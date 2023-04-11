@@ -1,0 +1,37 @@
+﻿<Properties StartupConfiguration="{B444EE61-5C60-434E-AB35-F1FE46FAA8F0}|Default">
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <Xamarin.Addins.Core.Project ActiveDebugTarget="MyAppleMacCatalystID" />
+  <MonoDevelop.Ide.ItemProperties.KavaupMaui PreferredExecutionTarget="MyAppleMacCatalystID" FirstBuild="True" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.Workbench ActiveDocument="App.xaml.cs">
+    <Files>
+      <File FileName="App.xaml.cs" Line="9" Column="35" />
+      <File FileName="Resx/AppResources.resx" Line="1" Column="1" />
+      <File FileName="Resx/AppResources.Designer.cs" Line="1" Column="1" />
+      <File FileName="AppShell.xaml.cs" Line="1" Column="1" />
+      <File FileName="AppShell.xaml" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="KavaupMaui" expanded="True">
+            <Node name="KavaupMaui" expanded="True">
+              <Node name="Resx" expanded="True">
+                <Node name="AppResources.resx" expanded="True" />
+              </Node>
+              <Node name="App.xaml" expanded="True">
+                <Node name="App.xaml.cs" selected="True" />
+              </Node>
+              <Node name="AppShell.xaml" expanded="True" />
+              <Node name="MainPage.xaml" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+</Properties>
