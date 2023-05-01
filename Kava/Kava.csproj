@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="akavache" Version="9.1.7" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="DI\" />
+      <Folder Include="Helpers\AppName\Interfaces\" />
+      <Folder Include="Helpers\Logger\Interfaces\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Maui.Essentials">
+        <HintPath>..\..\..\..\..\..\..\..\..\usr\local\share\dotnet\packs\Microsoft.Maui.Essentials.Ref.ios\7.0.81\ref\net7.0-ios13.6\Microsoft.Maui.Essentials.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KavaupMaui", "KavaupMaui.csproj", "{B444EE61-5C60-434E-AB35-F1FE46FAA8F0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kava", "Kava\Kava.csproj", "{045560F1-E8F7-4768-B61F-8F8DEB815043}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{B444EE61-5C60-434E-AB35-F1FE46FAA8F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B444EE61-5C60-434E-AB35-F1FE46FAA8F0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B444EE61-5C60-434E-AB35-F1FE46FAA8F0}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{045560F1-E8F7-4768-B61F-8F8DEB815043}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{045560F1-E8F7-4768-B61F-8F8DEB815043}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{045560F1-E8F7-4768-B61F-8F8DEB815043}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{045560F1-E8F7-4768-B61F-8F8DEB815043}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
