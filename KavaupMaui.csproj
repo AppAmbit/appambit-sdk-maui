@@ -91,6 +91,33 @@
 	    <DependentUpon>MainPage.xaml</DependentUpon>
 	    <SubType>Code</SubType>
 	  </Compile>
+	  <Compile Update="Kava\API\Interfaces\HttpVerb.cs">
+	    <Link>Kavaup\API\Interfaces\HttpVerb.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\Interfaces\IWebAPIService.cs">
+	    <Link>Kavaup\API\Interfaces\IWebAPIService.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\Interfaces\IWebAPIEndpoint.cs">
+	    <Link>Kavaup\API\Interfaces\IWebAPIEndpoint.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\Interfaces\IAuthenticationService.cs">
+	    <Link>Kavaup\API\Interfaces\IAuthenticationService.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\Interfaces\INetworkSessionManager.cs">
+	    <Link>Kavaup\API\Interfaces\INetworkSessionManager.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\WebAPIService.cs">
+	    <Link>Kavaup\API\WebAPIService.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\AuthenticationService.cs">
+	    <Link>Kavaup\API\AuthenticationService.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\API\NetworkSessionManager.cs">
+	    <Link>Kavaup\API\NetworkSessionManager.cs</Link>
+	  </Compile>
+	  <Compile Update="Kava\Class1.cs">
+	    <Link>Kavaup\Class1.cs</Link>
+	  </Compile>
 	</ItemGroup>
 	<ItemGroup>
 	  <MauiXaml Update="Views\MainPage.xaml">

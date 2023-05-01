@@ -8,7 +8,7 @@ public static class MauiProgram
 	public static MauiApp CreateMauiApp()
 	{
 		Akavache.Registrations.Start(ApplicationName.AppName);
-
+	
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
