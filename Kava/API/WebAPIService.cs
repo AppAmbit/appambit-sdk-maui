@@ -29,10 +29,10 @@ public class WebAPIService : IWebAPIService
             try
             {
                 //Check if the device is connected to the internet before attempting to send the request
-                if (Connectivity.NetworkAccess != NetworkAccess.Internet)
-                {
-                    throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
-                }
+                // if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+                // {
+                //     throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
+                // }
                 var httpResponse = await HttpRequest(endpoint, _client, cancellationToken);
                 if (httpResponse == null) return default(T);
                 var responseString = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
