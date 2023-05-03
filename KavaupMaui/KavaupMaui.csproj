@@ -74,7 +74,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="Controls\" />
-	  <Folder Include="Helpers\AppName\Interfaces" />
 	  <Folder Include="Helpers\Logger\Interfaces\" />
 	  <Folder Include="Services\" />
 	  <Folder Include="ViewModels\" />
