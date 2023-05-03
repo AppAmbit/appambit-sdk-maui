@@ -1,252 +1,125 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text;
+using System.Net.Http.Json;
+using System.Text.Json;
 using KavaupMaui.API.Interfaces;
 using KavaupMaui.Auth.Interfaces;
-using Newtonsoft.Json;
-using JsonException = System.Text.Json.JsonException;
+using KavaupMaui.Helpers.DialogResults;
 
 namespace KavaupMaui.API;
 
 public class WebAPIService : IWebAPIService
+{
+    private readonly IAuthService _authService;
+    private readonly HttpClient _client;
+    private readonly List<IWebAPIEndpoint> endpointQueue = new List<IWebAPIEndpoint>();
+    private readonly IDialogResults _dialogResults;
+    private bool _isRefreshingToken;
+    private readonly HttpClient _httpClient = new HttpClient {
+    Timeout = new TimeSpan(100000), DefaultRequestHeaders = {
+    Accept = { new MediaTypeWithQualityHeaderValue("application/json") } } };
+    public WebAPIService(IAuthService sessionManager, IDialogResults dialogResults
+    )
     {
-        private readonly IAuthService _authService;
-        private readonly HttpClient _client;
-        private readonly List<IWebAPIEndpoint> endpointQueue = new List<IWebAPIEndpoint>();
-        private bool _isRefreshingToken;
-        private string _accessToken;
-        public WebAPIService(IAuthService sessionManager
-        ) {
-            _authService = sessionManager;
-            _client = new HttpClient();
-            _client.Timeout = TimeSpan.FromSeconds(10);
-            _accessToken = _authService.GetSession().Result.AccessToken;
-        }
-   //      public async Task<T> MakeRequest<T>(IWebAPIEndpoint endpoint, CancellationToken cancellationToken) where T : class
-   //      {
-   //          try
-   //          {
-   //              //Check if the device is connected to the internet before attempting to send the request
-   //              if (Connectivity.NetworkAccess != NetworkAccess.Internet)
-   //              {
-   //                  throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
-   //              }
-   //              var httpResponse = await HttpRequest(endpoint, _client, cancellationToken);
-   //              if (httpResponse == null) return default(T);
-   //              var responseString = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-   //              try
-   //              {
-   //                  StatusCodeCheck(httpResponse, responseString);
-   //              }
-   //              catch (Exception ex)//TODO WHAT DOES THIS DO?//UnAuthorizedException exception)
-   //              {
-   //                  //if the code verify or delivery endpoint returns a 401 then throw the UnAuthorized exception
-   //                  //do not attempt to auto refresh a token
-   // //TODO ADD IN
-   // //if (endpoint is PatientCodeVerifyEndpoint ||
-   //                  //     endpoint is PatientCodeDeliveryEndpoint)
-   //                  // {
-   //                  //     throw;
-   //                  // }
-   //                  switch (_isRefreshingToken)
-   //                  {
-   //                      case false:
-   //                          await RefreshAuthenticationToken(cancellationToken);
-   //                          break;
-   //                      case true:
-   //                          return await QueueWhileTokenIsRefreshing<T>(endpoint, cancellationToken);
-   //                      default:
-   //                          InvalidateSessionAndPromptToSignIn();
-   //                          return default(T);
-   //                  }
-   //                  endpointQueue.Remove(endpoint);
-   //                  return await MakeRequest<T>(endpoint, cancellationToken);
-   //              }
-   //              return DeserializeJson<T>(responseString);
-   //          }
-   //          catch (Exception ex)
-   //          {//TODO CREATE LOG MANAGER
-   //             // LogManager.Write(ex, nameof(MakeRequest), LogType.Error);
-   //              throw;
-   //          }
-   //      }
-        // private async Task<T> QueueWhileTokenIsRefreshing<T>(IWebAPIEndpoint endpoint, CancellationToken cancellationToken) where T : class
-        // {
-        //     endpointQueue.Add(endpoint);
-        //     return await MakeRequest<T>(endpoint, cancellationToken);
-        // }
-        // private async Task RefreshAuthenticationToken(CancellationToken cancellationToken)
-        // {
-        //     var refreshToken = _authClient.GetSession().Result.RefreshToken;
-        //     switch (_isRefreshingToken)
-        //     {
-        //         case false when !string.IsNullOrEmpty(refreshToken):
-        //             _isRefreshingToken = true;
-        //             try
-        //             {
-        //                 var authToken = await _authenticationService.RefreshToken(
-        //                     _sessionManager.GetSession().Result);
-        //                 _isRefreshingToken = false;
-        //                 _sessionManager.SaveSession(authToken);
-        //             }
-        //             catch (Exception ex)//TODO WHAT WAS THIS DOING?//UnAuthorizedException)
-        //             {
-        //                 InvalidateSessionAndPromptToSignIn();
-        //             }
-        //             break;
-        //         case true:
-        //             InvalidateSessionAndPromptToSignIn();
-        //             break;
-        //         default:
-        //             {
-        //                 if (string.IsNullOrEmpty(refreshToken))
-        //                 {
-        //                     InvalidateSessionAndPromptToSignIn();
-        //                 }
-        //                 break;
-        //             }
-        //     }
-        // }
-        // private void InvalidateSessionAndPromptToSignIn()
-        // {
-        //     _authClient.ClearSession();
-        //     //TODO:logout and go to sign in page
-        // }
-        private async Task<HttpResponseMessage> HttpRequest(IWebAPIEndpoint endpoint, HttpClient client, CancellationToken cancellationToken)
-        {
-            AddHeaders(client, endpoint);
-            var url = endpoint.DomainUrl + endpoint.Url;
-            if (endpoint.HttpVerb == HttpVerb.Get)
-                return await MakeHttpRequest(endpoint, client, url, cancellationToken);
-                return await MakeHttpRequest(endpoint, client, url, cancellationToken, endpoint.Payload);
-                }
-        private void AddHeaders(HttpClient client, IWebAPIEndpoint endpoint)
-        {
-            if (!string.IsNullOrEmpty(_authService.GetSession().Result.IdToken))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_authService.GetSession().Result.IdToken);
-                if (client.DefaultRequestHeaders.Contains(_accessToken))
-                {
-                    client.DefaultRequestHeaders.Remove(_accessToken);
-                }
-                //set latest every time
-                client.DefaultRequestHeaders.Add(_accessToken, _authService.GetSession().Result.AccessToken);
-            }
-            if (null == endpoint.RequestHeader) return;
-            foreach (var header in endpoint.RequestHeader)
-            {
-                switch (header.Key)
-                {
-                    case HeaderTypes.ContentType:
-                        client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
-                        break;
-                    case HeaderTypes.Accept:
-                        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(header.Value));
-                        break;
-                    case HeaderTypes.Authorization:
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(header.Key, header.Value);
-                        break;
-                    default:
-                        client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                        break;
-                }
-            }
-        }
-        private async Task<HttpResponseMessage> MakeHttpRequest(IWebAPIEndpoint endpoint,
-                                                               HttpClient client,
-                                                               string url,
-                                                               CancellationToken cancellationToken,
-                                                               object? payload = null)
-        {
-            HttpResponseMessage result = null;
-            try
-            {
-                switch (endpoint.HttpVerb)
-                {
-                    case HttpVerb.Delete:
-                        //TODO:implement
-                        break;
-                    case HttpVerb.Get:
-                        result = await client.GetAsync(url, cancellationToken);
-                        break;
-                    case HttpVerb.Patch:
-                        //TODO:implement
-                        break;
-                    case HttpVerb.Post:
-                        {
-                            result = await client.PostAsync(url, WebAPIService.SerializeJson(payload), cancellationToken);
-                        }
-                        break;
-                    case HttpVerb.Put:
-                        //TODO:implement
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            catch (TaskCanceledException ex)
-            {
-                //If the task was not cancelled due to user navigation, throw a timeout exception
-                if (!ex.CancellationToken.IsCancellationRequested)
-                {
-                    throw new Exception("web timeout");
-                }
-                else throw;
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
-            return result;
-        }
-        private static HttpContent SerializeJson(object payload)
-        {
-            if (payload == null)
-            {
-                return null;
-            }
-            var data = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(data, Encoding.UTF8, MediaTypes.Json);
-            return content;
-        }
-        private void StatusCodeCheck(HttpResponseMessage result, string responseString)
-        {
-            switch (result.StatusCode)
-            {
-                case HttpStatusCode.Unauthorized:
-                    //TODO WHAT DOES THIS DO?throw new UnAuthorizedException();
-                case HttpStatusCode.NotFound:
-                case HttpStatusCode.BadRequest:
-                case HttpStatusCode.InternalServerError:
-                case HttpStatusCode.RequestTimeout:
-                case HttpStatusCode.Forbidden:
-                    throw new Exception(result.StatusCode.ToString());
-                case HttpStatusCode.OK:
-                    break;
-                default:
-                    Console.WriteLine("issue");
-                    break;
-            }
-        }
-        private static T DeserializeJson<T>(string response)
-        {
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(response);
-            }
-            catch (JsonException ex)
-            {
-                throw new JsonException("Could not parse JSON.", ex);
-            }
-        }
+        _authService = sessionManager;
+        _dialogResults = dialogResults;
+        var accessToken = _authService.GetSession().Result.AccessToken;
+        _httpClient.DefaultRequestHeaders.Authorization =
+        !string.IsNullOrEmpty(accessToken) 
+        ? new AuthenticationHeaderValue("Bearer", accessToken) 
+        : null;
     }
-internal static class HeaderTypes
-{
-    public const string ContentType = "ContentType";
-    public const string Accept = "Accept"; 
-    public const string Authorization = "Authorization";
-}
-internal static class MediaTypes
-{
-    public static string Json { get => "application/json"; }
+      public async Task<TResult> GetAsync<TResult>(string uri)
+    {
+        var response = await _httpClient.GetAsync(uri).ConfigureAwait(false);
+
+        await HandleResponse(response).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<TResult>();
+
+        return result;
+    }
+
+    public async Task<TResult> PostAsync<TResult>(string uri, TResult data)
+    {
+
+        var content = new StringContent(JsonSerializer.Serialize(data));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var response = await _httpClient.PostAsync(uri, content).ConfigureAwait(false);
+
+        await HandleResponse(response).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<TResult>();
+
+        return result;
+    }
+
+    public async Task<TResult> PostAsync<TResult>(string uri, string data)
+    {
+        var content = new StringContent(data);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+        var response = await _httpClient.PostAsync(uri, content).ConfigureAwait(false);
+
+        await HandleResponse(response).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<TResult>();
+
+        return result;
+    }
+
+    public async Task<TResult> PutAsync<TResult>(string uri, TResult data)
+    {
+
+        var content = new StringContent(JsonSerializer.Serialize(data));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        var response = await _httpClient.PutAsync(uri, content).ConfigureAwait(false);
+
+        await HandleResponse(response).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<TResult>();
+
+        return result;
+    }
+
+    public async Task DeleteAsync(string uri)
+    {
+        
+        await _httpClient.DeleteAsync(uri).ConfigureAwait(false);
+    }
+    private static void AddHeaderParameter(HttpClient httpClient, string parameter)
+    {
+        if (httpClient == null)
+            return;
+        if (string.IsNullOrEmpty(parameter))
+            return;
+
+        httpClient.DefaultRequestHeaders.Add(parameter, Guid.NewGuid().ToString());
+    }
+
+    private async Task HandleResponse(HttpResponseMessage response)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            // var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.Forbidden ||
+                    response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var refreshed = await _authService.RefreshToken();
+                if (refreshed == null)
+                {
+                    var login = _authService.LoginAsync();
+                    if (login != null)
+                    {
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.Result.AccessToken);
+                        await _dialogResults.ShowAlertAsync("Login", "Successfully Logged In!", "Ok");
+                    }
+                }
+                else
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
+                    //TODO HANDLE SUCCESS REFRESH?
+                }
+            }
+
+            //TODO CHECK if we want to do a dialog box?
+        }
+        
+    }
 }

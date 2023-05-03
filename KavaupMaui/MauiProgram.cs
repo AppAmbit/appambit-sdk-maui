@@ -1,9 +1,11 @@
 ﻿using System.Reflection;
+using CommunityToolkit.Maui;
 using KavaupMaui.API;
 using KavaupMaui.API.Interfaces;
 using KavaupMaui.Auth;
 using KavaupMaui.Auth.Interfaces;
 using KavaupMaui.Helpers.AppName;
+using KavaupMaui.Helpers.DialogResults;
 using KavaupMaui.Providers;
 using KavaupMaui.Providers.Interfaces;
 using KavaupMaui.ViewModels;
@@ -30,6 +32,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -53,7 +56,7 @@ public static class MauiProgram
 		mAB.Services.AddSingleton<IAuthService, AuthService>();
 		#endregion
 		mAB.Services.AddSingleton<ICacheProvider, AkavacheCacheProvider>();
-
+		mAB.Services.AddSingleton<IDialogResults, DialogResults>();
 		return mAB;
 	}
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)

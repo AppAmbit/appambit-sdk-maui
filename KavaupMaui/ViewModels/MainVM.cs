@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using KavaupMaui.API.Interfaces;
 using KavaupMaui.Auth;
 using KavaupMaui.Constant;
+using KavaupMaui.Helpers.DialogResults;
 using KavaupMaui.Providers;
 using KavaupMaui.Providers.Interfaces;
 
@@ -16,6 +17,7 @@ public class MainVM  : ObservableObject
   private bool _loggedInImg;
   private readonly AuthService _authService;
   private readonly ICacheProvider _cacheProvider;
+  private readonly IDialogResults _dialogResults;
   public int Counter
   {
     get => _counter;
@@ -36,11 +38,11 @@ public class MainVM  : ObservableObject
   public ICommand LogOutCommand { get; private set; }
 
   public MainVM(AuthService authService, 
-    ICacheProvider cacheProvider)
+    ICacheProvider cacheProvider, IDialogResults dialogResults)
   {
     _authService = authService;
-    // _networkSession = networkSession;
     _cacheProvider = cacheProvider;
+    _dialogResults = dialogResults;
     SetupCommands();
   }
   private void SetupCommands()
@@ -55,9 +57,7 @@ public class MainVM  : ObservableObject
   }
   private async Task LoginClicked()
   {
-    
     var loginResult = await _authService.LoginAsync();
-
     if (!loginResult.IsError)
     {
       LoggedInImg = true;
@@ -66,7 +66,7 @@ public class MainVM  : ObservableObject
     }
     else
     {
-      await Application.Current.MainPage.DisplayAlert("Error!", loginResult.ErrorDescription, "Close");
+      await _dialogResults.ShowAlertAsync("Error!", loginResult.ErrorDescription, "Close");
     }
   }
   private async Task LogoutClicked()
@@ -78,7 +78,7 @@ public class MainVM  : ObservableObject
       LoginBtn = true;
      
     } else {
-      await Application.Current.MainPage.DisplayAlert("Error!", logoutResult.ErrorDescription, "OK");
+      await _dialogResults.ShowAlertAsync("Error!", logoutResult.ErrorDescription, "Close");
     }
   }
 }
