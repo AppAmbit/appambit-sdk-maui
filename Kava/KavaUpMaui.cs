@@ -7,12 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Kava
 {
-	public static class KavaUpMaui
-	{
+    public static class KavaUpMaui
+    {
         public static Application Application;
 
-		public static void Register(MauiAppBuilder mAB, OAuthClientOptions oAuthClientOptions = null)
-		{
+        public static void Register(MauiAppBuilder mAB, OAuthClientOptions oAuthClientOptions = null)
+        {
             Akavache.Registrations.Start(AkavacheCacheProvider.AppName);
 
             var akavacheCacheProvider = new AkavacheCacheProvider();
@@ -25,10 +25,10 @@ namespace Kava
             if (oAuthClientOptions != null)
             {
                 mAB.Services.AddSingleton<OAuthClientOptions>(oAuthClientOptions);
-               
+
                 mAB.Services.AddSingleton<IOAuthService>(new OAuthService(oAuthClientOptions, akavacheCacheProvider));
             }
         }
-	}
+    }
 }
 
