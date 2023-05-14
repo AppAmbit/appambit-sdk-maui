@@ -1,25 +1,19 @@
 ﻿using System.Reflection;
 using CommunityToolkit.Maui;
-using KavaupMaui.API;
-using KavaupMaui.API.Interfaces;
-using KavaupMaui.Auth;
-using KavaupMaui.Auth.Interfaces;
-using KavaupMaui.Helpers.AppName;
-using KavaupMaui.Helpers.DialogResults;
-using KavaupMaui.Providers;
-using KavaupMaui.Providers.Interfaces;
+using Kava;
+using Kava.Oauth;
+using Kava.Storage;
 using KavaupMaui.ViewModels;
 using KavaupMaui.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 namespace KavaupMaui;
 
 public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
-		Akavache.Registrations.Start(ApplicationName.AppName);
-
 		#region JSON Settings
 		var appSettingsFile = "KavaupMaui.appsettings.json";
 #if DEBUG
@@ -46,18 +40,17 @@ public static class MauiProgram
 	}
 	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
 	{
-		#region AuthSettings
-		mAB.Services.AddSingleton(new AuthService(new AuthClientOptions {
-		Domain = "",
-		ClientId = "",
-		Scope = "openid profile",
-		RedirectUri = "KavaupMaui://callback"
-		}));
-		mAB.Services.AddSingleton<IAuthService, AuthService>();
-		#endregion
-		mAB.Services.AddSingleton<ICacheProvider, AkavacheCacheProvider>();
-		mAB.Services.AddSingleton<IDialogResults, DialogResults>();
-		return mAB;
+
+		var oAuthClientOptions = new OAuthClientOptions
+		{
+			Domain = "",
+			ClientId = "",
+			Scope = "openid profile",
+			RedirectUri = "KavaupMaui://callback"
+		};
+
+        KavaUpMaui.Register(mAB, oAuthClientOptions);
+        return mAB;
 	}
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
 	{

@@ -1,15 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        	<TargetFrameworks>net7.0-android;net7.0-ios;net7.0-maccatalyst</TargetFrameworks>
+            <UseMaui>true</UseMaui>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+	
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
+      <CreatePackage>false</CreatePackage>
+    </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="akavache" Version="9.1.7" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Logging\" />
+      <None Remove="OAuth\" />
+      <None Remove="Dialogs\" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Logging\" />
+      <Folder Include="OAuth\" />
+      <Folder Include="Dialogs\" />
+    </ItemGroup>
 </Project>

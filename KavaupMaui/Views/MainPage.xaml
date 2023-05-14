@@ -56,6 +56,18 @@
                 SemanticProperties.Hint="Counts the number of times you click"
                 Command="{Binding AddCommand}"
                 HorizontalOptions="Center" />
+            <StackLayout Orientation="Horizontal">
+                <Label Text="Test Resopnse: " TextColor="Black"
+                   FontSize="18" HorizontalOptions="Center"/>
+             <Label Text="{Binding TestEndpointResult}" TextColor="Black"
+                   FontSize="18" HorizontalOptions="Center"/>
+                </StackLayout>
+            <Button
+                x:Name="TestEndpointBtn"
+                Text="Test Endpoint API call"
+                SemanticProperties.Hint="Makes an API call against the test endpoint"
+                Command="{Binding TestEndpointCommand}"
+                HorizontalOptions="Center" />
 
         </VerticalStackLayout>
     </ScrollView>

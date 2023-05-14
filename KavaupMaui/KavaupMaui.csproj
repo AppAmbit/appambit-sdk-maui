@@ -33,6 +33,9 @@
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
 	  <CreatePackage>false</CreatePackage>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-ios|AnyCPU'">
+	  <CreatePackage>false</CreatePackage>
+	</PropertyGroup>
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
@@ -70,16 +73,13 @@
 	  <None Remove="ViewModels\" />
 	  <None Remove="Views\" />
 	  <None Remove="ResEx\" />
-	  <None Remove="DI\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="Controls\" />
-	  <Folder Include="Helpers\Logger\Interfaces\" />
-	  <Folder Include="Services\" />
 	  <Folder Include="ViewModels\" />
 	  <Folder Include="Views\" />
 	  <Folder Include="Resx\" />
-	  <Folder Include="DI\" />
+	  <Folder Include="Models\" />
 	</ItemGroup>
 	<ItemGroup>
 	  <EmbeddedResource Update="Resx\AppResources.resx">
@@ -116,4 +116,7 @@
 	</ItemGroup>
 
 	
+	<ItemGroup>
+	  <ProjectReference Include="..\Kava\Kava.csproj" />
+	</ItemGroup>
 </Project>

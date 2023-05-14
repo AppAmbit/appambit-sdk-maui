@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using Kava.API.Interfaces;
+using Kava.API;
 // using Microsoft.Maui.Networking;
 using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
@@ -11,14 +11,13 @@ namespace Kava.API;
 public class WebAPIService : IWebAPIService
     {
         private readonly IAuthenticationService _authenticationService;
-        private readonly INetworkSessionManager _sessionManager;
+        private readonly ISessionManager _sessionManager;
         private readonly HttpClient _client;
         private readonly List<IWebAPIEndpoint> endpointQueue = new List<IWebAPIEndpoint>();
         private bool _isRefreshingToken;
         private const string AccessToken = "Access-Token";
-        public WebAPIService(INetworkSessionManager sessionManager,
-                           IAuthenticationService authenticationService
-                            ) {
+        public WebAPIService(ISessionManager sessionManager,
+                           IAuthenticationService authenticationService) {
             _authenticationService = authenticationService;
             _sessionManager = sessionManager;
             _client = new HttpClient();
@@ -28,12 +27,12 @@ public class WebAPIService : IWebAPIService
         {
             try
             {
-                //Check if the device is connected to the internet before attempting to send the request
-                // if (Connectivity.NetworkAccess != NetworkAccess.Internet)
-                // {
-                //     throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
-                // }
-                var httpResponse = await HttpRequest(endpoint, _client, cancellationToken);
+            //Check if the device is connected to the internet before attempting to send the request
+            if (Connectivity.NetworkAccess != NetworkAccess.Internet)
+            {
+                throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
+            }
+            var httpResponse = await HttpRequest(endpoint, _client, cancellationToken);
                 if (httpResponse == null) return default(T);
                 var responseString = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
                 try
@@ -42,14 +41,6 @@ public class WebAPIService : IWebAPIService
                 }
                 catch (Exception ex)//TODO WHAT DOES THIS DO?//UnAuthorizedException exception)
                 {
-                    //if the code verify or delivery endpoint returns a 401 then throw the UnAuthorized exception
-                    //do not attempt to auto refresh a token
-   //TODO ADD IN
-   //if (endpoint is PatientCodeVerifyEndpoint ||
-                    //     endpoint is PatientCodeDeliveryEndpoint)
-                    // {
-                    //     throw;
-                    // }
                     switch (_isRefreshingToken)
                     {
                         case false:
@@ -67,8 +58,9 @@ public class WebAPIService : IWebAPIService
                 return DeserializeJson<T>(responseString);
             }
             catch (Exception ex)
-            {//TODO CREATE LOG MANAGER
-               // LogManager.Write(ex, nameof(MakeRequest), LogType.Error);
+            {
+            //TODO CREATE LOG MANAGER
+               // Logger.Write(ex);
                 throw;
             }
         }
@@ -79,7 +71,7 @@ public class WebAPIService : IWebAPIService
         }
         private async Task RefreshAuthenticationToken(CancellationToken cancellationToken)
         {
-            var refreshToken = _sessionManager.GetSession().Result.RefreshToken;
+            var refreshToken = _sessionManager.GetSession().RefreshToken;
             switch (_isRefreshingToken)
             {
                 case false when !string.IsNullOrEmpty(refreshToken):
@@ -87,11 +79,11 @@ public class WebAPIService : IWebAPIService
                     try
                     {
                         var authToken = await _authenticationService.RefreshToken(
-                            _sessionManager.GetSession().Result);
+                            _sessionManager.GetSession());
                         _isRefreshingToken = false;
                         _sessionManager.SaveSession(authToken);
                     }
-                    catch (Exception ex)//TODO WHAT WAS THIS DOING?//UnAuthorizedException)
+                    catch (Exception ex)
                     {
                         InvalidateSessionAndPromptToSignIn();
                     }
@@ -124,15 +116,15 @@ public class WebAPIService : IWebAPIService
                 }
         private void AddHeaders(HttpClient client, IWebAPIEndpoint endpoint)
         {
-            if (!string.IsNullOrEmpty(_sessionManager.GetSession().Result.IdToken))
+            if (!string.IsNullOrEmpty(_sessionManager.GetSession()?.IdToken))
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_sessionManager.GetSession().Result.IdToken);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_sessionManager.GetSession().IdToken);
                 if (client.DefaultRequestHeaders.Contains(AccessToken))
                 {
                     client.DefaultRequestHeaders.Remove(AccessToken);
                 }
                 //set latest every time
-                client.DefaultRequestHeaders.Add(AccessToken, _sessionManager.GetSession().Result.AccessToken);
+                client.DefaultRequestHeaders.Add(AccessToken, _sessionManager.GetSession().AccessToken);
             }
             if (null == endpoint.RequestHeader) return;
             foreach (var header in endpoint.RequestHeader)
