@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Kava.API;
-// using Microsoft.Maui.Networking;
 using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
 

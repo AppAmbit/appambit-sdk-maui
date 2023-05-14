@@ -10,7 +10,6 @@ namespace Kava.API;
 
 public class SessionManager : ISessionManager
 {
-
     private readonly ICacheProvider _cacheProvider;
 
     public SessionManager(ICacheProvider cacheProvider)
