@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using Kava.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace Kava.Logging
 {
@@ -8,11 +9,11 @@ namespace Kava.Logging
     {
         const string identifier = ",";
 		public LogLevel LogLevel { get; set; }
-		public DateTime CreatedAd { get; set; }
+		public DateTime CreatedAt { get; set; }
 		public string? LogTag { get; set; }
 		public string? Message { get; set; }
 
-		public new string ToString => $"[{LogLevel.convertToString()}] [{LogLevel}] {CreatedAd.ToLongTimeString}: {Message}";
+		public new string ToString => $"[{LogLevel.convertToString()}] [{LogLevel}] {CreatedAt.ToLongTimeString}: {Message}";
 
         public static string? UnsanitizedMessage(string text) => text?.Replace(identifier, "c0mm4");
 
@@ -20,7 +21,7 @@ namespace Kava.Logging
 
         public string Parse()
         {
-            return $"{LogLevel.convertToString()}{identifier}{LogTag}{identifier}{Message}{identifier}{CreatedAd.ToFileTimeUtc};";
+            return $"{LogLevel.convertToString()}{identifier}{LogTag}{identifier}{Message}{identifier}{CreatedAt.ToString()};";
         }
 
         public static LogEntry UnParse(string parsedFormat)
@@ -31,7 +32,7 @@ namespace Kava.Logging
                 LogLevel = values[0].converToEnum<LogLevel>(),
                 LogTag = SanitizedText(values[1]),
                 Message = SanitizedText(values[2]),
-                CreatedAd = Convert.ToDateTime(values[3])
+                CreatedAt = Convert.ToDateTime(values[3])
             };  
         }
     }
