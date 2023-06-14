@@ -2,7 +2,7 @@ using Kava.Models;
 
 namespace Kava.API;
 
-public interface IAuthenticationService
+public interface ITokenRefreshService
 {
   Task<Session> RefreshToken(Session sessionKeys);
 }

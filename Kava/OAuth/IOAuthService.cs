@@ -1,10 +1,11 @@
 using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
+using Kava.API;
 using Kava.Models;
 
 namespace Kava.Oauth;
 
-public interface IOAuthService
+public interface IOAuthService : ITokenRefreshService
 {
     Task<LoginResult> LoginAsync();
     Task<BrowserResult> LogoutAsync();
@@ -12,6 +13,4 @@ public interface IOAuthService
     Session GetSession();
     void SaveSession(Session session);
     void ClearSession();
-
-    Task<Session> RefreshToken();
 }

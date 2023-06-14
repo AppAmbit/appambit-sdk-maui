@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using CommunityToolkit.Maui;
+using IdentityModel.Jwk;
+using IdentityModel.OidcClient;
 using Kava;
 using Kava.Oauth;
 using Kava.Storage;
@@ -40,15 +42,18 @@ public static class MauiProgram
 	}
 	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
 	{
-
-		var oAuthClientOptions = new OAuthClientOptions
+		//Google OAuth test
+        var oAuthClientOptions = new OAuthClientOptions
 		{
-			Domain = "",
-			ClientId = "",
+			Authority = "accounts.google.com",
+			ClientId = "791579469784-857mhv6435tbdq3ut3jbc8b25mddnb2g.apps.googleusercontent.com",
 			Scope = "openid profile",
-			RedirectUri = "KavaupMaui://callback"
-		};
+			RedirectUri = "com.googleusercontent.apps.791579469784-857mhv6435tbdq3ut3jbc8b25mddnb2g:/oauth2redirect",
+			AuthorizeEndpoint = "https://accounts.google.com/o/oauth2/v2/auth",
+			TokenEndpoint = "https://www.googleapis.com/oauth2/v4/token"
+        };
 
+		
         KavaUpMaui.Register(mAB, oAuthClientOptions);
         return mAB;
 	}

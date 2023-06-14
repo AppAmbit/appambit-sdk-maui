@@ -51,6 +51,7 @@ public class MainVM : ObservableObject
     public ICommand LoginCommand { get; private set; }
     public ICommand LogOutCommand { get; private set; }
     public ICommand TestEndpointCommand { get; private set; }
+    public ICommand TestGoogleEndpointCommand { get; private set; }
 
     public MainVM(IOAuthService authService,
                 ICacheProvider cacheProvider,
@@ -70,11 +71,18 @@ public class MainVM : ObservableObject
         AddCommand = new AsyncRelayCommand(AddCounter);
         LogOutCommand = new AsyncRelayCommand(LogoutClicked);
         TestEndpointCommand = new AsyncRelayCommand(TestEndpointClicked);
+        TestGoogleEndpointCommand = new AsyncRelayCommand(TestGoogleEndpointClicked);
     }
 
     private async Task AddCounter()
     {
         Counter++;
+    }
+
+    private async Task TestGoogleEndpointClicked()
+    {
+        var response = await _webAPIService.MakeRequest<TestResponse>(new GoogleEndpoint(), new CancellationToken());
+        TestEndpointResult = response?.Data;
     }
 
     private async Task TestEndpointClicked()

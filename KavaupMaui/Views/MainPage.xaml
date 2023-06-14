@@ -69,6 +69,13 @@
                 Command="{Binding TestEndpointCommand}"
                 HorizontalOptions="Center" />
 
+             <Button
+                x:Name="TestGoogleEndpointBtn"
+                Text="Test Google Endpoint API call"
+                SemanticProperties.Hint="Makes a google API call"
+                Command="{Binding TestGoogleEndpointCommand}"
+                HorizontalOptions="Center" />
+
         </VerticalStackLayout>
     </ScrollView>
 

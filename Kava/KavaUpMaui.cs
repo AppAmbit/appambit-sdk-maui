@@ -18,7 +18,7 @@ namespace Kava
             var akavacheCacheProvider = new AkavacheCacheProvider();
             mAB.Services.AddSingleton<ICacheProvider>(akavacheCacheProvider);
             mAB.Services.AddSingleton<ISessionManager, SessionManager>();
-            mAB.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            mAB.Services.AddSingleton<ITokenRefreshService, TokenRefreshService>();
             mAB.Services.AddSingleton<IWebAPIService, WebAPIService>();
             mAB.Services.AddSingleton<IDialogService, DialogService>();
 

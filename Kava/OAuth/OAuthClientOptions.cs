@@ -9,7 +9,7 @@ public class OAuthClientOptions
         Browser = new WebBrowserAuthenticator();
     }
 
-    public string Domain { get; set; }
+    public string Authority { get; set; }
 
     public string ClientId { get; set; }
 
@@ -18,4 +18,12 @@ public class OAuthClientOptions
     public string Scope { get; set; }
 
     public IdentityModel.OidcClient.Browser.IBrowser Browser { get; set; }
+
+    public string IssuerName { get; set; }
+
+    public string AuthorizeEndpoint { get; set; }
+
+    public string TokenEndpoint { get; set; }
+
+    
 }

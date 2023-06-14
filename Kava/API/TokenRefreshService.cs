@@ -3,7 +3,7 @@ using Kava.Models;
 
 namespace Kava.API;
 
-public class AuthenticationService : IAuthenticationService
+public class TokenRefreshService : ITokenRefreshService
 {
   public async Task<Session> RefreshToken(Session sessionKeys)
   {

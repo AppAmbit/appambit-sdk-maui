@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Kava.API;
+using Kava.Models;
 using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
 
@@ -9,29 +10,46 @@ namespace Kava.API;
 
 public class WebAPIService : IWebAPIService
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly ITokenRefreshService _authenticationService;
     private readonly ISessionManager _sessionManager;
     private readonly HttpClient _client;
     private readonly List<IWebAPIEndpoint> endpointQueue = new List<IWebAPIEndpoint>();
     private bool _isRefreshingToken;
     private const string AccessToken = "Access-Token";
+    private Task<Session> refreshTokenTask;
+
+    public int MaxRetries = 3;
+    private int _retryCount = 0;
+
+    public int QueueEndpointMax = 5;
+
+    bool IsRefreshingToken => _isRefreshingToken;
+
     public WebAPIService(ISessionManager sessionManager,
-                       IAuthenticationService authenticationService)
+                       ITokenRefreshService authenticationService)
     {
         _authenticationService = authenticationService;
         _sessionManager = sessionManager;
         _client = new HttpClient();
-        _client.Timeout = TimeSpan.FromSeconds(10);
+        _client.Timeout = TimeSpan.FromSeconds(20);
     }
+
     public async Task<T> MakeRequest<T>(IWebAPIEndpoint endpoint, CancellationToken cancellationToken) where T : class
     {
         try
         {
+
             //Check if the device is connected to the internet before attempting to send the request
             if (Connectivity.NetworkAccess != NetworkAccess.Internet)
             {
                 throw new Exception($"No internet connection: {Connectivity.NetworkAccess}");
             }
+
+            if (IsRefreshingToken)
+            {
+                return await QueueWhileTokenIsRefreshing<T>(endpoint, cancellationToken);
+            }
+
             var httpResponse = await HttpRequest(endpoint, _client, cancellationToken);
             if (httpResponse == null) return default(T);
             var responseString = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -39,9 +57,9 @@ public class WebAPIService : IWebAPIService
             {
                 StatusCodeCheck(httpResponse, responseString);
             }
-            catch (Exception ex)//TODO WHAT DOES THIS DO?//UnAuthorizedException exception)
+            catch (UnauthorizedException exception)
             {
-                switch (_isRefreshingToken)
+                switch (IsRefreshingToken)
                 {
                     case false:
                         await RefreshAuthenticationToken(cancellationToken);
@@ -55,33 +73,34 @@ public class WebAPIService : IWebAPIService
                 endpointQueue.Remove(endpoint);
                 return await MakeRequest<T>(endpoint, cancellationToken);
             }
+            endpointQueue.Remove(endpoint);
             return DeserializeJson<T>(responseString);
         }
         catch (Exception ex)
         {
-            //TODO CREATE LOG MANAGER
-            // Logger.Write(ex);
+            //TODO LOG error
             throw;
         }
     }
     private async Task<T> QueueWhileTokenIsRefreshing<T>(IWebAPIEndpoint endpoint, CancellationToken cancellationToken) where T : class
     {
         endpointQueue.Add(endpoint);
+        await refreshTokenTask;
         return await MakeRequest<T>(endpoint, cancellationToken);
     }
     private async Task RefreshAuthenticationToken(CancellationToken cancellationToken)
     {
-        var refreshToken = _sessionManager.GetSession().RefreshToken;
-        switch (_isRefreshingToken)
+        var refreshToken = _sessionManager.GetSession()?.RefreshToken;
+        switch (IsRefreshingToken)
         {
             case false when !string.IsNullOrEmpty(refreshToken):
                 _isRefreshingToken = true;
                 try
                 {
-                    var authToken = await _authenticationService.RefreshToken(
-                        _sessionManager.GetSession());
+                    refreshTokenTask = _authenticationService.RefreshToken(_sessionManager.GetSession());
+                    var session = await refreshTokenTask;
                     _isRefreshingToken = false;
-                    _sessionManager.SaveSession(authToken);
+                    _sessionManager.SaveSession(session);
                 }
                 catch (Exception ex)
                 {
@@ -101,11 +120,14 @@ public class WebAPIService : IWebAPIService
                 }
         }
     }
+
+
     private void InvalidateSessionAndPromptToSignIn()
     {
         _sessionManager.ClearSession();
         //TODO:logout and go to sign in page
     }
+
     private async Task<HttpResponseMessage> HttpRequest(IWebAPIEndpoint endpoint, HttpClient client, CancellationToken cancellationToken)
     {
         AddHeaders(client, endpoint);
@@ -114,18 +136,20 @@ public class WebAPIService : IWebAPIService
             return await MakeHttpRequest(endpoint, client, url, cancellationToken);
         return await MakeHttpRequest(endpoint, client, url, cancellationToken, endpoint.Payload);
     }
+
     private void AddHeaders(HttpClient client, IWebAPIEndpoint endpoint)
     {
-        if (!string.IsNullOrEmpty(_sessionManager.GetSession()?.IdToken))
+        if (!string.IsNullOrEmpty(_sessionManager.GetSession()?.AccessToken))
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_sessionManager.GetSession().IdToken);
-            if (client.DefaultRequestHeaders.Contains(AccessToken))
-            {
-                client.DefaultRequestHeaders.Remove(AccessToken);
-            }
-            //set latest every time
-            client.DefaultRequestHeaders.Add(AccessToken, _sessionManager.GetSession().AccessToken);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(_sessionManager.GetSession().AccessToken);
+            //if (client.DefaultRequestHeaders.Contains(AccessToken))
+            //{
+            //    client.DefaultRequestHeaders.Remove(AccessToken);
+            //}
+            ////set latest every time
+            //client.DefaultRequestHeaders.Add(AccessToken, _sessionManager.GetSession().AccessToken);
         }
+
         if (null == endpoint.RequestHeader) return;
         foreach (var header in endpoint.RequestHeader)
         {
@@ -193,6 +217,7 @@ public class WebAPIService : IWebAPIService
         }
         return result;
     }
+
     private static HttpContent SerializeJson(object payload)
     {
         if (payload == null)
@@ -203,12 +228,13 @@ public class WebAPIService : IWebAPIService
         var content = new StringContent(data, Encoding.UTF8, MediaTypes.Json);
         return content;
     }
+
     private void StatusCodeCheck(HttpResponseMessage result, string responseString)
     {
         switch (result.StatusCode)
         {
             case HttpStatusCode.Unauthorized:
-            //TODO WHAT DOES THIS DO?throw new UnAuthorizedException();
+                throw new UnauthorizedException();
             case HttpStatusCode.NotFound:
             case HttpStatusCode.BadRequest:
             case HttpStatusCode.InternalServerError:
@@ -241,6 +267,7 @@ internal static class HeaderTypes
     public const string Accept = "Accept"; 
     public const string Authorization = "Authorization";
 }
+
 internal static class MediaTypes
 {
     public static string Json { get => "application/json"; }

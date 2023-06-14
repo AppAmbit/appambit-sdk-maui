@@ -2,6 +2,7 @@ using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using Akavache;
 using IdentityModel.Client;
+using IdentityModel.Jwk;
 using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
 using Kava.Models;
@@ -17,13 +18,23 @@ public class OAuthService : IOAuthService
     public OAuthService(OAuthClientOptions options, ICacheProvider cache)
     {
         _cache = cache;
+
+        var providerInformation = new ProviderInformation()
+        {
+            IssuerName = options.Authority,
+            AuthorizeEndpoint = options.AuthorizeEndpoint,
+            TokenEndpoint = options.TokenEndpoint,
+            KeySet = new JsonWebKeySet()
+        };
+
         oidcClient = new OidcClient(new OidcClientOptions
         {
-            Authority = $"https://{options.Domain}",
+            Authority = options.AuthorizeEndpoint,
             ClientId = options.ClientId,
             Scope = options.Scope,
             RedirectUri = options.RedirectUri,
-            Browser = options.Browser
+            Browser = options.Browser,
+            ProviderInformation = providerInformation
         });
     }
 
@@ -47,13 +58,14 @@ public class OAuthService : IOAuthService
 
         return result;
     }
+
     public async Task<BrowserResult> LogoutAsync()
     {
         var logoutParameters = new Dictionary<string, string>
-    {
-    {"client_id", oidcClient.Options.ClientId },
-    {"returnTo", oidcClient.Options.RedirectUri }
-    };
+        {
+            {"client_id", oidcClient.Options.ClientId },
+            {"returnTo", oidcClient.Options.RedirectUri }
+        };
 
         var logoutRequest = new LogoutRequest();
         var endSessionUrl = new RequestUrl($"{oidcClient.Options.Authority}/v2/logout")
@@ -68,20 +80,21 @@ public class OAuthService : IOAuthService
         ClearSession();
         return browserResult;
     }
+
     public Session GetSession()
     {
-        var obj = _cache.GetObject<Session>("Session");
-        return obj ;
+        return _cache.GetObject<Session>("Session");
     }
+
     public void SaveSession(Session Session)
     {
-        _cache.InsertObject<Session>("Session", Session, DateTime.Now.AddHours(24));//TODO ADD CORRECT INFORMATION HERE
+        _cache.InsertObject<Session>("Session", Session);
     }
     public void ClearSession()
     {
         _cache.DeleteAll();
     }
-    public async Task<Session> RefreshToken()
+    public async Task<Session> RefreshToken(Session session)
     {
         var obj = _cache.GetObject<Session>("Session");
         if (obj == null) return null;//TODO PUSH TO MAIN PAGE
