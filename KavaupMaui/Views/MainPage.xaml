@@ -69,6 +69,27 @@
                 Command="{Binding TestEndpointCommand}"
                 HorizontalOptions="Center" />
 
+            <Button
+                x:Name="TestLogBtn"
+                Text="Test Setting A Log"
+                SemanticProperties.Hint="Saves logs to the console and file"
+                Command="{Binding TestLogCommand}"
+                HorizontalOptions="Center" />
+
+            <Button
+                x:Name="TestAutoDeleteLogBtn"
+                Text="Test Auto Deleting A Log"
+                SemanticProperties.Hint="Delete log once it has filled the log size"
+                Command="{Binding TestAutoDeleteCommand}"
+                HorizontalOptions="Center" />
+
+            <Button
+                x:Name="TestClearLogBtn"
+                Text="Test Clearing A Log"
+                SemanticProperties.Hint="Clear logs manually"
+                Command="{Binding TestClearLogCommand}"
+                HorizontalOptions="Center" />
+
         </VerticalStackLayout>
     </ScrollView>
 

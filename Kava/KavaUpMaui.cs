@@ -1,6 +1,7 @@
 ﻿using System;
 using Kava.API;
 using Kava.Dialogs;
+using Kava.Logging;
 using Kava.Oauth;
 using Kava.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,9 @@ namespace Kava
             mAB.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
             mAB.Services.AddSingleton<IWebAPIService, WebAPIService>();
             mAB.Services.AddSingleton<IDialogService, DialogService>();
+            mAB.Services.AddSingleton<ILogService, KavaLogger>();
+            mAB.Services.AddSingleton<INetworkLogService, MockNetworkLogService>();
+            mAB.Services.AddSingleton<LogManager, LogManager>();
 
             if (oAuthClientOptions != null)
             {
