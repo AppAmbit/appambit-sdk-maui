@@ -23,6 +23,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
+      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -30,11 +31,15 @@
       <None Remove="OAuth\" />
       <None Remove="Dialogs\" />
       <None Remove="Logging\ConsoleLogger\" />
+      <None Remove="Mvvm\" />
+      <None Remove="Mvvm\Extensions\" />
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Logging\" />
       <Folder Include="OAuth\" />
       <Folder Include="Dialogs\" />
       <Folder Include="Logging\ConsoleLogger\" />
+      <Folder Include="Mvvm\" />
+      <Folder Include="Mvvm\Extensions\" />
     </ItemGroup>
 </Project>

@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<base:BaseContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             x:TypeArguments="viewModels:MainVM"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:KavaupMaui.ViewModels"
+             xmlns:base="clr-namespace:Kava.Mvvm;assembly=Kava"
              x:DataType="viewModels:MainVM"
              x:Class="KavaupMaui.Views.MainPage">
     <ScrollView>
@@ -90,8 +92,15 @@
                 Command="{Binding TestClearLogCommand}"
                 HorizontalOptions="Center" />
 
+            <Button
+                x:Name="TestNavigation"
+                Text="Navigate to second page"
+                SemanticProperties.Hint="Use new shell navigation"
+                Command="{Binding GoToNextPage}"
+                HorizontalOptions="Center" />
+
         </VerticalStackLayout>
     </ScrollView>
 
-</ContentPage>
+</base:BaseContentPage>
 
