@@ -12,15 +12,9 @@ namespace Kava.Mvvm
                 .GetTypesFrom<BaseViewModel>(Assembly.GetCallingAssembly())
                 ?.ForEach(superClass =>
                 {
-                    //dynamic v2 = superClass.GetType().GetProperty("Value").PropertyType;
-                    //superClass.genericTy
-                    
-                    //var type = default(superClass);
-                    //dynamic singletonVm = superClass;
                     var registerRouteAttribute = Attribute.GetCustomAttribute(superClass, typeof(RegisterRouteAttribute)) as RegisterRouteAttribute;
 
                     mab.RegisterRoute(registerRouteAttribute!.Route, registerRouteAttribute!.PageType);
-                    //mab.RegisterVM<v2>();
                 });
         }
 
@@ -33,11 +27,6 @@ namespace Kava.Mvvm
         {
             mab.Services.AddSingleton<TViewModel>();
         }
-
-        //public static void RegisterView<T, TViewModel>(this MauiAppBuilder mab, Type pageType) where T : BaseContentPage<TViewModel>
-        //{
-        //    mab.Services.AddTransient<T>();
-        //}
     }
 }
 

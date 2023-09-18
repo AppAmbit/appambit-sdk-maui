@@ -7,6 +7,4 @@ public partial class AbstractContentPage : ContentPage
 		InitializeComponent();
         BindingContext = viewModel;
     }
-
-
 }

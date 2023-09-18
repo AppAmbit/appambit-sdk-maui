@@ -3,7 +3,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-
 namespace Kava.Mvvm
 {
 	public abstract class BaseViewModel : ObservableObject
