@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<base:BaseContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             x:TypeArguments="viewModels:SecondVM"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:KavaupMaui.ViewModels"
+             xmlns:base="clr-namespace:Kava.Mvvm;assembly=Kava"
+             x:Class="KavaupMaui.Views.SecondPage"
+             x:DataType="viewModels:SecondVM"
+             Title="SecondPage">
+    <VerticalStackLayout>
+        <Label 
+            Text="Welcome to .NET MAUI!"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center" />
+
+        <Button
+            Text="Navigate to third page"
+            SemanticProperties.Hint="Use new shell navigation"
+            Command="{Binding GoToNextPage}"
+            HorizontalOptions="Center" />
+    </VerticalStackLayout>
+</base:BaseContentPage>

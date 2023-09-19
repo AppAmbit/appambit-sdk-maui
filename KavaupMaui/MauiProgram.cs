@@ -7,6 +7,7 @@ using KavaupMaui.ViewModels;
 using KavaupMaui.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Kava.Mvvm;
 
 namespace KavaupMaui;
 
@@ -32,9 +33,14 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			}).Configuration.AddConfiguration(config);
-		builder.RegisterDI().RegisterVM().RegisterViews();
+		builder
+			.RegisterDI()
+			.RegisterVM()
+			.RegisterViews()
+			.RegisterRoutes();
+
 #if DEBUG
-		builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 		return builder.Build();
 	}
@@ -55,12 +61,16 @@ public static class MauiProgram
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
 	{
 		mAB.Services.AddSingleton<MainVM>();
-		return mAB;
+        mAB.Services.AddSingleton<SecondVM>();
+        mAB.Services.AddSingleton<ThirdVM>();
+        return mAB;
 	}
 	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
 	{
 		mAB.Services.AddTransient<MainPage>();
-		return mAB;
+        mAB.Services.AddTransient<SecondPage>();
+        mAB.Services.AddTransient<ThirdPage>();
+        return mAB;
 	}
 }
 

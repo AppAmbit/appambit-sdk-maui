@@ -4,16 +4,19 @@ using CommunityToolkit.Mvvm.Input;
 using Kava.API;
 using Kava.Dialogs;
 using Kava.Logging;
+using Kava.Mvvm;
 using Kava.Oauth;
 using Kava.Storage;
 using KavaupMaui.Constant;
 using KavaupMaui.Endpoints;
 using KavaupMaui.Models;
+using KavaupMaui.Views;
 using Microsoft.Extensions.Logging;
 
 namespace KavaupMaui.ViewModels;
 
-public class MainVM : ObservableObject
+[RegisterRoute(route: "Main", pageType: typeof(MainPage))]
+public class MainVM : BaseViewModel
 {
     int _counter;
     private bool _loginBtn = true;
@@ -57,6 +60,7 @@ public class MainVM : ObservableObject
     public ICommand TestLogCommand { get; private set; }
     public ICommand TestAutoDeleteCommand { get; private set; }
     public ICommand TestClearLogCommand { get; private set; }
+    public ICommand GoToNextPage { get; private set; }
 
     public MainVM(IOAuthService authService,
                 ICacheProvider cacheProvider,
@@ -81,6 +85,7 @@ public class MainVM : ObservableObject
         TestLogCommand = new AsyncRelayCommand(TestLogClicked);
         TestAutoDeleteCommand = new AsyncRelayCommand(TestAutoDeletingLog);
         TestClearLogCommand = new AsyncRelayCommand(TestClearLogs);
+        GoToNextPage = new AsyncRelayCommand(GoToSecondPage);
     }
 
     private async Task AddCounter()
@@ -147,5 +152,11 @@ public class MainVM : ObservableObject
         {
             await _dialogResults.ShowAlertAsync("Error!", logoutResult.ErrorDescription, "Close");
         }
+    }
+
+    public async Task GoToSecondPage()
+    {
+        //await Shell.Current.GoToAsync("Second");
+        await Shell.Current.Navigate(typeof(SecondVM));
     }
 }
