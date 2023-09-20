@@ -54,6 +54,24 @@ public static class FileHelper
 
 	public static async Task<string[]> GetFileContents(String path) => await File.ReadAllLinesAsync(path); 
 
+	public static bool ClearLog(string dataPath, string directory)
+	{
+		try
+		{
+			lock (lockObject)
+			{
+				var fullPath = Path.Combine(dataPath, directory);
+				File.Delete(fullPath);
+			}
+			
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+	
 	public static bool ClearLog(string dataPath, string directory, string fileName)
 	{
 		try
