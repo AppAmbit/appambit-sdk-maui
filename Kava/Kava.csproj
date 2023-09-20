@@ -1,45 +1,51 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        	<TargetFrameworks>net7.0-android;net7.0-ios;net7.0-maccatalyst</TargetFrameworks>
-            <UseMaui>true</UseMaui>
+        <TargetFrameworks>net7.0;net7.0-android;net7.0-ios;net7.0-maccatalyst</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
+        <UseMaui>true</UseMaui>
+        <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
+        <RepositoryUrl>https://github.com/Kava-Up-LLC/maui-core</RepositoryUrl>
+
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+        <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <Nullable>enable</Nullable>
-
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-
-    <RepositoryUrl>https://github.com/Kava-Up-LLC/maui-core</RepositoryUrl>
-	
+        <AssemblyName>Kava</AssemblyName>
+        <RootNamespace>Kava</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
-      <CreatePackage>false</CreatePackage>
+        <CreatePackage>false</CreatePackage>
     </PropertyGroup>
+
     <ItemGroup>
-      <PackageReference Include="akavache" Version="9.1.7" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
-      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+      <Compile Update="Mvvm\AbstractContentPage.xaml.cs">
+        <DependentUpon>AbstractContentPage.xaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Mvvm\AbstractContentPage.xaml.cs">
+        <DependentUpon>AbstractContentPage.xaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Logging\" />
-      <None Remove="OAuth\" />
-      <None Remove="Dialogs\" />
-      <None Remove="Logging\ConsoleLogger\" />
-      <None Remove="Mvvm\" />
-      <None Remove="Mvvm\Extensions\" />
+      <MauiXaml Update="Mvvm\AbstractContentPage.xaml">
+        <SubType>Designer</SubType>
+      </MauiXaml>
     </ItemGroup>
+
     <ItemGroup>
-      <Folder Include="Logging\" />
-      <Folder Include="OAuth\" />
-      <Folder Include="Dialogs\" />
-      <Folder Include="Logging\ConsoleLogger\" />
-      <Folder Include="Mvvm\" />
-      <Folder Include="Mvvm\Extensions\" />
+      <AdditionalFiles Include="Mvvm\AbstractContentPage.xaml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="akavache" Version="9.1.20" />
+      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+      <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
     </ItemGroup>
 </Project>

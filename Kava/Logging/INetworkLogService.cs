@@ -1,9 +1,6 @@
-﻿using System;
-namespace Kava.Logging
-{
-	public interface INetworkLogService
-	{
-		Task UploadLogEntries(LogEntry[] entries);
-	}
-}
+﻿namespace Kava.Logging;
 
+public interface INetworkLogService
+{
+	Task UploadLogEntries(LogEntry[] entries);
+}

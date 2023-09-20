@@ -5,8 +5,10 @@
              xmlns:local="clr-namespace:KavaupMaui.Views"
              Title="AppShell">
 
-    <Tab>
-        <ShellContent Route="Main" ContentTemplate="{DataTemplate local:MainPage}" />
-    </Tab>
+    <ShellItem>
+		<Tab>
+			<ShellContent Route="Main" ContentTemplate="{DataTemplate local:MainPage}" />
+		</Tab>
+    </ShellItem>
 
 </Shell>

@@ -32,6 +32,9 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
 	  <CreatePackage>false</CreatePackage>
+	  <CodesignKey>iPhone Developer</CodesignKey>
+	  <MtouchDebug>true</MtouchDebug>
+	  <MtouchInterpreter>-all</MtouchInterpreter>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-ios|AnyCPU'">
 	  <CreatePackage>false</CreatePackage>
@@ -56,7 +59,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="akavache" Version="9.1.7" />
+		<PackageReference Include="akavache" Version="9.1.20" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="5.1.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
 		<PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
@@ -75,7 +78,6 @@
 	  <None Remove="ResEx\" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Controls\" />
 	  <Folder Include="ViewModels\" />
 	  <Folder Include="Views\" />
 	  <Folder Include="Resx\" />
@@ -117,6 +119,8 @@
 
 	
 	<ItemGroup>
-	  <ProjectReference Include="..\Kava\Kava.csproj" />
+	  <ProjectReference Include="..\Kava\Kava.csproj">
+	    <ReferenceSourceTarget>ProjectReference</ReferenceSourceTarget>
+	  </ProjectReference>
 	</ItemGroup>
 </Project>
