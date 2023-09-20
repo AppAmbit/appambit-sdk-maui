@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using Kava.API;
 using Newtonsoft.Json;
 using JsonException = System.Text.Json.JsonException;
+using NetworkAccess = Microsoft.Maui.Networking.NetworkAccess;
 
 namespace Kava.API;
 

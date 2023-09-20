@@ -1,26 +1,23 @@
-﻿using System;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
-namespace Kava.Logging
-{ 
-	public interface ILogService
-	{
-		internal const string DEFAULT_TAG = "DEFAULT";
+namespace Kava.Logging;
 
-		Task Log(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
+public interface ILogService
+{
+	internal const string DEFAULT_TAG = "DEFAULT";
 
-		Task<LogEntry> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
+	Task Log(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
 
-		Task<LogEntry[]> GetLogEntries();
+	Task<LogEntry> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
 
-		Task<bool> ClearLogs();
+	Task<LogEntry[]> GetLogEntries();
 
-		DateTime getLastLogTime();
+	Task<bool> ClearLogs();
 
-		string GetLogFilePath();
+	DateTime getLastLogTime();
 
-		LogLevel ConsoleLogLevel { set; }
+	string GetLogFilePath();
 
-    }
+	LogLevel ConsoleLogLevel { set; }
+
 }
-

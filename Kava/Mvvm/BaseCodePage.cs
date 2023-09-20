@@ -1,7 +1,4 @@
 ﻿using Kava.Mvvm;
-using Microsoft.Maui.Controls.PlatformConfiguration;
-using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
-using Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;
 
 namespace Kava;
 

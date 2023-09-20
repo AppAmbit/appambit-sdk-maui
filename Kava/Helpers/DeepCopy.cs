@@ -1,4 +1,3 @@
-using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 
 namespace Kava.Helpers;

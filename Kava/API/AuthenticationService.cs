@@ -1,4 +1,3 @@
-using Kava.API;
 using Kava.Models;
 
 namespace Kava.API;

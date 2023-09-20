@@ -1,6 +1,3 @@
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
-using Akavache;
 using IdentityModel.Client;
 using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
