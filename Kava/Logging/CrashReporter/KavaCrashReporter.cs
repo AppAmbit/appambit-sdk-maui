@@ -2,6 +2,8 @@ namespace Kava.Logging.CrashReporter;
 
 public class KavaCrashReporter
 {
+    private static KavaCrashLogger _crashLogger = new KavaCrashLogger();
+
     public static void Init()
     {
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -9,6 +11,9 @@ public class KavaCrashReporter
     
     private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
-        Console.Out.WriteLine("Hey");
+        Task.Run(async () =>
+        {
+            await _crashLogger.EnterCrashLog(unhandledExceptionEventArgs);
+        });
     }
 }
