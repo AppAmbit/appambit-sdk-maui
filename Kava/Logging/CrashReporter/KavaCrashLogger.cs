@@ -25,15 +25,15 @@ public class KavaCrashLogger
     
     	public DateTime getLastLogTime() => File.GetLastWriteTime(GetLogFilePath());
     
-    	public Task EnterCrashLog(UnhandledExceptionEventArgs unhandledExceptionEventArgs, LogLevel level = LogLevel.Critical, string tag = "CRASH") => Task.Run(async () =>
+    	public async Task EnterCrashLog(UnhandledExceptionEventArgs unhandledExceptionEventArgs, LogLevel level = LogLevel.Critical, string tag = "CRASH")
 	    {
 		    await LogCrashToLoggerAsync("Crash Detected!", level, tag);
 		    CRASH_FILE = $"{unhandledExceptionEventArgs.ExceptionObject.GetHashCode()}.log";
 		    FileHelper.CreateFileWithDirectory(CRASH_FILE_PATH, CRASH_DIRECTORY, CRASH_FILE);
 		    await SaveCrashLog(unhandledExceptionEventArgs);
-	    });    
+	    }    
     
-    	public async Task LogCrashToLoggerAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
+    	private async Task LogCrashToLoggerAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
     	{
     		var entry = new LogEntry
     		{
