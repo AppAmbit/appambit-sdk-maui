@@ -35,7 +35,6 @@
 	  <CodesignKey>iPhone Developer</CodesignKey>
 	  <MtouchDebug>true</MtouchDebug>
 	  <MtouchInterpreter>-all</MtouchInterpreter>
-	  <MtouchArch>ARMv7</MtouchArch>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-ios|AnyCPU'">
 	  <CreatePackage>false</CreatePackage>
