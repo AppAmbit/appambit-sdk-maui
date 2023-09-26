@@ -4,7 +4,7 @@ using IdentityModel.OidcClient.Browser;
 using Kava.Models;
 using Kava.Storage;
 
-namespace Kava.Oauth;
+namespace Kava.OAuth;
 
 public class OAuthService : IOAuthService
 {

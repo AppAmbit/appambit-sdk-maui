@@ -1,7 +1,7 @@
 using IdentityModel.Client;
 using IdentityModel.OidcClient.Browser;
 
-namespace Kava.Oauth;
+namespace Kava.OAuth;
 
 public class WebBrowserAuthenticator : IdentityModel.OidcClient.Browser.IBrowser
 {

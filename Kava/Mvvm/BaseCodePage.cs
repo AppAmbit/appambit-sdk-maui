@@ -1,6 +1,4 @@
-﻿using Kava.Mvvm;
-
-namespace Kava;
+﻿namespace Kava.Mvvm;
 
 public class BaseCodePage<TViewModel> : ContentPage where TViewModel : BaseViewModel
 {

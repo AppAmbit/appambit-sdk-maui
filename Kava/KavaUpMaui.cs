@@ -1,7 +1,6 @@
-﻿using Kava.API;
-using Kava.Dialogs;
+﻿using Kava.Dialogs;
 using Kava.Logging;
-using Kava.Oauth;
+using Kava.OAuth;
 using Kava.Storage;
 
 namespace Kava;
@@ -16,9 +15,6 @@ public static class KavaUpMaui
 
 		var akavacheCacheProvider = new AkavacheCacheProvider();
 		mAB.Services.AddSingleton<ICacheProvider>(akavacheCacheProvider);
-		mAB.Services.AddSingleton<ISessionManager, SessionManager>();
-		mAB.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
-		mAB.Services.AddSingleton<IWebAPIService, WebAPIService>();
 		mAB.Services.AddSingleton<IDialogService, DialogService>();
 		mAB.Services.AddSingleton<ILogService, KavaLogger>();
 		mAB.Services.AddSingleton<INetworkLogService, MockNetworkLogService>();

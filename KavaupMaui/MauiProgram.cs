@@ -1,13 +1,12 @@
 ﻿using System.Reflection;
 using CommunityToolkit.Maui;
 using Kava;
-using Kava.Oauth;
-using Kava.Storage;
 using KavaupMaui.ViewModels;
 using KavaupMaui.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Kava.Mvvm;
+using Kava.OAuth;
 
 namespace KavaupMaui;
 
@@ -15,15 +14,13 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
-		#region JSON Settings
 		var appSettingsFile = "KavaupMaui.appsettings.json";
 #if DEBUG
 		appSettingsFile = "KavaupMaui.appsettings.Development.json";
 #endif
 		using var settings = Assembly.GetExecutingAssembly().GetManifestResourceStream(appSettingsFile);
 		var config = new ConfigurationBuilder().AddJsonStream(settings).Build();
-		#endregion
-		
+
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
@@ -40,7 +37,7 @@ public static class MauiProgram
 			.RegisterRoutes();
 
 #if DEBUG
-        builder.Logging.AddDebug();
+		builder.Logging.AddDebug();
 #endif
 		return builder.Build();
 	}
@@ -55,22 +52,21 @@ public static class MauiProgram
 			RedirectUri = "KavaupMaui://callback"
 		};
 
-        KavaUpMaui.Register(mAB, oAuthClientOptions);
-        return mAB;
+		KavaUpMaui.Register(mAB, oAuthClientOptions);
+		return mAB;
 	}
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
 	{
 		mAB.Services.AddSingleton<MainVM>();
-        mAB.Services.AddSingleton<SecondVM>();
-        mAB.Services.AddSingleton<ThirdVM>();
-        return mAB;
+		mAB.Services.AddSingleton<SecondVM>();
+		mAB.Services.AddSingleton<ThirdVM>();
+		return mAB;
 	}
 	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
 	{
 		mAB.Services.AddTransient<MainPage>();
-        mAB.Services.AddTransient<SecondPage>();
-        mAB.Services.AddTransient<ThirdPage>();
-        return mAB;
+		mAB.Services.AddTransient<SecondPage>();
+		mAB.Services.AddTransient<ThirdPage>();
+		return mAB;
 	}
 }
-

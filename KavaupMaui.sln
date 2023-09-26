@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KavaupMaui", "KavaupMaui/Ka
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kava", "Kava\Kava.csproj", "{8500F146-1567-4600-8383-23E33B97D7AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kava.HttpClient", "Kava.HttpClient\Kava.HttpClient.csproj", "{98F4DE63-527F-40DD-9757-3D3E78BD50D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,13 +16,16 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{200BC8B7-E544-47CE-90FA-3CD8DD1165B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{200BC8B7-E544-47CE-90FA-3CD8DD1165B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{200BC8B7-E544-47CE-90FA-3CD8DD1165B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{200BC8B7-E544-47CE-90FA-3CD8DD1165B7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8500F146-1567-4600-8383-23E33B97D7AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8500F146-1567-4600-8383-23E33B97D7AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8500F146-1567-4600-8383-23E33B97D7AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8500F146-1567-4600-8383-23E33B97D7AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98F4DE63-527F-40DD-9757-3D3E78BD50D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98F4DE63-527F-40DD-9757-3D3E78BD50D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98F4DE63-527F-40DD-9757-3D3E78BD50D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98F4DE63-527F-40DD-9757-3D3E78BD50D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

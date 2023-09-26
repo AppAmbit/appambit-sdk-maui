@@ -2,7 +2,7 @@ using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
 using Kava.Models;
 
-namespace Kava.Oauth;
+namespace Kava.OAuth;
 
 public interface IOAuthService
 {

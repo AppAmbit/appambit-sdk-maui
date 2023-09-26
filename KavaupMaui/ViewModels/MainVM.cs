@@ -1,15 +1,10 @@
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kava.API;
 using Kava.Dialogs;
 using Kava.Logging;
 using Kava.Mvvm;
-using Kava.Oauth;
+using Kava.OAuth;
 using Kava.Storage;
-using KavaupMaui.Constant;
-using KavaupMaui.Endpoints;
-using KavaupMaui.Models;
 using KavaupMaui.Views;
 using Microsoft.Extensions.Logging;
 
@@ -23,9 +18,7 @@ public class MainVM : BaseViewModel
     private bool _loggedInImg;
     private string _testEndpointResult;
     private readonly IOAuthService _authService;
-    private readonly ICacheProvider _cacheProvider;
     private readonly IDialogService _dialogResults;
-    private readonly IWebAPIService _webAPIService;
     private readonly LogManager _logManager;
 
     public int Counter
@@ -65,13 +58,10 @@ public class MainVM : BaseViewModel
     public MainVM(IOAuthService authService,
                 ICacheProvider cacheProvider,
                 IDialogService dialogResults,
-                IWebAPIService webAPIService,
                 LogManager logManager)
     {
         _authService = authService;
-        _cacheProvider = cacheProvider;
         _dialogResults = dialogResults;
-        _webAPIService = webAPIService;
         _logManager = logManager;
         SetupCommands();
     }
@@ -95,8 +85,6 @@ public class MainVM : BaseViewModel
 
     private async Task TestEndpointClicked()
     {
-        var response = await _webAPIService.MakeRequest<TestResponse>(new TestEndpoint(), new CancellationToken());
-        TestEndpointResult = response?.Data;
     }
 
     private async Task TestLogClicked()

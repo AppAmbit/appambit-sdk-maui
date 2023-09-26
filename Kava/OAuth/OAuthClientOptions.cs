@@ -1,4 +1,4 @@
-namespace Kava.Oauth;
+namespace Kava.OAuth;
 
 public class OAuthClientOptions
 {
