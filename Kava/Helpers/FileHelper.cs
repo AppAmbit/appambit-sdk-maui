@@ -36,7 +36,7 @@ public static class FileHelper
 		}
 	}
 
-	public static void AddTextToFile(string text, String path)
+	public static void AddTextToFile(string text, string path)
 	{
 		lock (lockObject)
 		{

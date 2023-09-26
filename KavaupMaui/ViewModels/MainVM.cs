@@ -103,7 +103,10 @@ public class MainVM : BaseViewModel
     {
         _logManager.Log("Test log", level: LogLevel.Information);
     }
-
+    
+    private async Task DisplayMessage(string message) => await _dialogResults.ShowAlertAsync("Message", message, "Close");
+    
+    
     private async Task TestAutoDeletingLog()
     {
 #pragma warning disable
