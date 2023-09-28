@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using CommunityToolkit.Maui;
 using Kava;
+using Kava.Logging.CrashReporter;
 using Kava.Oauth;
 using Kava.Storage;
 using KavaupMaui.ViewModels;
@@ -42,6 +43,7 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+		KavaCrashReporter.Init();
 		return builder.Build();
 	}
 	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
@@ -72,5 +74,8 @@ public static class MauiProgram
         mAB.Services.AddTransient<ThirdPage>();
         return mAB;
 	}
+	
+	
+
 }
 

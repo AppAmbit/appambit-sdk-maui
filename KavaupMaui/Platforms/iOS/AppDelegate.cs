@@ -1,4 +1,6 @@
 ﻿using Foundation;
+using Microsoft.Maui.LifecycleEvents;
+using UIKit;
 
 namespace KavaupMaui;
 
