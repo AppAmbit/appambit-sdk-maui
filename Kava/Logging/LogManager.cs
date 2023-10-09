@@ -18,9 +18,7 @@ public class LogManager
 
 
 	public long LogSizeKB { get => maxLogSizeKB; set => maxLogSizeKB = value * 1000; }
-
-	public  LogLevel LoggingLevel { set => logger.ConsoleLogLevel = value; }
-
+	
 	public LogManager(ILogService logger, INetworkLogService networkLogService)
 	{
 		this.logger = logger;
@@ -38,17 +36,14 @@ public class LogManager
 	{
 		logger.ClearLogs();
 	}
-
-	public async Task<LogEntry[]> GetLogs() => await logger.GetLogEntries();
-
+	
 	public async Task StoreAndClearLogs()
 	{
-		var entries = await logger.GetLogEntries();
-		await networkLogService.UploadLogEntries(entries);
 		await logger.ClearLogs();
 	}
 
-	private bool ShouldClearLogs() => FileHelper.GetFileSize(logger.GetLogFilePath()) > maxLogSizeKB;
+	// This needs to be refactored as this doesn't wor the same on both impleentations
+	private bool ShouldClearLogs() => throw new NotImplementedException();
 
 
 }

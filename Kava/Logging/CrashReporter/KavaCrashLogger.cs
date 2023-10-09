@@ -15,9 +15,11 @@ public class KavaCrashLogger
 	    private string _crashFile;
 	    private DeviceHelper _deviceHelper = new DeviceHelper();
     	const LogLevel _consoleLogLevel = LogLevel.Critical;
+	    readonly ILogService _logService;
     
-    	public KavaCrashLogger()
+    	public KavaCrashLogger(ILogService logService)
 	    {
+		    _logService = logService;
 		    InitializeCrashFile();
 	    }
     
@@ -58,7 +60,7 @@ public class KavaCrashLogger
     			CreatedAt = DateTime.Now
     		};
     
-		    SaveLogToFile(entry);
+		    _logService.Log(entry);
     	}
 	    
 	    private void SaveLogToFile(LogEntry entry)

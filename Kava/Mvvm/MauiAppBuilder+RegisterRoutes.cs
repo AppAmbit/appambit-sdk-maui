@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using Kava.Helpers;
+using Kava.Logging;
+using Kava.Logging.CrashReporter;
 
 namespace Kava.Mvvm;
 
@@ -25,5 +27,10 @@ public static class MauiAppBuilder_Extensions
 	public static void RegisterVM<TViewModel>(this MauiAppBuilder mab) where TViewModel : class
 	{
 		mab.Services.AddSingleton<TViewModel>();
+	}
+	
+	public static void RegisterServices(this MauiAppBuilder mab)
+	{
+		mab.Services.AddSingleton<ILogService, KavaLogger>();
 	}
 }

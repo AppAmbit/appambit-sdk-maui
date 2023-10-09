@@ -2,10 +2,11 @@ namespace Kava.Logging.CrashReporter;
 
 public class KavaCrashReporter
 {
-    private static KavaCrashLogger _crashLogger = new KavaCrashLogger();
-
-    public static void Init()
+    private static KavaCrashLogger _crashLogger;
+    
+    public void Init(KavaCrashLogger crashLogger)
     {
+        _crashLogger = crashLogger;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
     }
     

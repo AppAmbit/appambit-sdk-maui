@@ -6,15 +6,18 @@ using Kava.Mvvm;
 using System.Reflection;
 using Kava.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Kava.Logging.CrashReporter;
 
 namespace KavaupMaui;
 
 public partial class App : Application
 {
 	private IConfiguration _configuration;
+	private KavaCrashReporter _crashReporter;
 
 	public App(IConfiguration configuration, MainPage vm)
 	{
+		_crashReporter = this.Handler.MauiContext.Services.GetService<KavaCrashReporter>();
 		_configuration = configuration;
 			InitializeComponent();
 			Resources["DefaultStringResources"] = new Resx.AppResources();

@@ -43,7 +43,6 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-		KavaCrashReporter.Init();
 		return builder.Build();
 	}
 	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)

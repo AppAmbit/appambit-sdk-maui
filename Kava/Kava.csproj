@@ -50,6 +50,9 @@
       <PackageReference Include="akavache" Version="9.1.20" />
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
       <PackageReference Include="IdentityModel.OidcClient" Version="5.2.1" />
+      <PackageReference Include="Serilog" Version="3.0.1" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
+      <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="Platforms\MacCatalyst\" />
