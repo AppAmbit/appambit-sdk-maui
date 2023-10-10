@@ -13,9 +13,8 @@ public class KavaSerilogger : ILogService
     public KavaSerilogger()
     {
         Serilog.Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
             .WriteTo.Console()
-            .WriteTo.File("Console.log", rollingInterval: RollingInterval.Day)
+            .WriteTo.File(LogHelper.GetLogFilePath(), fileSizeLimitBytes: LogManager.DefaultLogSizeMb)
             .CreateLogger();
     }
     
@@ -53,8 +52,13 @@ public class KavaSerilogger : ILogService
     public async Task<bool> ClearLogs() => await Task.Run( async () =>
     {
         await Serilog.Log.CloseAndFlushAsync();
-        return true;
+        return await Task.Run(() =>
+        {
+            return FileHelper.ClearLog(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
+        });
     });
+    
+    public bool ShouldClearLogs() => false;
     
     private LogEventLevel GetEventLevel(LogLevel level)
     {

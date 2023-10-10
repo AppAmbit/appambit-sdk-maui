@@ -4,7 +4,7 @@ public class KavaCrashReporter
 {
     private static KavaCrashLogger _crashLogger;
     
-    public void Init(KavaCrashLogger crashLogger)
+    public KavaCrashReporter(KavaCrashLogger crashLogger)
     {
         _crashLogger = crashLogger;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;

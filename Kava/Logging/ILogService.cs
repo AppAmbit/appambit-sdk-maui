@@ -15,4 +15,6 @@ public interface ILogService
 	Task<bool> LogAsync(LogEntry entry);
 	
 	Task<bool> ClearLogs();
+
+	public bool ShouldClearLogs();
 }

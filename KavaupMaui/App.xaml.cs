@@ -15,14 +15,13 @@ public partial class App : Application
 	private IConfiguration _configuration;
 	private KavaCrashReporter _crashReporter;
 
-	public App(IConfiguration configuration, MainPage vm)
+	public App(IConfiguration configuration, KavaCrashReporter crashReporter)
 	{
-		_crashReporter = this.Handler.MauiContext.Services.GetService<KavaCrashReporter>();
+		_crashReporter = crashReporter;
 		_configuration = configuration;
-			InitializeComponent();
-			Resources["DefaultStringResources"] = new Resx.AppResources();
-			var apiSettings = configuration.GetRequiredSection("APISettings").Get<APISettings>();
-
+		InitializeComponent();
+		Resources["DefaultStringResources"] = new Resx.AppResources();
+		var apiSettings = configuration.GetRequiredSection("APISettings").Get<APISettings>();
 		MainPage = new AppShell();
     }
 }

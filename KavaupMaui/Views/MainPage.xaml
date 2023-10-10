@@ -98,6 +98,14 @@
                 SemanticProperties.Hint="Use new shell navigation"
                 Command="{Binding GoToNextPage}"
                 HorizontalOptions="Center" />
+            
+            
+            <Button
+                x:Name="TestAddingLogs"
+                Text="Test Adding Logs"
+                SemanticProperties.Hint="Use new shell navigation"
+                Command="{Binding GoToLogPage}"
+                HorizontalOptions="Center" />
 
         </VerticalStackLayout>
     </ScrollView>

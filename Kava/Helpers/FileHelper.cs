@@ -52,7 +52,13 @@ public static class FileHelper
 		}
 	}
 
-	public static async Task<string[]> GetFileContents(String path) => await File.ReadAllLinesAsync(path); 
+	public static string[] GetFileContents(String path)
+	{
+		lock (lockObject)
+		{
+			return File.ReadAllLines(path); 
+		}
+	} 
 
 	public static bool ClearLog(string dataPath, string directory)
 	{

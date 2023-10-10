@@ -5,45 +5,53 @@ namespace Kava.Logging;
 
 public class LogManager
 {
-	readonly ILogService logger;
-	readonly INetworkLogService networkLogService;
+	readonly ILogService _logger;
+	readonly INetworkLogService _networkLogService;
 
-	const long DEFAULT_LOG_SIZE = 1024 * 1000; //1 megabyte
-	const int DEFAULT_NETWORK_LOG_INTERVAL = 20000;
+	public const long DefaultLogSizeMb = 1024 * 1000; //1 megabyte
+	const int DefaultNetworkLogInterval = 20000;
 
-	private long maxLogSizeKB = DEFAULT_LOG_SIZE;
-	private bool sendOnStart = true;
-	private bool sendOnClear = true;
-	private int networkLogIntervalMS = DEFAULT_NETWORK_LOG_INTERVAL;
+	private long _maxLogSizeKb = DefaultLogSizeMb;
+	private bool _sendOnStart = true;
+	private bool _sendOnClear = true;
+	private int _networkLogIntervalMs = DefaultNetworkLogInterval;
 
 
-	public long LogSizeKB { get => maxLogSizeKB; set => maxLogSizeKB = value * 1000; }
+	public long LogSizeKb { get => _maxLogSizeKb; set => _maxLogSizeKb = value * 1000; }
 	
 	public LogManager(ILogService logger, INetworkLogService networkLogService)
 	{
-		this.logger = logger;
-		this.networkLogService = networkLogService;
+		this._logger = logger;
+		this._networkLogService = networkLogService;
 	}
 
 	public void Log(string message, LogLevel level = LogLevel.Information, string tag = ILogService.DEFAULT_TAG)
 	{
-		logger.Log(message, level, tag);
+		_logger.Log(message, level, tag);
 		if (ShouldClearLogs())
 			Task.Run(async () => await StoreAndClearLogs());
 	}
 
 	public void ClearLogs()
 	{
-		logger.ClearLogs();
+		_logger.ClearLogs();
 	}
 	
 	public async Task StoreAndClearLogs()
 	{
-		await logger.ClearLogs();
+		await _logger.ClearLogs();
 	}
+	
+	// gets the filepath from the logger
+	// returns a file from the filepath
+	public async Task<string[]> GetLogs()
+	{
+		return await Task.Run(() => FileHelper.GetFileContents(LogHelper.GetLogFilePath()));
+	}
+	
 
 	// This needs to be refactored as this doesn't wor the same on both impleentations
-	private bool ShouldClearLogs() => throw new NotImplementedException();
+	private bool ShouldClearLogs() => _logger.ShouldClearLogs();
 
 
 }

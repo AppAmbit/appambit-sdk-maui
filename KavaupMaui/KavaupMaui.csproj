@@ -78,7 +78,6 @@
 	  <None Remove="ResEx\" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="ViewModels\" />
 	  <Folder Include="Resx\" />
 	  <Folder Include="Models\" />
 	</ItemGroup>

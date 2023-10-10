@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Kava.API;
 using Kava.Dialogs;
 using Kava.Logging;
+using Kava.Logging.CrashReporter;
 using Kava.Mvvm;
 using Kava.Oauth;
 using Kava.Storage;
@@ -27,6 +28,7 @@ public class MainVM : BaseViewModel
     private readonly IDialogService _dialogResults;
     private readonly IWebAPIService _webAPIService;
     private readonly LogManager _logManager;
+    private readonly KavaCrashReporter _crashReporter;
 
     public int Counter
     {
@@ -61,18 +63,21 @@ public class MainVM : BaseViewModel
     public ICommand TestAutoDeleteCommand { get; private set; }
     public ICommand TestClearLogCommand { get; private set; }
     public ICommand GoToNextPage { get; private set; }
+    public ICommand GoToLogPage { get; private set; }
 
     public MainVM(IOAuthService authService,
                 ICacheProvider cacheProvider,
                 IDialogService dialogResults,
                 IWebAPIService webAPIService,
-                LogManager logManager)
+                LogManager logManager,
+                KavaCrashReporter crashReporter)
     {
         _authService = authService;
         _cacheProvider = cacheProvider;
         _dialogResults = dialogResults;
         _webAPIService = webAPIService;
         _logManager = logManager;
+        _crashReporter = crashReporter;
         SetupCommands();
     }
 
@@ -86,6 +91,7 @@ public class MainVM : BaseViewModel
         TestAutoDeleteCommand = new AsyncRelayCommand(TestAutoDeletingLog);
         TestClearLogCommand = new AsyncRelayCommand(TestClearLogs);
         GoToNextPage = new AsyncRelayCommand(GoToSecondPage);
+        GoToLogPage = new AsyncRelayCommand(GoToLogPageAsync);
     }
 
     private async Task AddCounter()
@@ -110,7 +116,7 @@ public class MainVM : BaseViewModel
     private async Task TestAutoDeletingLog()
     {
 #pragma warning disable
-        _logManager.LogSizeKB = 1; //1 kilobytes
+        _logManager.LogSizeKb = 1; //1 kilobytes
         Task.Run(async () =>
         {
             var j = 10000000;
@@ -161,5 +167,10 @@ public class MainVM : BaseViewModel
     {
         //await Shell.Current.GoToAsync("Second");
         await Shell.Current.Navigate(typeof(SecondVM));
+    }
+    
+    private async Task GoToLogPageAsync()
+    {
+        await Shell.Current.Navigate(typeof(LogVM));
     }
 }

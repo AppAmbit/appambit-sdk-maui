@@ -21,7 +21,8 @@ public static class KavaUpMaui
 		mAB.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 		mAB.Services.AddSingleton<IWebAPIService, WebAPIService>();
 		mAB.Services.AddSingleton<IDialogService, DialogService>();
-		mAB.Services.AddSingleton<ILogService, KavaLogger>();
+		//mAB.Services.AddSingleton<ILogService, KavaLogger>();
+		mAB.Services.AddSingleton<ILogService, KavaSerilogger>();
 		mAB.Services.AddSingleton<INetworkLogService, MockNetworkLogService>();
 		mAB.Services.AddSingleton<LogManager, LogManager>();
 		mAB.Services.AddSingleton<KavaCrashLogger, KavaCrashLogger>();

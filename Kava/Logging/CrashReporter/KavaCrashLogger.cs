@@ -88,8 +88,8 @@ public class KavaCrashLogger
 		    _crashFile = $"Crash_{_deviceHelper.GetDeviceId()}_{_crashId.ToString()}.log";
 		    FileHelper.CreateFileWithDirectory(CRASH_FILE_PATH, CRASH_DIRECTORY, _crashFile);
 	    }
-    
-    	private string GetLogFilePath() => Path.Combine(CRASH_FILE_PATH, LOG_DIRECTORY, LOG_FILE);
+
+	    private string GetLogFilePath() => LogHelper.GetLogFilePath();
 	    
 	    private string GetCrashLogFilePath() => Path.Combine(CRASH_FILE_PATH, CRASH_DIRECTORY, _crashFile);
 }

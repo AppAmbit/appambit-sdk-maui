@@ -12,7 +12,7 @@ public class KavaLogger : ILogService
 	
 	public KavaLogger()
 	{
-		FileHelper.CreateFileWithDirectory(LogHelper.LOG_FILE_PATH, LogHelper.LOG_DIRECTORY, LogHelper.LOG_FILE_NAME);
+		FileHelper.CreateFileWithDirectory(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
 	}
 	
 	public Task Log(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT") => Task.Run(async () =>
@@ -61,9 +61,9 @@ public class KavaLogger : ILogService
 	{
 		return await Task.Run(() =>
 		{
-			return FileHelper.ClearLog(LogHelper.LOG_FILE_PATH, LogHelper.LOG_DIRECTORY, LogHelper.LOG_FILE_NAME);
+			return FileHelper.ClearLog(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
 		});
 	}
 	
-	private bool ShouldClearLogs() => new FileInfo(LogHelper.GetLogFilePath()).Length > maxLogSizeKB;
+	public bool ShouldClearLogs() => new FileInfo(LogHelper.GetLogFilePath()).Length > maxLogSizeKB;
 }
