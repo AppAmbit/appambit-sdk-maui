@@ -50,7 +50,7 @@
                     Spacing="0"
                     Background="#F0F0F0">
                     <Label
-                        Text="{Binding Logs}"
+                        Text="{Binding Logs, Mode=TwoWay}"
                         FontSize="Title"
                         LineBreakMode="WordWrap"
                         HorizontalTextAlignment="Start"
