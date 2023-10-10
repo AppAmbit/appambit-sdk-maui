@@ -19,13 +19,13 @@ public class LogVM : BaseViewModel
     public string LogEntry 
     {
         get => _logEntry;
-        private set => SetProperty(ref _logEntry, value);
+        set => SetProperty(ref _logEntry, value);
     }
 
     public string Logs 
     {
-        get => _logs;
-        private set => SetProperty(ref _logs, value);
+        get => _logs; 
+        set => SetProperty(ref _logs, value);
     }
     
     public ICommand EnterLogCommand { get; private set; }
