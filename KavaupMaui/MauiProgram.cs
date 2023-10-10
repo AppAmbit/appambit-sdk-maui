@@ -64,6 +64,7 @@ public static class MauiProgram
 		mAB.Services.AddSingleton<MainVM>();
         mAB.Services.AddSingleton<SecondVM>();
         mAB.Services.AddSingleton<ThirdVM>();
+        mAB.Services.AddSingleton<LogVM>();
         return mAB;
 	}
 	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
@@ -71,6 +72,7 @@ public static class MauiProgram
 		mAB.Services.AddTransient<MainPage>();
         mAB.Services.AddTransient<SecondPage>();
         mAB.Services.AddTransient<ThirdPage>();
+        mAB.Services.AddTransient<LogPage>();
         return mAB;
 	}
 	
