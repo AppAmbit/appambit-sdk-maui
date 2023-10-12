@@ -31,10 +31,22 @@ public class LogManager
 		if (ShouldClearLogs())
 			Task.Run(async () => await StoreAndClearLogs());
 	}
+	
+	public async Task LogAsync(string message, LogLevel level = LogLevel.Information, string tag = ILogService.DEFAULT_TAG)
+	{
+		await _logger.LogAsync(message, level, tag);
+		if (ShouldClearLogs())
+			await StoreAndClearLogs();
+	}
 
 	public void ClearLogs()
 	{
 		_logger.ClearLogs();
+	}
+	
+	public async Task ClearLogsAsync()
+	{
+		await _logger.ClearLogs();
 	}
 	
 	public async Task StoreAndClearLogs()

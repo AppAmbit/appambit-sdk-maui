@@ -61,10 +61,10 @@ public static class MauiProgram
 	}
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
 	{
-		mAB.Services.AddSingleton<MainVM>();
-        mAB.Services.AddSingleton<SecondVM>();
-        mAB.Services.AddSingleton<ThirdVM>();
-        mAB.Services.AddSingleton<LogVM>();
+		mAB.Services.AddTransient<MainVM>();
+        mAB.Services.AddTransient<SecondVM>();
+        mAB.Services.AddTransient<ThirdVM>();
+        mAB.Services.AddTransient<LogVM>();
         return mAB;
 	}
 	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)

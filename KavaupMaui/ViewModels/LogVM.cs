@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Kava.Helpers;
@@ -14,7 +15,7 @@ public class LogVM : BaseViewModel
     private readonly LogManager _logManager;
 
     private string _logEntry = "test";//string.Empty;
-    private string _logs = string.Empty;
+    private ObservableCollection<string> _logs = new();
 
     public string LogEntry 
     {
@@ -22,7 +23,7 @@ public class LogVM : BaseViewModel
         set => SetProperty(ref _logEntry, value);
     }
 
-    public string Logs 
+    public ObservableCollection<string> Logs 
     {
         get => _logs; 
         set => SetProperty(ref _logs, value);
@@ -46,7 +47,7 @@ public class LogVM : BaseViewModel
         if (string.IsNullOrEmpty(LogEntry?.Trim()))
             return;
         
-        _logManager.Log(LogEntry);
+        await _logManager.LogAsync(LogEntry);
         LogEntry = string.Empty;
         await GetLogs();
     }
@@ -54,15 +55,12 @@ public class LogVM : BaseViewModel
     private async Task GetLogs()
     {
         var logs = await _logManager.GetLogs();
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            Logs = string.Join(Environment.NewLine, logs);
-        });
+        Logs = new ObservableCollection<string>(logs);
     }
     
     private async Task ClearLogsAsync()
     {
-        _logManager.ClearLogs();
+        await _logManager.ClearLogsAsync();
         await GetLogs();
     }
 }

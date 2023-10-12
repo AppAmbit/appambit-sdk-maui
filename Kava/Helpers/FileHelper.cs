@@ -56,7 +56,10 @@ public static class FileHelper
 	{
 		lock (lockObject)
 		{
-			return File.ReadAllLines(path); 
+			if (File.Exists(path))
+				return File.ReadAllLines(path);
+			else
+				return Array.Empty<string>();
 		}
 	} 
 

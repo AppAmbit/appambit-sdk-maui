@@ -52,10 +52,7 @@ public class KavaSerilogger : ILogService
     public async Task<bool> ClearLogs() => await Task.Run( async () =>
     {
         await Serilog.Log.CloseAndFlushAsync();
-        return await Task.Run(() =>
-        {
-            return FileHelper.ClearLog(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
-        });
+        return await Task.Run(() => FileHelper.ClearLog(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName));
     });
     
     public bool ShouldClearLogs() => false;

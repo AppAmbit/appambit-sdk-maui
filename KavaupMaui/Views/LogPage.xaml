@@ -9,38 +9,42 @@
                       x:Class="KavaupMaui.Views.LogPage">
     <base:BaseContentPage.Content>
         <VerticalStackLayout
-            Spacing="25"
-            Padding="30,10"
+            Spacing="0"
             VerticalOptions="Start">
             
+            <VerticalStackLayout
+                Spacing="25"
+                Padding="30,10">
             
-            <Entry
-                Text="{Binding LogEntry, Mode=TwoWay}"
-                Placeholder="Enter a log"
-                HorizontalOptions="FillAndExpand"
-                VerticalOptions="Center"
-                TextColor="Black"
-                FontSize="Title"
-                PlaceholderColor="Gray"
-                BackgroundColor="White"/>
+                <Entry
+                    Text="{Binding LogEntry, Mode=TwoWay}"
+                    Placeholder="Enter a log"
+                    HorizontalOptions="FillAndExpand"
+                    VerticalOptions="Center"
+                    TextColor="Black"
+                    FontSize="Title"
+                    PlaceholderColor="Gray"
+                    BackgroundColor="White"/>
+                
+                <Button
+                    Text="Add Log"
+                    Command="{Binding EnterLogCommand}"
+                    HorizontalOptions="FillAndExpand"
+                    VerticalOptions="Center"
+                    TextColor="Black"
+                    FontSize="Title"
+                    BackgroundColor="White"/>            
+                
+                <Button
+                    Text="Clear Logs"
+                    Command="{Binding ClearLogsCommand}"
+                    HorizontalOptions="FillAndExpand"
+                    VerticalOptions="Center"
+                    TextColor="Black"
+                    FontSize="Title"
+                    BackgroundColor="White"/>
             
-            <Button
-                Text="Add Log"
-                Command="{Binding EnterLogCommand}"
-                HorizontalOptions="FillAndExpand"
-                VerticalOptions="Center"
-                TextColor="Black"
-                FontSize="Title"
-                BackgroundColor="White"/>            
-            
-            <Button
-                Text="Clear Logs"
-                Command="{Binding ClearLogsCommand}"
-                HorizontalOptions="FillAndExpand"
-                VerticalOptions="Center"
-                TextColor="Black"
-                FontSize="Title"
-                BackgroundColor="White"/>
+            </VerticalStackLayout>
             
             <ScrollView
                 VerticalOptions="Fill"
@@ -48,17 +52,29 @@
                 Background="#00FFFF">
                 <VerticalStackLayout
                     Spacing="0"
+                    Padding="20,5"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
                     Background="#F0F0F0">
-                    <Label
-                        Text="{Binding Logs, Mode=TwoWay}"
-                        FontSize="Title"
-                        LineBreakMode="WordWrap"
-                        HorizontalTextAlignment="Start"
-                        VerticalTextAlignment="Start"
+                    <CollectionView
                         HorizontalOptions="Fill"
-                        VerticalOptions="Fill"
-                        TextColor="Black"/>
-                    
+                        VerticalOptions="Start"
+                        ItemsSource="{Binding Logs}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label
+                                    Text="{Binding ., Mode=TwoWay}"
+                                    FontSize="Medium"
+                                    Padding="0,10"
+                                    MaxLines="2"
+                                    HorizontalTextAlignment="Start"
+                                    VerticalTextAlignment="Start"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Start"
+                                    TextColor="Black"/>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
             </ScrollView>
         </VerticalStackLayout>
