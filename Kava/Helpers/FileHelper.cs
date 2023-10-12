@@ -70,9 +70,22 @@ public static class FileHelper
 			lock (lockObject)
 			{
 				var fullPath = Path.Combine(dataPath, directory);
-				File.Delete(fullPath);
+				File.WriteAllText(fullPath, string.Empty);
 			}
 			
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+	
+	public static async Task<bool> ClearLogAsync(string path)
+	{
+		try
+		{
+			await File.WriteAllTextAsync(path, string.Empty);
 			return true;
 		}
 		catch

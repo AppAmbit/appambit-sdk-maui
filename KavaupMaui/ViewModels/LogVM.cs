@@ -61,6 +61,6 @@ public class LogVM : BaseViewModel
     private async Task ClearLogsAsync()
     {
         await _logManager.ClearLogsAsync();
-        await GetLogs();
+        Logs.Clear();
     }
 }
