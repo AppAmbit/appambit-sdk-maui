@@ -1,202 +1,230 @@
 ﻿using System.ComponentModel;
+using Kava.HttpClient.Authentication;
 using OneOf;
-using RestSharp;
-using RestSharp.Authenticators;
 
 namespace Kava.HttpClient;
 
-/*
- * var dogRequest = webApiClient
- *						.GetFrom("https://www.doggos.com/api/dogs?limit=10,page=1")
- *						.Execute();
- *
- * var twitterAuthEndpoint = new TwitterAuthEndPoint()
- *		.WithParams(new { userId = 2})
- *		.UseRefreshStrategy()
- *		.Execute();
- *
- *
- *
- * var dogRequest2 = webApiClient
- *						.GetFrom("https://www.doggos.com/api/dogs")
- *						.WithParams(new { limit = 10, page = 1 })
- *						.MapTo<List<Dog>>()
- *						.Execute();
- *
- * var dogRequest3 = webApiClient
- *						.GetFrom("https://www.doggos.com/api/dogs")
- *						.WithParams(myParamsObjThatImplsParameterable)
- *						.WithAutentication("https://www.doggos.com/api", apiKey, apiKeySecret)
- *						.TryRefresh<RefreshStrategy>()
- *						.AttemptRetries(5)
- *						.UseKavaRefresh()
- *						.WithHeaders()
- *						.Execute();
- *
- * var request4 = webApiClient
- *						.GetFrom("https://www.doggos.com/api/dogs")
- *						.WithParams(new { limit = 10, page = 1 });
- *
- * Pros of endpoints: Queueing multiple calls from the same endpoint
- *
- * ability to behind-the-scenes/automatically refresh the token for endpoints that require authN
- *
- * use case: user goes to recipe page, hasn't used app in a while, they refresh
- * but their request to the recipe page drops and they get shown a blank page,
- * harming their experience
- *
- * good to build: Try to create Authenticators with:
- *		- Auth0
- *		- HttpBasic
- *		- Our own custom provider sink
- *
- * TODO: Move the underlying RestSharp implementation to its own concrete subtype
- * TODO: Put in its own solution (see projects like Serilog or Rebus)
- * Examples:
- *		Kava.HttpClient (This impl can stay here)
- *		Kava.HttpClient.RestSharp
- *		Kava.HttpClient.AnotherImpl
- * https://www.nuget.org/packages?q=microsoft.extensions.configuration
- * https://www.nuget.org/packages?q=serilog
- * https://www.nuget.org/packages?q=rebus
- */
-
-public class WebApiClient : IDisposable
+public class WebApiClient :
+	IEndpointSelector,
+	IParameterSelector,
+	IExecutionSelector
 {
-	private RestClient Client { get; set; } = new();
+	public WebApiClientOptions Options { get; private set; }
 
-	private RestClientOptions ClientOptions { get; set; } = new()
+	// TODO: Fix issue with having a factory method but also needing DI
+	public WebApiClient(IHttpClientFactory httpClientFactory)
 	{
-		FailOnDeserializationError = true,
-	};
-	
-	private RestRequest? Request { get; set; }
-	public string? Url { get; private set; }
-	public Method Method { get; private set; }
-	public Dictionary<string, string>? Headers { get; private set; }
-	
-	public AuthenticatorBase? Authenticator { get; private set; }
-	public OneOf<string, Uri>? AuthUrl { get; private set; }
-	
-	public Dictionary<string, string>? Parameters { get; private set; }
+		Options = new WebApiClientOptions
+		{
+			Client = httpClientFactory.CreateClient(),
+			Request = new(),
+			Url = null,
+		};
+	}
+	 private WebApiClient()
+	 {}
 
-	public WebApiClient Get(OneOf<string, Uri> url)
+	public static IEndpointSelector CreateClient()
 	{
-		Url = url.Match(
+		return new WebApiClient();
+	}
+	
+	// 1. Endpoint Selection Stage
+	public IParameterSelector Get(OneOf<string, Uri> url)
+	{
+		Options.Url = url.Match(
 			str => str,
 			uri => uri.AbsoluteUri
 		);
 
-		Method = Method.Get;
-		Request = new RestRequest(Url, Method);
+		Options.Request = new HttpRequestMessage(HttpMethod.Get, Options.Url);
 
 		return this;
 	}
 
-	public WebApiClient Post(OneOf<string, Uri> url)
+	public IParameterSelector Post(OneOf<string, Uri> url)
 	{
-		Url = url.Match(
+		Options.Url = url.Match(
 			str => str,
 			uri => uri.AbsoluteUri
 		);
 
-		Method = Method.Post;
-		Request = new RestRequest(Url, Method);
+		Options.Request = new HttpRequestMessage(HttpMethod.Get, Options.Url);
 		
 		return this;
 	}
 	
-	public WebApiClient WithParams(OneOf<object, Dictionary<string, string>> parameters)
+	public IParameterSelector Patch(OneOf<string, Uri> url)
 	{
-		var resolvedParams = parameters.Match(
+		Options.Url = url.Match(
+			str => str,
+			uri => uri.AbsoluteUri
+		);
+
+		Options.Request = new HttpRequestMessage(HttpMethod.Patch, Options.Url);
+		
+		return this;
+	}
+	
+	public IParameterSelector Put(OneOf<string, Uri> url)
+	{
+		Options.Url = url.Match(
+			str => str,
+			uri => uri.AbsoluteUri
+		);
+
+		Options.Request = new HttpRequestMessage(HttpMethod.Put, Options.Url);
+		
+		return this;
+	}
+
+	public IParameterSelector Delete(OneOf<string, Uri> url)
+	{
+		Options.Url = url.Match(
+			str => str,
+			uri => uri.AbsoluteUri
+		);
+
+		Options.Request = new HttpRequestMessage(HttpMethod.Delete, Options.Url);
+		
+		return this;
+	}
+
+	// 2. Parameter Selection Stage
+	public IExecutionSelector WithNoParams()
+	{
+		Options.Request.Content?.Headers.Clear();
+		return this;
+	}
+	
+	public IExecutionSelector WithBodyParam(string name, string value)
+	{
+		Options.Request.Content?.Headers.Clear();
+		Options.Request.Content?.Headers.Add(name, value);
+		return this;
+	}
+	
+	public IExecutionSelector WithContentHeaderField(string name, string value)
+	{
+		_ = WithBodyParam(name, value);
+		return this;
+	}
+	
+	public IExecutionSelector WithBodyParams(OneOf<object, ICollection<KeyValuePair<string, string>>> parameters)
+	{
+		parameters.Switch(
 			obj =>
 			{
-				var dict = new Dictionary<string, string>();
 				foreach (PropertyDescriptor prop in TypeDescriptor.GetProperties(obj))
 				{
 					var value = prop.GetValue(obj);
 					if (value is string strValue)
 					{
-						dict.Add(prop.Name, strValue);
+						Options.Request.Content?.Headers.Add(prop.Name, strValue);
 					}
 				}
-				return dict;
 			},
-			dict => dict
-		);
-		
-		Parameters = resolvedParams;
+			dict =>
+			{
+				foreach (var entry in dict)
+				{
+					Options.Request.Content?.Headers.Add(entry.Key, entry.Value);
+				}
+			});
+
 		return this;
 	}
 
-	public WebApiClient WithHeader(string name, OneOf<string> value)
+	public IExecutionSelector WithContentHeaderFields(
+		OneOf<object, ICollection<KeyValuePair<string, string>>> parameters)
+	{
+		_ = WithBodyParams(parameters);
+		return this;
+	}
+
+	public IExecutionSelector WithNoHeaderParams()
+	{
+		
+		return this;
+	}
+	
+
+	public IExecutionSelector WithHeaderParam(string name, OneOf<string> value)
 	{
 		var resolvedValue = value.Match(
 			str => str
 		);
 		
-		Request?.AddOrUpdateHeader(name, resolvedValue);
-		
-		Headers ??= new();
-		Headers.Add(name, resolvedValue);
-		
+		Options.Request.Headers.Add(name, resolvedValue);
 		return this;
 	}
 
-	public WebApiClient WithJsonBody(OneOf<object, string> json)
+	public IExecutionSelector WithHeaderParams(OneOf<object, ICollection<KeyValuePair<string, string>>> headers)
 	{
-		json.Switch(
-			obj => Request?.AddJsonBody(obj),
-			str => Request?.AddJsonBody(str)
+		headers.Switch(
+			obj =>
+			{
+				foreach (PropertyDescriptor prop in TypeDescriptor.GetProperties(obj))
+				{
+					var value = prop.GetValue(obj);
+					if (value is string strValue)
+					{
+						Options.Request.Headers.Add(prop.Name, strValue);
+					}
+				}
+			},
+			collection =>
+			{
+				foreach (var entry in collection)
+				{
+					Options.Request.Headers.Add(entry.Key, entry.Value);
+				}
+			}
 		);
 		
 		return this;
 	}
 
-	public WebApiClient UseAuthenticator(string baseUrl, string email, string password)
+	public IExecutionSelector WithQueryParam(string name, OneOf<string> value)
 	{
-		Authenticator = new Tb12Authenticator(baseUrl, email, password);
+		var resolvedValue = value.Match(
+			str => str
+		);
+		
+		// TODO
+		
 		return this;
 	}
 	
-	public OneOf<RestResponse, Exception> Execute()
+	public IExecutionSelector WithQueryParams(OneOf<object, ICollection<KeyValuePair<string, string>>> queryParams)
 	{
-		if (Request is null)
-		{
-			return new NullReferenceException(
-				"""
-				The request for this WebClient is null.
-				See if you've called .Get() or .Post() with a valid URL.
-				""");
-		}
+		// TODO
+		return this;
+	}
 
-		return Client.Execute(Request, Method);
+	// 3. Execution Stage
+	public OneOf<HttpResponseMessage, Exception> Execute()
+	{
+		// TODO
+		return new NotImplementedException();
 	}
 	
-	public OneOf<RestResponse<T>, Exception> Execute<T>()
+	public OneOf<HttpResponseMessage, Exception> Execute<T>()
 		where T : class
 	{
-		if (Request is null)
-		{
-			return new NullReferenceException(
-				"""
-				The request for this WebClient is null.
-				See if you've called .Get() or .Post() with a valid URL.
-				""");
-		}
-
-		if (Authenticator is not null)
-		{
-			ClientOptions.Authenticator = Authenticator;
-			Client = new RestClient(ClientOptions);
-		}
-
-		return Client.Execute<T>(Request, Method);
+		// TODO
+		return new NotImplementedException();
 	}
+}
 
-	public void Dispose()
-	{
-		Client.Dispose();
-		GC.SuppressFinalize(this);
-	}
+public record WebApiClientOptions
+{
+	public required System.Net.Http.HttpClient Client { get; set; }
+	public required HttpRequestMessage Request { get; set; }
+	public required string? Url { get; set; }
+}
+
+public interface IWebApiClientOptions
+{
+	public WebApiClientOptions Options { get; }
 }

@@ -1,0 +1,11 @@
+### GET (Performs a POST login under the hood)
+GET http://localhost:5000/tb12-login
+Accept: application/json
+
+### GET request (Gets user data from a protected endpoint)
+GET http://localhost:5000/tb12-get-user
+Accept: application/json
+
+### Get request (Invalidates the access token)
+GET http://localhost:5000/tb12-invalidate-token
+Accept: application/json

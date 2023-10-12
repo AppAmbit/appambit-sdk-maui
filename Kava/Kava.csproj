@@ -16,7 +16,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Kava</AssemblyName>
         <RootNamespace>Kava</RootNamespace>
-        <LangVersion>12</LangVersion>
+        <LangVersion>11</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
