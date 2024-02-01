@@ -10,7 +10,9 @@ public interface ILogService
 
 	Task<bool> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
 	
-	Task Log(LogEntry entry); 
+	Task Log(LogEntry entry);
+
+	Task LogCrash(string errorMessage, string stackTrace);
 	
 	Task<bool> LogAsync(LogEntry entry);
 	

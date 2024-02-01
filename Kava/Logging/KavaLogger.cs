@@ -66,4 +66,9 @@ public class KavaLogger : ILogService
 	}
 	
 	public bool ShouldClearLogs() => new FileInfo(LogHelper.GetLogFilePath()).Length > maxLogSizeKB;
+
+    public Task LogCrash(string errorMessage, string stackTrace)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -2,9 +2,9 @@ namespace Kava.Helpers
 {
     public partial class DeviceHelper
     {
-        public partial string GetDeviceId()
+        public string GetDeviceId()
         {
-            return "";
+            throw new NotImplementedException();
         }
     }
 }

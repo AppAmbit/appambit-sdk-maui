@@ -1,4 +1,8 @@
+using System.Globalization;
+using System.Text;
+using Amazon;
 using Kava.Helpers;
+using Kava.Logging.Factory;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -7,15 +11,16 @@ namespace Kava.Logging;
 
 public class KavaSerilogger : ILogService
 {
+    private DeviceHelper _deviceHelper = new DeviceHelper();
     private readonly string _logEntryMessage =
         "Log entry created at level: {Level}, tag: {Tag}, message: {Message}, data: {Data}";
+    private readonly string _crashEntryMessage =
+        "Crash detected! DeviceId: {DeviceId}, ErrorMessage: {ErrorMessage}, Stacktrace: {Stacktrace}";
+
 
     public KavaSerilogger()
     {
-        Serilog.Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .WriteTo.File(LogHelper.GetLogFilePath(), fileSizeLimitBytes: LogManager.DefaultLogSizeMb)
-            .CreateLogger();
+        SeriloggerFactory.GenerateLogger();
     }
     
     public Task Log(string message, LogLevel level = LogLevel.Information, string tag = ILogService.DEFAULT_TAG) =>
@@ -76,5 +81,10 @@ public class KavaSerilogger : ILogService
             default:
                 return LogEventLevel.Information;
         }
+    }
+
+    public async Task LogCrash(string errorMessage, string stackTrace)
+    {
+        Serilog.Log.Write(Serilog.Events.LogEventLevel.Fatal, _crashEntryMessage, _deviceHelper.GetDeviceId(), errorMessage, stackTrace);
     }
 }

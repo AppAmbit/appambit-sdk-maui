@@ -10,8 +10,8 @@ public class KavaCrashLogger
 	    const string LOG_DIRECTORY = "KavaTemp";
 	    const string LOG_FILE = "Log.txt";
 	    const string CRASH_DIRECTORY = "KavaTempCrash";
-	    
-	    private readonly Guid _crashId = Guid.NewGuid();
+
+		private readonly Guid _crashId = Guid.NewGuid();
 	    private string _crashFile;
 	    private DeviceHelper _deviceHelper = new DeviceHelper();
     	const LogLevel _consoleLogLevel = LogLevel.Critical;
@@ -42,7 +42,6 @@ public class KavaCrashLogger
 		    {
 			    Task.Run(() =>
 			    {
-				    LogCrashToLoggerAsync($"Crash {_crashId.ToString()} Detected!", level, tag);
 				    SaveCrashLog(unhandledExceptionEventArgs);
 			    }),
 		    };
@@ -50,18 +49,18 @@ public class KavaCrashLogger
 		   Task.WaitAll(tasks);
 	    }    
     
-    	private void LogCrashToLoggerAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
-    	{
-    		var entry = new LogEntry
-    		{
-    			Message = message,
-    			LogLevel = level,
-    			LogTag = tag,
-    			CreatedAt = DateTime.Now
-    		};
+    	//private void LogCrashToLoggerAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
+    	//{
+    	//	var entry = new LogEntry
+    	//	{
+    	//		Message = message,
+    	//		LogLevel = level,
+    	//		LogTag = tag,
+    	//		CreatedAt = DateTime.Now
+    	//	};
     
-		    _logService.Log(entry);
-    	}
+		   // _logService.Log(entry);
+    	//}
 	    
 	    private void SaveLogToFile(LogEntry entry)
     	{
@@ -73,14 +72,15 @@ public class KavaCrashLogger
 		    FileHelper.AddTextToFile(contents, GetCrashLogFilePath());
 	    }
 
-	    private void SaveCrashLog(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+	    private async void SaveCrashLog(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
 	    {
 		    var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
 		    var message = exception?.Message ?? "No message provided";
 		    var stackTrace = exception?.StackTrace ?? "No stacktrace provided";
-		    
+    
 		    SaveCrashLogToFile(message);
 		    SaveCrashLogToFile(stackTrace);
+			await _logService.LogCrash(message, stackTrace);
 	    }
 	    
 	    private void InitializeCrashFile()
