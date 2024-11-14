@@ -47,14 +47,14 @@ public class OAuthService : IOAuthService
     public async Task<BrowserResult> LogoutAsync()
     {
         var logoutParameters = new Dictionary<string, string>
-    {
-    {"client_id", oidcClient.Options.ClientId },
-    {"returnTo", oidcClient.Options.RedirectUri }
-    };
+        {
+            {"client_id", oidcClient.Options.ClientId },
+            {"returnTo", oidcClient.Options.RedirectUri }
+        };
 
         var logoutRequest = new LogoutRequest();
         var endSessionUrl = new RequestUrl($"{oidcClient.Options.Authority}/v2/logout")
-        .Create(new Parameters(logoutParameters));
+            .Create(new Parameters(logoutParameters));
         var browserOptions = new BrowserOptions(endSessionUrl, oidcClient.Options.RedirectUri)
         {
             Timeout = TimeSpan.FromSeconds(logoutRequest.BrowserTimeout),
@@ -65,19 +65,23 @@ public class OAuthService : IOAuthService
         ClearSession();
         return browserResult;
     }
+    
     public Session GetSession()
     {
         var obj = _cache.GetObject<Session>("Session");
         return obj ;
     }
+    
     public void SaveSession(Session Session)
     {
         _cache.InsertObject<Session>("Session", Session, DateTime.Now.AddHours(24));//TODO ADD CORRECT INFORMATION HERE
     }
+    
     public void ClearSession()
     {
         _cache.DeleteAll();
     }
+    
     public async Task<Session> RefreshToken()
     {
         var obj = _cache.GetObject<Session>("Session");

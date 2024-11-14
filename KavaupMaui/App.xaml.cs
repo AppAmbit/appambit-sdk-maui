@@ -7,10 +7,11 @@ using System.Reflection;
 using Kava.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kava.Logging.CrashReporter;
+using Microsoft.Maui.Controls;
 
 namespace KavaupMaui;
 
-public partial class App : Application
+public partial class App : Application	
 {
 	private IConfiguration _configuration;
 	private KavaCrashReporter _crashReporter;

@@ -9,6 +9,9 @@ using KavaupMaui.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Kava.Mvvm;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Hosting;	
 
 namespace KavaupMaui;
 

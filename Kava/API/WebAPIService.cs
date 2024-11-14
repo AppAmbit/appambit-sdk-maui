@@ -15,6 +15,7 @@ public class WebAPIService : IWebAPIService
     private readonly List<IWebAPIEndpoint> endpointQueue = new List<IWebAPIEndpoint>();
     private bool _isRefreshingToken;
     private const string AccessToken = "Access-Token";
+    
     public WebAPIService(ISessionManager sessionManager,
                        IAuthenticationService authenticationService)
     {
