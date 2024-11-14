@@ -52,7 +52,16 @@ public static class FileHelper
 		}
 	}
 
-	public static async Task<string[]> GetFileContents(String path) => await File.ReadAllLinesAsync(path); 
+	public static string[] GetFileContents(String path)
+	{
+		lock (lockObject)
+		{
+			if (File.Exists(path))
+				return File.ReadAllLines(path);
+			else
+				return Array.Empty<string>();
+		}
+	} 
 
 	public static bool ClearLog(string dataPath, string directory)
 	{
@@ -61,9 +70,22 @@ public static class FileHelper
 			lock (lockObject)
 			{
 				var fullPath = Path.Combine(dataPath, directory);
-				File.Delete(fullPath);
+				File.WriteAllText(fullPath, string.Empty);
 			}
 			
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+	
+	public static async Task<bool> ClearLogAsync(string path)
+	{
+		try
+		{
+			await File.WriteAllTextAsync(path, string.Empty);
 			return true;
 		}
 		catch

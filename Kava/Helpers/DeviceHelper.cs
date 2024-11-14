@@ -2,6 +2,10 @@ namespace Kava.Helpers
 {
     public partial class DeviceHelper
     {
-        public partial string GetDeviceId();
+#if (!ANDROID && !IOS && !MACCATALYST && !WINDOWS && !TIZEN)
+
+    public string GetDeviceId() => throw new NotImplementedException();
+#endif
+
     }
 }

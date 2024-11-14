@@ -9,6 +9,9 @@ using KavaupMaui.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Kava.Mvvm;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls.Hosting;
+using Microsoft.Maui.Hosting;	
 
 namespace KavaupMaui;
 
@@ -43,7 +46,6 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-		KavaCrashReporter.Init();
 		return builder.Build();
 	}
 	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
@@ -62,9 +64,10 @@ public static class MauiProgram
 	}
 	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
 	{
-		mAB.Services.AddSingleton<MainVM>();
-        mAB.Services.AddSingleton<SecondVM>();
-        mAB.Services.AddSingleton<ThirdVM>();
+		mAB.Services.AddTransient<MainVM>();
+        mAB.Services.AddTransient<SecondVM>();
+        mAB.Services.AddTransient<ThirdVM>();
+        mAB.Services.AddTransient<LogVM>();
         return mAB;
 	}
 	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
@@ -72,6 +75,7 @@ public static class MauiProgram
 		mAB.Services.AddTransient<MainPage>();
         mAB.Services.AddTransient<SecondPage>();
         mAB.Services.AddTransient<ThirdPage>();
+        mAB.Services.AddTransient<LogPage>();
         return mAB;
 	}
 	

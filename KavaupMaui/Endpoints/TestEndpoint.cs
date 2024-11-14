@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Kava.API;
 
 namespace KavaupMaui.Endpoints

@@ -1,4 +1,6 @@
-﻿namespace KavaupMaui;
+﻿using Microsoft.Maui.Controls;
+
+namespace KavaupMaui;
 
 public partial class AppShell : Shell
 {

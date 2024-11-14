@@ -5,37 +5,30 @@ namespace Kava.Logging;
 
 public class KavaLogger : ILogService
 {
+	const long DEFAULT_LOG_SIZE = 1024 * 1000; //1 megabyte
+	const int DEFAULT_NETWORK_LOG_INTERVAL = 20000;
 
-	readonly static string LOG_FILE_PATH = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-	const string LOG_DIRECTORY = "KavaTemp";
-	const string LOG_FILE = "Log.txt";
-
-	private LogLevel _consoleLogLevel { get; set; } = LogLevel.Information;
-	LogLevel ILogService.ConsoleLogLevel { set => _consoleLogLevel = value; }
-
+	private long maxLogSizeKB = DEFAULT_LOG_SIZE;
+	
 	public KavaLogger()
 	{
-		FileHelper.CreateFileWithDirectory(LOG_FILE_PATH, LOG_DIRECTORY, LOG_FILE);
+		FileHelper.CreateFileWithDirectory(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
 	}
-
-	public async Task<LogEntry[]> GetLogEntries()
-	{
-		var entries = await FileHelper.GetFileContents(GetLogFilePath());
-
-		if (entries == null)
-			return new LogEntry[0];
-
-		return entries.Select(entry => LogEntry.UnParse(entry)).OrderBy(entry => entry.CreatedAt).ToArray();
-	}
-
-	public DateTime getLastLogTime() => File.GetLastWriteTime(GetLogFilePath());
-
+	
 	public Task Log(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT") => Task.Run(async () =>
 	{
 		await LogAsync(message, level, tag);
-	});    
+	}); 
 
-	public async Task<LogEntry> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
+	public async Task<bool> LogAsync(LogEntry entry)
+	{
+		await SaveLogToFile(entry);
+		if (ShouldClearLogs())
+			await ClearLogs();	
+		return true;
+	}
+
+	public async Task<bool> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = "DEFAULT")
 	{
 		var entry = new LogEntry
 		{
@@ -45,18 +38,22 @@ public class KavaLogger : ILogService
 			CreatedAt = DateTime.Now
 		};
 
-		if (entry.LogLevel >= _consoleLogLevel)
+		if (entry.LogLevel >= LogLevel.None)
 			Console.WriteLine(entry.ToString());
 
-		await SaveLogToFile(entry);
-		return entry;
+		return await LogAsync(entry);
 	}
+
+	public Task Log(LogEntry entry) => Task.Run(async () =>
+	{
+		await LogAsync(entry);
+	});
 
 	async Task SaveLogToFile(LogEntry entry)
 	{
 		await Task.Run(() =>
 		{
-			FileHelper.AddTextToFile(entry.Parse(), GetLogFilePath());
+			FileHelper.AddTextToFile(entry.Parse(), LogHelper.GetLogFilePath());
 		});
 	}
 
@@ -64,9 +61,14 @@ public class KavaLogger : ILogService
 	{
 		return await Task.Run(() =>
 		{
-			return FileHelper.ClearLog(LOG_FILE_PATH, LOG_DIRECTORY, LOG_FILE);
+			return FileHelper.ClearLog(LogHelper.LogFilePath, LogHelper.LogDirectory, LogHelper.LogFileName);
 		});
 	}
+	
+	public bool ShouldClearLogs() => new FileInfo(LogHelper.GetLogFilePath()).Length > maxLogSizeKB;
 
-	public string GetLogFilePath() => Path.Combine(LOG_FILE_PATH, LOG_DIRECTORY, LOG_FILE);
+    public Task LogCrash(string errorMessage, string stackTrace)
+    {
+        throw new NotImplementedException();
+    }
 }

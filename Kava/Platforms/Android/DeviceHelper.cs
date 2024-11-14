@@ -5,7 +5,7 @@ namespace Kava.Helpers
 {
     public partial class DeviceHelper
     {
-        public partial string GetDeviceId()
+        public string GetDeviceId()
         {
             var context = Android.App.Application.Context;
 

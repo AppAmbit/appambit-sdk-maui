@@ -12,6 +12,7 @@ public class DialogService : IDialogService
   {
     return Application.Current.MainPage.DisplayAlert(title, message, "ok", "no");
   }
+  
   public Task<string> ShowActionsAsync(string title, string cancel, string destruction, params string[] buttons)
   {
     return Application.Current.MainPage.DisplayActionSheet(title, cancel, destruction, buttons);

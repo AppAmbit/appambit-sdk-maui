@@ -8,16 +8,15 @@ public interface ILogService
 
 	Task Log(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
 
-	Task<LogEntry> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
+	Task<bool> LogAsync(string message, LogLevel level = LogLevel.Information, string tag = DEFAULT_TAG);
+	
+	Task Log(LogEntry entry);
 
-	Task<LogEntry[]> GetLogEntries();
-
+	Task LogCrash(string errorMessage, string stackTrace);
+	
+	Task<bool> LogAsync(LogEntry entry);
+	
 	Task<bool> ClearLogs();
 
-	DateTime getLastLogTime();
-
-	string GetLogFilePath();
-
-	LogLevel ConsoleLogLevel { set; }
-
+	public bool ShouldClearLogs();
 }
