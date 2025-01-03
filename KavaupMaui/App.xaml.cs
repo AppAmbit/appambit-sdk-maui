@@ -14,6 +14,7 @@ namespace KavaupMaui;
 public partial class App : Application	
 {
 	private IConfiguration _configuration;
+	
 	private KavaCrashReporter _crashReporter;
 
 	public App(IConfiguration configuration, KavaCrashReporter crashReporter)
