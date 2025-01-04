@@ -12,21 +12,14 @@ internal class AppInfoService : IAppInfoService
 {
     public AppInfoService()
     {
-#if ANDROID
-        DeviceId = Settings.Secure.GetString(Android.App.Application.Context.ContentResolver, Settings.Secure.AndroidId);
-#elif IOS
-        DeviceId = UIDevice.CurrentDevice.IdentifierForVendor.AsString();
-#endif
         AppVersion = AppInfo.Current.VersionString;
         Platform = DeviceInfo.Current.Platform.ToString();
         OS = DeviceInfo.Current.Version.ToString();
-        DeviceModel = DeviceInfo.Current.Model;
+        DeviceModel = DeviceInfo.Current.Model; 
         Country = RegionInfo.CurrentRegion.Name;
         UtcOffset = TimeZoneInfo.Local.BaseUtcOffset.ToString();
         Language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     }
-
-    public string? DeviceId { get; set; }
     
     public string? AppVersion { get; set; }
     

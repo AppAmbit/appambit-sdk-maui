@@ -15,7 +15,7 @@ public partial class App : Application
     {
         base.OnStart();
         
-        Core.OnStart("e1a848f4-46b1-45e4-8dcb-128510611c02");
+        Core.OnStart("40ae5a38-d1b4-4783-977b-1e24570c834d");
     }
 
     

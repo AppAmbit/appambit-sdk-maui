@@ -22,3 +22,12 @@ public static class Logging
         await logService?.LogEventAsync(log);
     }
 }
+
+public enum LogType
+{
+    Debug,
+    Information,
+    Warning,
+    Error,
+    Crash
+}

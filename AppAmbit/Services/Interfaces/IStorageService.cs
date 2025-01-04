@@ -25,6 +25,10 @@ internal interface IStorageService
     Task SetToken(string? token);
 
     Task<string?> GetToken();
+    
+    Task SetDeviceId(string? token);
+
+    Task<string?> GetDeviceId();
 
     Task SetAppId(string? appId);
 

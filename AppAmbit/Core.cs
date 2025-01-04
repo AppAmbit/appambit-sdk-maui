@@ -54,14 +54,16 @@ public static class Core
     private static async Task<bool> IsRegistered(string appKey)
     {
         var localToken = await storageService?.GetToken();
-        
+
         if (localToken == null)
         {
+            await storageService.SetAppId(appKey);
+            await storageService.SetDeviceId(Guid.NewGuid().ToString());
             var consumer = new Consumer
             {
                 AppVersion = appInfoService.AppVersion,
-                DeviceId = appInfoService.DeviceId,
-                UserId = "1",
+                DeviceId = await storageService.GetDeviceId(),
+                UserId = "",
                 IsGuest = false,
                 UserEmail = "test@gmail.com",
                 OS = appInfoService.OS,
@@ -74,7 +76,6 @@ public static class Core
             var registerEndpoint = new RegisterEndpoint(consumer);
             var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
             
-            await storageService.SetAppId(appKey);
             await storageService.SetToken(remoteToken.Token);
             
             return true;
@@ -87,14 +88,15 @@ public static class Core
 
     private static async Task StartSession()
     {
-        var sessionId = await apiService?.ExecuteRequest<string>(new StartSessionEndpoint());
-        storageService?.SetSessionId(sessionId);
+        var response = await apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        storageService?.SetSessionId(response.SessionId);
     }
 
     private static async Task EndSession()
     {
         var sessionId = await storageService?.GetSessionId();
-        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
+        var session = new Session { SessionId = sessionId, Timestamp = DateTime.Now };
+        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(session));
     }
     
     private static async Task SendSummaryAndFile()
@@ -107,10 +109,8 @@ public static class Core
         
         var summary = new LogSummary
         {
-            AppId = await storageService.GetAppId(),
-            TeamId = "1",
             Title = "Test summary",
-            DeviceId = appInfoService?.DeviceId,
+            DeviceId = await storageService?.GetDeviceId(),
             DeviceModel = appInfoService?.DeviceModel,
             Platform = appInfoService?.Platform,
             AppVersion = appInfoService?.AppVersion,
@@ -188,20 +188,17 @@ public static class Core
             case LogType.Error:
                 result = "error";
             break;
+            case LogType.Crash:
+                result = "crash";
+                break;
             case LogType.Warning:
-                result = "warning";
+                result = "warn";
             break;
             case LogType.Debug:
                 result = "debug";
             break;
             case LogType.Information:
                 result = "info";
-            break;
-            case LogType.Critical:
-                result = "critical";
-            break;
-            case LogType.Trace:
-                result = "trace";
             break;
         }
         return result;

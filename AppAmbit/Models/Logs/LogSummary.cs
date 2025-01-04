@@ -21,12 +21,6 @@ public class LogSummary
 
     [JsonProperty("platform")]
     public string? Platform { get; set; }
-
-    [JsonProperty("app_id")]
-    public string? AppId { get; set; }
-    
-    [JsonProperty("team_id")]
-    public string? TeamId { get; set; }
     
     [JsonProperty("error_count")]
     public int ErrorCount { get; set; }

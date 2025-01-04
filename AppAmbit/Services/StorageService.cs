@@ -29,7 +29,8 @@ internal class StorageService : IStorageService
     
     public void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
-        _ = LogUnhandledException(unhandledExceptionEventArgs);
+        LogUnhandledException(unhandledExceptionEventArgs);
+        Core.OnSleep();
     }
 
     public async Task SetToken(string? token)
@@ -38,7 +39,26 @@ internal class StorageService : IStorageService
         appSecrets.Token = token;
         await _database.UpdateAsync(appSecrets);
     }
-
+    
+    public async Task<string?> GetToken()
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        return appSecrets?.Token;
+    }
+    
+    public async Task SetDeviceId(string? deviceId)
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        appSecrets.DeviceId = deviceId;
+        await _database.UpdateAsync(appSecrets);
+    }
+    
+    public async Task<string?> GetDeviceId()
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        return appSecrets?.DeviceId;
+    }
+    
     public async Task SetAppId(string? appId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
@@ -75,12 +95,6 @@ internal class StorageService : IStorageService
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
         return appSecrets?.SessionId;
-    }
-
-    public async Task<string?> GetToken()
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        return appSecrets?.Token;
     }
 
     public async Task LogUnhandledException(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
