@@ -29,61 +29,68 @@ public static class Core
         return builder;
     }
 
-    public static async Task OnStart(string appId)
+    public static async Task OnStart(string appKey)
     {
         await InitializeServices();
+
+        await InitializeConsumer(appKey);
         
-        var isRegistered = await IsRegistered(appId);
-        if (isRegistered)
+        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        if (hasInternet)
         {
-            var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-            if (hasInternet)
-            {
-                await SendSummaryAndFile();
-            }
+            await SendSummaryAndFile();
         }
         
         await StartSession();
     }
 
+    public static async Task OnResume()
+    {
+        var appKey = await storageService?.GetAppId();
+        await InitializeConsumer(appKey);
+        await StartSession();
+
+    }
+    
     public static async Task OnSleep()
     {
         await EndSession();
     }
 
-    private static async Task<bool> IsRegistered(string appKey)
+    private static async Task InitializeConsumer(string appKey)
     {
-        var localToken = await storageService?.GetToken();
-
-        if (localToken == null)
+        var appId = await storageService?.GetAppId();
+        var deviceId = await storageService.GetDeviceId();
+        
+        if (appId == null)
         {
             await storageService.SetAppId(appKey);
-            await storageService.SetDeviceId(Guid.NewGuid().ToString());
-            var consumer = new Consumer
-            {
-                AppVersion = appInfoService.AppVersion,
-                DeviceId = await storageService.GetDeviceId(),
-                UserId = "",
-                IsGuest = false,
-                UserEmail = "test@gmail.com",
-                OS = appInfoService.OS,
-                Platform = appInfoService.Platform,
-                DeviceModel = appInfoService.DeviceModel,
-                Country = appInfoService.Country,
-                Language = appInfoService.Language,
-                AppKey = appKey,
-            };
-            var registerEndpoint = new RegisterEndpoint(consumer);
-            var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-            
-            await storageService.SetToken(remoteToken.Token);
-            
-            return true;
         }
-        else
+
+        if (deviceId == null)
         {
-            return true;
+            var id = Guid.NewGuid().ToString();
+            await storageService.SetDeviceId(id);
         }
+        
+        var consumer = new Consumer
+        {
+            AppVersion = appInfoService.AppVersion,
+            DeviceId = await storageService.GetDeviceId(),
+            UserId = "",
+            IsGuest = false,
+            UserEmail = "test@gmail.com",
+            OS = appInfoService.OS,
+            Platform = appInfoService.Platform,
+            DeviceModel = appInfoService.DeviceModel,
+            Country = appInfoService.Country,
+            Language = appInfoService.Language,
+            AppKey = appKey,
+        };
+        var registerEndpoint = new RegisterEndpoint(consumer);
+        var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
+            
+        await storageService.SetToken(remoteToken.Token);
     }
 
     private static async Task StartSession()

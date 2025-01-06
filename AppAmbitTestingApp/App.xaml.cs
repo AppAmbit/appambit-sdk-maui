@@ -15,9 +15,15 @@ public partial class App : Application
     {
         base.OnStart();
         
-        Core.OnStart("40ae5a38-d1b4-4783-977b-1e24570c834d");
+        Core.OnStart("05fa9fec-5c5f-4163-b72b-105fb5bea4d5");
     }
 
+    protected override void OnResume()
+    {
+        base.OnResume();
+
+        Core.OnResume();
+    }
     
     protected override void OnSleep()
     {
