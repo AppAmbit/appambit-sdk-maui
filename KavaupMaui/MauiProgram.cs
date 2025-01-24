@@ -17,69 +17,67 @@ namespace KavaupMaui;
 
 public static class MauiProgram
 {
-	public static MauiApp CreateMauiApp()
-	{
-		#region JSON Settings
-		var appSettingsFile = "KavaupMaui.appsettings.json";
+    public static MauiApp CreateMauiApp()
+    {
+        #region JSON Settings
+        var appSettingsFile = "KavaupMaui.appsettings.json";
 #if DEBUG
-		appSettingsFile = "KavaupMaui.appsettings.Development.json";
+        appSettingsFile = "KavaupMaui.appsettings.Development.json";
 #endif
-		using var settings = Assembly.GetExecutingAssembly().GetManifestResourceStream(appSettingsFile);
-		var config = new ConfigurationBuilder().AddJsonStream(settings).Build();
-		#endregion
+        using var settings = Assembly.GetExecutingAssembly().GetManifestResourceStream(appSettingsFile);
+        var config = new ConfigurationBuilder().AddJsonStream(settings).Build();
+        #endregion
 		
-		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
-			.UseMauiCommunityToolkit()
-			.ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			}).Configuration.AddConfiguration(config);
-		builder
-			.RegisterDI()
-			.RegisterVM()
-			.RegisterViews()
-			.RegisterRoutes();
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            }).Configuration.AddConfiguration(config);
+        builder
+            .RegisterDI()
+            .RegisterVM()
+            .RegisterViews()
+            .RegisterRoutes();
 
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-		return builder.Build();
-	}
-	public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
-	{
-
-		var oAuthClientOptions = new OAuthClientOptions
-		{
-			Domain = "",
-			ClientId = "",
-			Scope = "openid profile",
-			RedirectUri = "KavaupMaui://callback"
-		};
+        return builder.Build();
+    }
+    public static MauiAppBuilder RegisterDI(this MauiAppBuilder mAB)
+    {
+        var oAuthClientOptions = new OAuthClientOptions
+        {
+            Domain = "",
+            ClientId = "",
+            Scope = "openid profile",
+            RedirectUri = "KavaupMaui://callback"
+        };
 
         KavaUpMaui.Register(mAB, oAuthClientOptions);
         return mAB;
-	}
-	public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
-	{
-		mAB.Services.AddTransient<MainVM>();
+    }
+    
+    public static MauiAppBuilder RegisterVM(this MauiAppBuilder mAB)
+    {
+        mAB.Services.AddTransient<MainVM>();
         mAB.Services.AddTransient<SecondVM>();
         mAB.Services.AddTransient<ThirdVM>();
         mAB.Services.AddTransient<LogVM>();
         return mAB;
-	}
-	public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
-	{
-		mAB.Services.AddTransient<MainPage>();
+    }
+    
+    public static MauiAppBuilder RegisterViews(this MauiAppBuilder mAB)
+    {
+        mAB.Services.AddTransient<MainPage>();
         mAB.Services.AddTransient<SecondPage>();
         mAB.Services.AddTransient<ThirdPage>();
         mAB.Services.AddTransient<LogPage>();
         return mAB;
-	}
-	
-	
-
+    }
+    
 }
-

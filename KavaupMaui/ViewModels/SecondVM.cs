@@ -12,6 +12,7 @@ namespace KavaupMaui.ViewModels
 	public class SecondVM : BaseViewModel
     {
         public ICommand GoToNextPage { get; private set; }
+        
         public SecondVM()
 		{
             GoToNextPage = new AsyncRelayCommand(GoToThirdPage);
