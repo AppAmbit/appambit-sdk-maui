@@ -15,7 +15,7 @@ public partial class App : Application
     {
         base.OnStart();
         
-        Core.OnStart("05fa9fec-5c5f-4163-b72b-105fb5bea4d5");
+        Core.OnStart("760eb415-e053-4a2c-b1ad-d18958064736");
     }
 
     protected override void OnResume()

@@ -1,15 +1,19 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="AppAmbitTestingApp.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:AppAmbitTestingApp"
-    Shell.FlyoutBehavior="Disabled"
-    Title="AppAmbitTestingApp">
+<?xml version="1.0" encoding="UTF-8"?>
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+<Shell x:Class="AppAmbitTestingApp.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:AppAmbitTestingApp"
+       FlyoutBehavior="Disabled"
+       Title="AppAmbitTestingApp">
 
+    <TabBar>
+        <ShellContent Title="Home"
+                      ContentTemplate="{DataTemplate local:MainPage}"
+                      Route="MainPage" />
+    
+        <ShellContent Title="Analytics"
+                      ContentTemplate="{DataTemplate local:AnalyticsPage}"
+                      Route="Analytics Page" />
+    </TabBar>
 </Shell>

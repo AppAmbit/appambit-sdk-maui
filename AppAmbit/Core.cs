@@ -1,14 +1,16 @@
 ﻿using System.Net.Http.Headers;
-using System.Text.Json;
 using Akavache;
 using AppAmbit.Models;
+using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Newtonsoft.Json;
 using Refit;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AppAmbit;
 
@@ -35,13 +37,14 @@ public static class Core
 
         await InitializeConsumer(appKey);
         
+        await StartSession();
+
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
             await SendSummaryAndFile();
+            await SendAnalytics();
         }
-        
-        await StartSession();
     }
 
     public static async Task OnResume()
@@ -77,7 +80,7 @@ public static class Core
         {
             AppVersion = appInfoService.AppVersion,
             DeviceId = await storageService.GetDeviceId(),
-            UserId = "",
+            UserId = "1",
             IsGuest = false,
             UserEmail = "test@gmail.com",
             OS = appInfoService.OS,
@@ -104,6 +107,26 @@ public static class Core
         var sessionId = await storageService?.GetSessionId();
         var session = new Session { SessionId = sessionId, Timestamp = DateTime.Now };
         await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(session));
+    }
+
+    private static async Task SendAnalytics()
+    {
+        var analytics = await storageService?.GetAllAnalyticsAsync();
+        if (analytics.Count == 0)
+        {
+            return;
+        }
+        
+        foreach (var item in analytics)
+        {
+            var analyticsReport = new AnalyticsReport()
+            {
+                EventTitle = item.EventTitle,
+                SessionId = await storageService.GetSessionId(),
+                Data = JsonConvert.DeserializeObject<Dictionary<string, string>>(item.Data)
+            };
+            var result = await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
+        }
     }
     
     private static async Task SendSummaryAndFile()

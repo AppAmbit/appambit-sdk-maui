@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
 
@@ -14,7 +15,7 @@ internal class APIService : IAPIService
         
         var responseMessage = await HttpResponseMessage(endpoint, client);
         var responseString = await responseMessage.Content.ReadAsStringAsync();
-            
+        
         return TryDeserializeJson<T>(responseString);
     }
     
@@ -53,34 +54,38 @@ internal class APIService : IAPIService
 
     private async Task<HttpContent> SerializeJSONPayload(object payload, IEndpoint endpoint = null)
     {
-        var formData = new MultipartFormDataContent();
-
         if (payload == null)
         {
             return null;
         }
-
-        foreach (var property in payload.GetType().GetProperties())
+        
+        if (endpoint is SendLogsAndSummaryEndpoint)
         {
-            var propertyName = property.Name;
-            var propertyValue = property.GetValue(payload);
-
-            if (propertyName == "logFile")
+            var formData = new MultipartFormDataContent();
+            foreach (var property in payload.GetType().GetProperties())
             {
-                var filePath = Path.Combine(FileSystem.AppDataDirectory, "logs.txt");
-                var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
-                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-                formData.Add(fileContent, "logFile", Path.GetFileName(filePath));
-                continue;
+                var propertyName = property.Name;
+                var propertyValue = property.GetValue(payload);
+                if (propertyName == "logFile")
+                {
+                    var filePath = Path.Combine(FileSystem.AppDataDirectory, "logs.txt");
+                    var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
+                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+                    formData.Add(fileContent, "logFile", Path.GetFileName(filePath));
+                    continue;
+                }
+                if (propertyValue != null)
+                {
+                    var json = JsonConvert.SerializeObject(propertyValue);
+                    formData.Add(new StringContent(json, Encoding.UTF8, "application/json"), propertyName);
+                }
             }
-            
-            if (propertyValue != null)
-            {
-                var json = JsonConvert.SerializeObject(propertyValue);
-                formData.Add(new StringContent(json, Encoding.UTF8, "application/json"), propertyName);
-            }
+            return formData;
         }
-        return formData;
+
+        var data = JsonConvert.SerializeObject(payload);
+        var content = new StringContent(data, Encoding.UTF8, "application/json");
+        return content;
     }
 
     private string SerializeStringPayload(object payload)
