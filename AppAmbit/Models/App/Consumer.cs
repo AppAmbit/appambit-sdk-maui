@@ -33,7 +33,7 @@ public class Consumer
     
     [JsonProperty("language")]
     public string Language { get; set; }
-
+    
     [JsonProperty("app_key")]
     public string AppKey { get; set; }
 }

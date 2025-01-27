@@ -72,7 +72,7 @@ public partial class MainPage : ContentPage, INotifyPropertyChanged
     
     private void OnTestSendingFileAndSummaryClicked(object sender, EventArgs e)
     {
-        Core.OnStart("40ae5a38-d1b4-4783-977b-1e24570c834d");
+        Core.OnStart("e79ffcef-c6c7-465c-ba5b-a9494c3af84e");
     }
 
     private void TitleInputView_OnTextChanged(object? sender, TextChangedEventArgs e)

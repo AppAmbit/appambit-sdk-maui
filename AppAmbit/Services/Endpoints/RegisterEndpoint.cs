@@ -5,7 +5,7 @@ using AppAmbit.Services.Interfaces;
 
 namespace AppAmbit.Services.Endpoints;
 
-internal class RegisterEndpoint :  BaseEndpoint, IEndpoint
+internal class RegisterEndpoint : BaseEndpoint, IEndpoint
 {
     public RegisterEndpoint(Consumer consumer)
     {

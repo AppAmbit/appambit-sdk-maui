@@ -1,3 +1,4 @@
+using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Logs;
 
 namespace AppAmbit.Services.Interfaces;
@@ -12,8 +13,12 @@ internal interface IStorageService
 
     Task LogEventAsync(Log log);
 
-    Task<List<Log>> GetAllLogsAsync();
+    Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog);
 
+    Task<List<Log>> GetAllLogsAsync();
+    
+    Task<List<AnalyticsLog>> GetAllAnalyticsAsync();
+    
     Task DeleteAllLogs();
     
     void OnUnhandledException(object sender, UnhandledExceptionEventArgs e);

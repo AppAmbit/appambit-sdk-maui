@@ -1,4 +1,5 @@
 using AppAmbit.Models;
+using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Interfaces;
@@ -25,6 +26,7 @@ internal class StorageService : IStorageService
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<Log>();
+        await _database.CreateTableAsync<AnalyticsLog>();
     }
     
     public void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
@@ -117,9 +119,19 @@ internal class StorageService : IStorageService
         await _database.InsertAsync(log);
     }
 
+    public async Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog)
+    {
+        await _database.InsertAsync(analyticsLog);
+    }
+
     public async Task<List<Log>> GetAllLogsAsync()
     {
         return await _database.Table<Log>().ToListAsync();
+    }
+
+    public async Task<List<AnalyticsLog>> GetAllAnalyticsAsync()
+    {
+        return await _database.Table<AnalyticsLog>().ToListAsync();
     }
 
     public async Task DeleteAllLogs()
