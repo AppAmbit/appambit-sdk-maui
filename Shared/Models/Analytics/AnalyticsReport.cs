@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace AppAmbit.Models.Analytics;
+namespace Shared.Models.Analytics;
 
 public class AnalyticsReport
 {

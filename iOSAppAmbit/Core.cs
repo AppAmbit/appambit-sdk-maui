@@ -1,15 +1,15 @@
-﻿using System.Net.Http.Headers;
-using AppAmbit.Models.Analytics;
-using AppAmbit.Models.App;
-using AppAmbit.Models.Logs;
-using AppAmbit.Models.Responses;
-using AppAmbit.Services;
-using AppAmbit.Services.Endpoints;
-using AppAmbit.Services.Interfaces;
+using System.Net.Http.Headers;
+using iOSAppAmbit.Services;
+using iOSAppAmbit.Services.Base;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
+using Shared.Models.Analytics;
+using Shared.Models.App;
+using Shared.Models.Endpoints;
+using Shared.Models.Logs;
+using Shared.Models.Responses;
 
-namespace AppAmbit;
+namespace iOSAppAmbit;
 
 public static class Core
 {
@@ -17,14 +17,7 @@ public static class Core
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
     
-    public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder)
-    {
-        builder.Services.AddSingleton<IAPIService, APIService>();
-        builder.Services.AddSingleton<IStorageService, StorageService>();
-        builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
-        return builder;
-    }
+    public static IServiceProvider Services { get; private set; } = null!;
 
     public static async Task OnStart(string appKey)
     {
@@ -34,8 +27,7 @@ public static class Core
         
         await StartSession();
 
-        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        if (hasInternet)
+        if (Analytics.HasInternet())
         {
             await SendSummaryAndFile();
             await SendAnalytics();
@@ -184,13 +176,12 @@ public static class Core
             }
         }
         
-        var filePath = Path.Combine(FileSystem.AppDataDirectory, "logs.txt");
-        var jsonString = JsonSerializer.Serialize(logs);
+        var filePath = Path.Combine(NSFileManager.DefaultManager.GetUrls(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User).FirstOrDefault()?.Path, "logs.txt");
+        var jsonString = JsonConvert.SerializeObject(logs);
         await File.WriteAllTextAsync(filePath, jsonString);
 
         var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-        
 
         await apiService?.ExecuteRequest<object>(new SendLogsAndSummaryEndpoint(fileContent, summary));
         
@@ -199,9 +190,18 @@ public static class Core
         
     private static async Task InitializeServices()
     {
-        apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-        appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
-        storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+        var serviceCollection = new ServiceCollection();
+        
+        serviceCollection.AddSingleton<IAPIService, APIService>(); 
+        serviceCollection.AddSingleton<IAppInfoService, AppInfoService>();
+        serviceCollection.AddSingleton<IStorageService, StorageService>();
+
+        Services = serviceCollection.BuildServiceProvider();
+
+        apiService = Services.GetService<IAPIService>();
+        appInfoService = Services.GetService<IAppInfoService>();
+        storageService = Services.GetService<IStorageService>();
+        
         await storageService?.InitializeAsync();
     }
 
