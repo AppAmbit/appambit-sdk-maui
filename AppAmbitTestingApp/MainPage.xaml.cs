@@ -47,32 +47,33 @@ public partial class MainPage : ContentPage, INotifyPropertyChanged
     
     private void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        Logging.LogAsync(LogTitle, LogMessage, LogType.Error);
+        Crashes.TrackError(LogTitle, LogMessage, LogType.Error);
     }
     
     private void OnTestCrashLogClicked(object sender, EventArgs e)
     {
-        Logging.LogAsync(LogTitle, LogMessage, LogType.Crash);
+        Crashes.TrackError(LogTitle, LogMessage, LogType.Crash);
     }
     
     private void OnTestInfoLogClicked(object sender, EventArgs e)
     {
-        Logging.LogAsync(LogTitle, LogMessage, LogType.Information);
+        Crashes.TrackError(LogTitle, LogMessage, LogType.Information);
     }
     
     private void OnTestDebugLogClicked(object sender, EventArgs e)
     {
-        Logging.LogAsync(LogTitle, LogMessage, LogType.Debug);
+        var exception = new NullReferenceException();
+        Crashes.TrackError(LogTitle, LogMessage, LogType.Debug);
+        Crashes.TrackError(exception);
+        Crashes.TrackError(exception,  new Dictionary<string, string>()
+        {
+            { "Category", "Music" },
+        });
     }
     
     private void OnTestWarnLogClicked(object sender, EventArgs e)
     {
-        Logging.LogAsync(LogTitle, LogMessage, LogType.Warning);
-    }
-    
-    private void OnTestSendingFileAndSummaryClicked(object sender, EventArgs e)
-    {
-        Core.OnStart("e79ffcef-c6c7-465c-ba5b-a9494c3af84e");
+        Crashes.TrackError(LogTitle, LogMessage, LogType.Warning);
     }
 
     private void TitleInputView_OnTextChanged(object? sender, TextChangedEventArgs e)

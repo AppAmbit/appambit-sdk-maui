@@ -4,6 +4,8 @@ internal interface IAppInfoService
 {
     string? AppVersion { get; set; }
     
+    string? Build { get; set; }
+
     string? Platform { get; set; }
     
     string? OS { get; set; }

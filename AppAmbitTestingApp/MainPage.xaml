@@ -40,10 +40,6 @@
             <Button
                 Text="Test logging crash" 
                 Clicked="OnCounterClicked" />
-            
-            <Button
-                Text="Test sending file and summary" 
-                Clicked="OnTestSendingFileAndSummaryClicked" />
         </VerticalStackLayout>
     </ScrollView>
 

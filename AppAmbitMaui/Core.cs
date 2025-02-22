@@ -6,6 +6,7 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Microsoft.Maui.LifecycleEvents;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -13,12 +14,52 @@ namespace AppAmbit;
 
 public static class Core
 {
+    private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
     
-    public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder)
+    public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
+        builder.ConfigureLifecycleEvents(events =>
+        {
+#if ANDROID
+            events.AddAndroid(android =>
+            {
+                android.OnCreate((activity, state) =>
+                {
+                    Start(appKey);
+                });
+                android.OnResume(activity =>
+                {
+                    if (_initialized)
+                        OnResume();
+                });
+                android.OnPause(activity =>
+                {
+                    OnSleep();
+                });
+            });
+#elif IOS
+            events.AddiOS(ios =>
+            {
+                ios.FinishedLaunching((application, options) =>
+                {
+                    Start(appKey);
+                    return true;
+                });
+                ios.WillEnterForeground(application =>
+                {
+                    OnResume();
+                });
+                ios.DidEnterBackground(application =>
+                {
+                    OnSleep();
+                });
+            });
+#endif
+        });
+
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -26,7 +67,7 @@ public static class Core
         return builder;
     }
 
-    public static async Task OnStart(string appKey)
+    private static async Task Start(string appKey)
     {
         await InitializeServices();
 
@@ -40,9 +81,11 @@ public static class Core
             await SendSummaryAndFile();
             await SendAnalytics();
         }
+        
+        _initialized = true;
     }
 
-    public static async Task OnResume()
+    private static async Task OnResume()
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
@@ -100,8 +143,7 @@ public static class Core
     private static async Task EndSession()
     {
         var sessionId = await storageService?.GetSessionId();
-        var session = new Session { SessionId = sessionId, Timestamp = DateTime.Now };
-        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(session));
+        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
     }
 
     private static async Task SendAnalytics()
@@ -114,7 +156,7 @@ public static class Core
         
         foreach (var item in analytics)
         {
-            var analyticsReport = new AnalyticsReport()
+            var analyticsReport = new Models.Analytics.AnalyticsReport()
             {
                 EventTitle = item.EventTitle,
                 SessionId = await storageService.GetSessionId(),
@@ -134,11 +176,9 @@ public static class Core
         
         var summary = new LogSummary
         {
-            Title = "Test summary",
             DeviceId = await storageService?.GetDeviceId(),
             DeviceModel = appInfoService?.DeviceModel,
             Platform = appInfoService?.Platform,
-            AppVersion = appInfoService?.AppVersion,
             CountryISO = appInfoService?.Country,
             Groups = new List<LogGrouping>()
         };
@@ -149,8 +189,12 @@ public static class Core
             {
                 summary.Groups.Add(new LogGrouping
                 {
-                    Description = log.Message,
-                    Title = log.Message,
+                    Timestamp = log.Timestamp.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    AppVersionBuild = log.AppVersionBuild,
+                    StackTrace = log.StackTrace,
+                    Description = log.Description,
+                    Title = log.Title, 
+                    Properties = log.Properties,
                     LogType = GetLogTypeString(log.Type),
                     Count = 1
                 });
@@ -192,7 +236,7 @@ public static class Core
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
         
 
-        await apiService?.ExecuteRequest<object>(new SendLogsAndSummaryEndpoint(fileContent, summary));
+        var result = await apiService?.ExecuteRequest<string>(new SendLogsAndSummaryEndpoint(fileContent, summary));
         
         await storageService.DeleteAllLogs();
     }

@@ -8,20 +8,20 @@ namespace AppAmbit;
 
 public static class Analytics
 {
-    public static async Task TrackEventAsync(string eventTitle, Dictionary<string, string> data)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-            var analyticsReport = new AnalyticsReport()
+            var analyticsReport = new Models.Analytics.AnalyticsReport()
             {
                 EventTitle = eventTitle,
                 SessionId = await storageService.GetSessionId(),
-                Data = data
+                Data = data.ToDictionary(item => item.Key, item => Truncate(item.Key, 125))
             };
-            var result = await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
+            await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
         }
         else
         {
@@ -30,11 +30,17 @@ public static class Analytics
             {   
                 Id = Guid.NewGuid(),    
                 EventTitle = eventTitle,
-                Data = JsonConvert.SerializeObject(data)
+                Data = JsonConvert.SerializeObject(data.ToDictionary(item => item.Key, item => Truncate(item.Key, 125)))
             };
         
             await logService?.LogAnalyticsEventAsync(log);
-            var list = await logService.GetAllAnalyticsAsync();
         }
     }
+    
+    private static string Truncate(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+
 }

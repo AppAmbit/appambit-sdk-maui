@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AppAmbit;
 
 namespace AppAmbitTestingApp;
 
@@ -15,6 +11,6 @@ public partial class AnalyticsPage : ContentPage
 
     private void Button_OnClicked(object? sender, EventArgs e)
     {
-        AppAmbit.Analytics.TrackEventAsync("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
+        Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
     }
 }

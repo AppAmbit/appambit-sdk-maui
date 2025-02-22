@@ -4,12 +4,10 @@ namespace AppAmbit.Models.Logs;
 
 public class LogSummary
 {
-    [JsonProperty("title")]
-    public string? Title { get; set; }
-    
-    [JsonProperty("app_version")]
-    public string? AppVersion { get; set; }
-    
+    [JsonProperty("title")] public string? Title { get; set; } = "TE";
+
+    [JsonProperty("app_version")] public string? AppVersion { get; set; } = "ds";
+
     [JsonProperty("country_iso")]
     public string? CountryISO { get; set; }
     

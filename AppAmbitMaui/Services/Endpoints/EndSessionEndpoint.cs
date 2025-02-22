@@ -6,13 +6,14 @@ namespace AppAmbit.Services.Endpoints;
 
 internal class EndSessionEndpoint : BaseEndpoint
 {
-    public EndSessionEndpoint(Session session)
+    public EndSessionEndpoint(string sessionId)
     {
         Url = "/session/end";
         Method = HttpMethodEnum.Post;
         Payload = new
         {
-            session
+            session_id = sessionId,
+            timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
         };
     }
 }

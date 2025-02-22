@@ -13,6 +13,7 @@ internal class AppInfoService : IAppInfoService
     public AppInfoService()
     {
         AppVersion = AppInfo.Current.VersionString;
+        Build = AppInfo.Current.BuildString;
         Platform = DeviceInfo.Current.Platform.ToString();
         OS = DeviceInfo.Current.Version.ToString();
         DeviceModel = DeviceInfo.Current.Model; 
@@ -23,6 +24,8 @@ internal class AppInfoService : IAppInfoService
     
     public string? AppVersion { get; set; }
     
+    public string? Build { get; set; }
+
     public string? Platform { get; set; }
     
     public string? OS { get; set; }

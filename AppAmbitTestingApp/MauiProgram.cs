@@ -10,15 +10,8 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseAppAmbit()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
-#if DEBUG
-        builder.Logging.AddDebug();
-#endif
+            .UseAppAmbit("7fe8e348-9a57-4397-8895-3b15b592aef0");
+        
         return builder.Build();
     }
 }

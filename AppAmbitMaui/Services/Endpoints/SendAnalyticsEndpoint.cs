@@ -6,13 +6,13 @@ namespace AppAmbit.Services.Endpoints;
 
 internal class SendAnalyticsEndpoint : BaseEndpoint
 {
-    public SendAnalyticsEndpoint(AnalyticsReport analyticsReport)
+    public SendAnalyticsEndpoint(Models.Analytics.AnalyticsReport analyticsReport)
     {
         Url = "/analytics";
         Method = HttpMethodEnum.Post;
         Payload = new
-        { 
-            analyticsReport
+        {
+            analytics = analyticsReport
         };
     }
 }

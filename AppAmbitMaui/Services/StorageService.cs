@@ -105,13 +105,21 @@ internal class StorageService : IStorageService
         var log = new Log
         {   
             Id = Guid.NewGuid(),
-            AppVersion = AppInfo.Current.VersionString,
-            Message = exception?.StackTrace,
-            Timestamp = DateTime.UtcNow,
-            Title = exception?.Message,
+            AppVersionBuild = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
+            StackTrace = exception?.StackTrace,
+            Description = Truncate(exception?.Message, 80),
+            Title =  Truncate(exception?.StackTrace, 80),
+            Properties = "No properties",
+            Timestamp = DateTime.Now,
             Type = LogType.Crash
         };
         await _database.InsertAsync(log);
+    }
+    
+    private static string Truncate(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 
     public async Task LogEventAsync(Log log)

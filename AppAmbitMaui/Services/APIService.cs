@@ -42,7 +42,6 @@ internal class APIService : IAPIService
         return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
     }
     
-    
     private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
     {
         var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
