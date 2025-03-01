@@ -166,7 +166,7 @@ public static class Core
         }
     }
     
-    private static async Task SendSummaryAndFile()
+    internal static async Task SendSummaryAndFile()
     {
         var logs = await storageService?.GetAllLogsAsync();
         if (logs.Count == 0)

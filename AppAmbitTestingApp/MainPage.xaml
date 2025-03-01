@@ -36,10 +36,12 @@
             <Button
                 Text="Test adding warn log" 
                 Clicked="OnTestWarnLogClicked" />
-            
             <Button
                 Text="Test logging crash" 
                 Clicked="OnCounterClicked" />
+            <Button
+                Text="Generate test crash" 
+                Clicked="OnGenerateTestCrash" />
         </VerticalStackLayout>
     </ScrollView>
 

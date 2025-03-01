@@ -25,6 +25,12 @@ public static class Crashes
         await LogEvent(title, message, logType);
     }
 
+    public static async Task GenerateTestCrash()
+    {
+        await LogEvent("Test Crash", "This is a test crash", LogType.Crash);
+        await Core.SendSummaryAndFile();
+    }
+    
     private static async Task LogEvent(string? title, string? message, LogType logType, Exception? exception = null, string properties = null)
     {
         var logService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();

@@ -75,6 +75,11 @@ public partial class MainPage : ContentPage, INotifyPropertyChanged
     {
         Crashes.TrackError(LogTitle, LogMessage, LogType.Warning);
     }
+    
+    private void OnGenerateTestCrash(object sender, EventArgs e)
+    {
+        Crashes.GenerateTestCrash();
+    }
 
     private void TitleInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
     {

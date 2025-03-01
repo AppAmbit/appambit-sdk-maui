@@ -8,13 +8,27 @@ namespace AppAmbit;
 
 public static class Analytics
 {
+    public static async Task GenerateTestEvent()
+    {
+        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+        {
+            { "Event", "Custom event" }
+        });
+    }
+    
     public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
+    {
+        await SendOrSaveEvent(eventTitle, data);
+    }
+
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
+            
             var analyticsReport = new Models.Analytics.AnalyticsReport()
             {
                 EventTitle = eventTitle,
