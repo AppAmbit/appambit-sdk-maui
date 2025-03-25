@@ -4,7 +4,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="AppAmbitTestingApp.AnalyticsPage">
     <ContentPage.Content>
-        <Button Text="Send custom analytics event"
-                Clicked="Button_OnClicked"/>
+        <VerticalStackLayout>
+            <Button Text="Send custom analytics event"
+                    HeightRequest="50"
+                    Padding="30"
+                    Clicked="Button_OnClicked"/>
+            <Button Text="Generate test event"
+                    HeightRequest="50"
+                    Padding="30"
+                    Clicked="Button_OnClickedTestEvent"/>
+        </VerticalStackLayout>
     </ContentPage.Content>
 </ContentPage>
