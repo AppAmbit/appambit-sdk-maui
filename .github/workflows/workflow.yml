@@ -43,7 +43,7 @@ jobs:
     - name: Build and Pack NuGet package
       run: dotnet pack Kava/Kava.csproj -p:Version='${{ steps.gitversion.outputs.SemVer }}' -c Release
     - name: Upload NuGet package to GitHub
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nugetPackage
         path: Kava/bin/Release/ 
