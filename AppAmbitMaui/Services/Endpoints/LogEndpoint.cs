@@ -1,16 +1,17 @@
 using AppAmbit.Models;
 using AppAmbit.Models.App;
+using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints.Base;
 using AppAmbit.Services.Interfaces;
 
 namespace AppAmbit.Services.Endpoints;
 
-internal class RegisterEndpoint : BaseEndpoint, IEndpoint
+internal class LogEndpoint : BaseEndpoint, IEndpoint
 {
-    public RegisterEndpoint(Consumer consumer)
+    public LogEndpoint(Log log)
     {
-        Url = "/consumer";
+        Url = "/log";
         Method = HttpMethodEnum.Post;
-        Payload = consumer;
+        Payload = log;
     }
 }

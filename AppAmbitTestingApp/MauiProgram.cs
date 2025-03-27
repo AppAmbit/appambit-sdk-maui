@@ -10,7 +10,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseAppAmbit("7fe8e348-9a57-4397-8895-3b15b592aef0");
+            .UseAppAmbit("cbe81c2b-3fa6-45ac-9ed9-7c9792e4843e");
         
         return builder.Build();
     }

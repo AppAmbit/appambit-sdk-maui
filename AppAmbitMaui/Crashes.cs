@@ -1,4 +1,5 @@
 using AppAmbit.Models.Logs;
+using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
 
@@ -33,28 +34,43 @@ public static class Crashes
     
     private static async Task LogEvent(string? title, string? message, LogType logType, Exception? exception = null, string properties = null)
     {
-        var logService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-        
         var description = exception != null ? exception.Message : message;
         var titleText = exception != null
             ? !string.IsNullOrEmpty(exception.StackTrace) 
                 ? exception.StackTrace 
                 : title 
             : title;
-        
+            
         var log = new Log
-        {   
+        {
             Id = Guid.NewGuid(),
-            AppVersionBuild = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
-            StackTrace = exception?.StackTrace,
-            Description = Truncate(description, 80),
-            Title = Truncate(titleText, 80) ,
-            Properties = properties,
-            Timestamp = DateTime.Now,
-            Type = logType
+            AppVersion = "1.0.0",
+            ClassFQN = @"App\Http\Controllers\Api\LogController",
+            FileName = "Microsoft.Maui.Controls.Button",
+            LineNumber = 23,
+            Message = "Call to a member function get() on null",
+            StackTrace = "Stacktrace:"+ exception?.StackTrace,
+            Context = new Dictionary<string, object>()
+            {
+                { "user_id", 1 }
+            },
+            Type = "error",
         };
-        
-        await logService?.LogEventAsync(log);
+                
+        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
+        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
+        if (hasInternet && !string.IsNullOrEmpty(token))
+        {
+            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
+            var registerEndpoint = new LogEndpoint(log);
+            var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+        }
+        else
+        {
+            var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+            await storageService?.LogEventAsync(log);
+        }
     }
     
     private static string Truncate(string value, int maxLength)

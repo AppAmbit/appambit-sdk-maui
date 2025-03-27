@@ -102,16 +102,26 @@ internal class StorageService : IStorageService
     public async Task LogUnhandledException(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
+        var stacktrace = exception.StackTrace;
+        stacktrace = String.IsNullOrEmpty(stacktrace) ? "no_stacktrace" : stacktrace;
+        var message = exception.Message;
         var log = new Log
         {   
+            
+            
             Id = Guid.NewGuid(),
-            AppVersionBuild = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
-            StackTrace = exception?.StackTrace,
-            Description = Truncate(exception?.Message, 80),
-            Title =  Truncate(exception?.StackTrace, 80),
-            Properties = "No properties",
-            Timestamp = DateTime.Now,
-            Type = LogType.Crash
+            
+            AppVersion = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
+            ClassFQN = "class",
+            FileName = "file_name",
+            LineNumber = 1,
+            Message = message,
+            StackTrace = stacktrace,
+            Context = new Dictionary<string, object>()
+            {
+                {"user_id",1}
+            },
+            Type = "error",
         };
         await _database.InsertAsync(log);
     }

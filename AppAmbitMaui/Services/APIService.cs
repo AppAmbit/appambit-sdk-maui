@@ -11,9 +11,14 @@ internal class APIService : IAPIService
 {
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
-        using var client = new HttpClient();
+        var httpClient = new HttpClient(){
+            Timeout = TimeSpan.FromMinutes(2), // Aumenta a 2 minutos
+        };
+        httpClient.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
         
-        var responseMessage = await HttpResponseMessage(endpoint, client);
+        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         var responseString = await responseMessage.Content.ReadAsStringAsync();
         
         return TryDeserializeJson<T>(responseString);
@@ -127,7 +132,8 @@ internal class APIService : IAPIService
                     result = await client.GetAsync(SerializedGetURL(url, payload));
                     break;
                 case HttpMethodEnum.Post:
-                    result = await client.PostAsync(url, await SerializeJSONPayload(payload, endpoint));
+                    var payloadJson = await SerializeJSONPayload(payload, endpoint);
+                    result = await client.PostAsync(url,payloadJson );
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)

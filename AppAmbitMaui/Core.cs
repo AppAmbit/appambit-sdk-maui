@@ -102,7 +102,7 @@ public static class Core
     {
         var appId = await storageService?.GetAppId();
         var deviceId = await storageService.GetDeviceId();
-        
+
         if (appId == null)
         {
             await storageService.SetAppId(appKey);
@@ -113,24 +113,22 @@ public static class Core
             var id = Guid.NewGuid().ToString();
             await storageService.SetDeviceId(id);
         }
-        
+
         var consumer = new Consumer
         {
-            AppVersion = appInfoService.AppVersion,
+            AppKey = appKey,
             DeviceId = await storageService.GetDeviceId(),
-            UserId = "1",
-            IsGuest = false,
+            DeviceModel = appInfoService.DeviceModel,
+            UserId = Guid.NewGuid().ToString(),
+            IsGuest = true,
             UserEmail = "test@gmail.com",
             OS = appInfoService.OS,
-            Platform = appInfoService.Platform,
-            DeviceModel = appInfoService.DeviceModel,
             Country = appInfoService.Country,
             Language = appInfoService.Language,
-            AppKey = appKey,
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-            
+
         await storageService.SetToken(remoteToken?.Token);
     }
 
@@ -168,6 +166,7 @@ public static class Core
     
     internal static async Task SendSummaryAndFile()
     {
+        /*
         var logs = await storageService?.GetAllLogsAsync();
         if (logs.Count == 0)
         {
@@ -182,20 +181,20 @@ public static class Core
             CountryISO = appInfoService?.Country,
             Groups = new List<LogGrouping>()
         };
-
         foreach (var log in logs)
         {
             if (summary.Groups.Count == 0 || summary.Groups.Any(logGrouping => logGrouping.Title != log.Title))
             {
                 summary.Groups.Add(new LogGrouping
                 {
-                    Timestamp = log.Timestamp.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    AppVersionBuild = log.AppVersionBuild,
+                    AppVersion = log.AppVersion,
+                    ClassFQN = log.ClassFQN,
+                    FileName = log.FileName,
+                    LineNumber = log.LineNumber,
+                    Message = log.Message,
                     StackTrace = log.StackTrace,
-                    Description = log.Description,
-                    Title = log.Title, 
-                    Properties = log.Properties,
-                    LogType = GetLogTypeString(log.Type),
+                    Context = log.Context,
+                    Type = log.Type,
                     Count = 1
                 });
             }
@@ -210,19 +209,19 @@ public static class Core
 
             switch (log.Type)
             {
-                case LogType.Crash:
+                case "crash":
                     summary.CrashCount++;
                     break;
-                case LogType.Debug:
+                case "debug":
                     summary.DebugCount++;
                     break;
-                case LogType.Error:
+                case "error":
                     summary.ErrorCount++;
                     break;
-                case LogType.Information:
+                case "information":
                     summary.InformationCount++;
                     break;
-                case LogType.Warning:
+                case "warning":
                     summary.WarningCount++;
                     break;
             }
@@ -239,6 +238,7 @@ public static class Core
         var result = await apiService?.ExecuteRequest<string>(new SendLogsAndSummaryEndpoint(fileContent, summary));
         
         await storageService.DeleteAllLogs();
+        */
     }
         
     private static async Task InitializeServices()
