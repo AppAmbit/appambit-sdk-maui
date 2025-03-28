@@ -1,26 +1,13 @@
 ﻿using System.ComponentModel;
 using AppAmbit;
+using AppAmbit.Models.Logs;
 
 namespace AppAmbitTestingApp;
 
-public partial class MainPage : ContentPage, INotifyPropertyChanged
+public partial class MainPage : ContentPage
 {
-    private string _logTitle = "";
 
-    public string LogTitle
-    {
-        get => _logTitle;
-        set
-        {
-            if (_logTitle != value)
-            {
-                _logTitle = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-    
-    private string _logMessage = "";
+    private string _logMessage = "Test Log Message";
 
     public string LogMessage
     {
@@ -38,6 +25,7 @@ public partial class MainPage : ContentPage, INotifyPropertyChanged
     public MainPage()
     {
         InitializeComponent();
+        this.BindingContext = this;
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
@@ -45,45 +33,19 @@ public partial class MainPage : ContentPage, INotifyPropertyChanged
         throw new NullReferenceException();
     }
     
-    private void OnTestErrorLogClicked(object sender, EventArgs e)
+    private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        Crashes.TrackError(LogTitle, LogMessage, LogType.Error);
+        Crashes.LogError( LogMessage, LogType.Error);
     }
     
-    private void OnTestCrashLogClicked(object sender, EventArgs e)
+    private async void OnTestCrashLogClicked(object sender, EventArgs e)
     {
-        Crashes.TrackError(LogTitle, LogMessage, LogType.Crash);
-    }
-    
-    private void OnTestInfoLogClicked(object sender, EventArgs e)
-    {
-        Crashes.TrackError(LogTitle, LogMessage, LogType.Information);
-    }
-    
-    private void OnTestDebugLogClicked(object sender, EventArgs e)
-    {
-        var exception = new NullReferenceException();
-        Crashes.TrackError(LogTitle, LogMessage, LogType.Debug);
-        Crashes.TrackError(exception);
-        Crashes.TrackError(exception,  new Dictionary<string, string>()
-        {
-            { "Category", "Music" },
-        });
-    }
-    
-    private void OnTestWarnLogClicked(object sender, EventArgs e)
-    {
-        Crashes.TrackError(LogTitle, LogMessage, LogType.Warning);
+        Crashes.LogError( LogMessage, LogType.Crash);
     }
     
     private void OnGenerateTestCrash(object sender, EventArgs e)
     {
         Crashes.GenerateTestCrash();
-    }
-
-    private void TitleInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
-    {
-        _logTitle = e.NewTextValue;
     }
 
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)

@@ -1,8 +1,13 @@
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using SQLite;
 
 namespace AppAmbit.Models.Logs;
 
+//Based on the specification:
+//http://staging-appambit.com/docs#logs
 public class Log
 {
     [PrimaryKey]
@@ -16,17 +21,15 @@ public class Log
     
     [JsonProperty("file_name")]
     public string? FileName { get; set; }
-    
-    [JsonProperty("line_number")]
-    public long? LineNumber { get; set; }
+
+    [JsonProperty("line_number")] 
+    public long LineNumber { get; set; }
     
     [JsonProperty("message")]
-    public string? Message { get; set; }
-    
-    [JsonProperty("stack_trace")]
-    public string? StackTrace { get; set; }
-    
-    
+    public string? Message { get; set; } = String.Empty;
+
+    [JsonProperty("stack_trace")] public string? StackTrace { get; set; } = AppConstants.NO_STACKTRACE_AVAILABLE;
+
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
     public Dictionary<string, object> Context 
@@ -40,5 +43,15 @@ public class Log
     public string ContextJson { get; set; }
     
     [JsonProperty("type")]
-    public string? Type { get; set; }
+    public LogType? Type { get; set; }
+}
+
+[JsonConverter(typeof(StringEnumConverter))]
+public enum LogType
+{
+    [EnumMember(Value = "error")]
+    Error,
+    
+    [EnumMember(Value = "crash")]
+    Crash
 }

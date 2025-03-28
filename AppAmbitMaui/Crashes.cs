@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -7,54 +8,45 @@ namespace AppAmbit;
 
 public static class Crashes
 {
-    public static async Task TrackError(Exception? ex, Dictionary<string, string> properties = null)
+    public static async Task LogError(Exception? ex, Dictionary<string, string> properties = null)
     {
         var tempDict = new Dictionary<string, string>();
         if (properties != null)
         {
             foreach (var item in properties.TakeWhile(item => tempDict.Count <= 80))
             {
-                tempDict.Add(item.Key, Truncate(item.Value, 125));
+                tempDict.Add(item.Key, item.Value.Truncate( 125));
             }
         }
         
-        await LogEvent(ex.Message, ex.StackTrace, LogType.Crash, ex, JsonConvert.SerializeObject(tempDict));
+        await LogEvent( ex?.StackTrace, LogType.Crash, ex, JsonConvert.SerializeObject(tempDict));
     }
     
-    public static async Task TrackError(string title, string message, LogType logType)
+    public static async Task LogError(string message, LogType logType)
     {
-        await LogEvent(title, message, logType);
+        await LogEvent(message, logType);
     }
 
     public static async Task GenerateTestCrash()
     {
-        await LogEvent("Test Crash", "This is a test crash", LogType.Crash);
-        await Core.SendSummaryAndFile();
+        await LogEvent( "This is a test crash", LogType.Crash);
     }
     
-    private static async Task LogEvent(string? title, string? message, LogType logType, Exception? exception = null, string properties = null)
+    private static async Task LogEvent(string? message, LogType logType, Exception? exception = null, string properties = null)
     {
-        var description = exception != null ? exception.Message : message;
-        var titleText = exception != null
-            ? !string.IsNullOrEmpty(exception.StackTrace) 
-                ? exception.StackTrace 
-                : title 
-            : title;
-            
+        var stackTrace = exception?.StackTrace;
+        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
         var log = new Log
         {
             Id = Guid.NewGuid(),
-            AppVersion = "1.0.0",
-            ClassFQN = @"App\Http\Controllers\Api\LogController",
-            FileName = "Microsoft.Maui.Controls.Button",
-            LineNumber = 23,
-            Message = "Call to a member function get() on null",
-            StackTrace = "Stacktrace:"+ exception?.StackTrace,
-            Context = new Dictionary<string, object>()
-            {
-                { "user_id", 1 }
-            },
-            Type = "error",
+            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
+            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
+            LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
+            Message = "" + message,
+            StackTrace = stackTrace,
+            Context = new Dictionary<string, object>(),
+            Type = logType
         };
                 
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
@@ -72,19 +64,4 @@ public static class Crashes
             await storageService?.LogEventAsync(log);
         }
     }
-    
-    private static string Truncate(string value, int maxLength)
-    {
-        if (string.IsNullOrEmpty(value)) return value;
-        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
-    }
-}
-
-public enum LogType
-{
-    Debug,
-    Information,
-    Warning,
-    Error,
-    Crash
 }

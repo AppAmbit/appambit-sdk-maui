@@ -7,4 +7,8 @@ internal class AppConstants
     internal const SQLite.SQLiteOpenFlags Flags = SQLite.SQLiteOpenFlags.ReadWrite | SQLite.SQLiteOpenFlags.Create | SQLite.SQLiteOpenFlags.SharedCache;
 
     internal static string DatabasePath => Path.Combine(FileSystem.AppDataDirectory, DatabaseFileName);
+    
+    internal const string UNKNOWNFILENAME = "UnknownFile"; 
+    internal const string UNKNOWNCLASS = "UnknownClass"; 
+    internal const string NO_STACKTRACE_AVAILABLE = "NoStackTraceAvailable";
 }

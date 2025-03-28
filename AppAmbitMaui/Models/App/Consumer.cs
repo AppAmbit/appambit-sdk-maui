@@ -2,6 +2,8 @@ using Newtonsoft.Json;
 
 namespace AppAmbit.Models.App;
 
+//Based on the specification:
+//http://staging-appambit.com/docs#consumer
 public class Consumer
 {
     [JsonProperty("app_key")]

@@ -102,36 +102,24 @@ internal class StorageService : IStorageService
     public async Task LogUnhandledException(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        var stacktrace = exception.StackTrace;
-        stacktrace = String.IsNullOrEmpty(stacktrace) ? "no_stacktrace" : stacktrace;
         var message = exception.Message;
+        var stackTrace = exception?.StackTrace;
+        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
         var log = new Log
-        {   
-            
-            
+        {
             Id = Guid.NewGuid(),
-            
-            AppVersion = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
-            ClassFQN = "class",
-            FileName = "file_name",
-            LineNumber = 1,
-            Message = message,
-            StackTrace = stacktrace,
-            Context = new Dictionary<string, object>()
-            {
-                {"user_id",1}
-            },
-            Type = "error",
+            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
+            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
+            LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
+            Message = exception?.Message,
+            StackTrace = stackTrace,
+            Context = new Dictionary<string, object>(),
+            Type = LogType.Crash
         };
         await _database.InsertAsync(log);
     }
     
-    private static string Truncate(string value, int maxLength)
-    {
-        if (string.IsNullOrEmpty(value)) return value;
-        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
-    }
-
     public async Task LogEventAsync(Log log)
     {
         await _database.InsertAsync(log);
