@@ -117,51 +117,15 @@ internal class StorageService : IStorageService
             Context = new Dictionary<string, object>(),
             Type = LogType.Crash
         };
-        await LogEventAsync(log);
-    }
-    
-    //Based on the requirements:
-    //https://www.figma.com/board/1exe6mAUjls7rNGqK2s94c/AppAmbit-Reqs?node-id=0-1&p=f&t=goikMoM2R1vFFRbI-0
-    public async Task LogEventAsync(Log log)
-    {    
-        var hasInternet = ()=> Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
         
-        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet() && !string.IsNullOrEmpty(token))
-        {
-            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-            var registerEndpoint = new LogEndpoint(log);
-            
-            var retryCounter = 0;
-            var hasErrors = false;
-            var hasCompleted = false;
-            do{
-                try
-                {
-                    var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
-                    hasCompleted = true;
-                }
-                catch (Exception ex)
-                {
-                    hasErrors = true;
-                }
-            } while( hasErrors && hasInternet() && retryCounter++ < 3  );
-            
-            if(!hasCompleted)
-                await StoreLogInDB(log);
-        }
-        else
-        {
-            await StoreLogInDB(log);
-        }
-    }
-
-    private async Task StoreLogInDB(Log log)
-    {
         var logTimestamp = log.ConvertTo<LogTimestamp>();
         logTimestamp.Id = Guid.NewGuid();
         logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
+        await LogEventAsync(logTimestamp);
+    }
+    
+    public async Task LogEventAsync(LogTimestamp logTimestamp)
+    {    
         await _database.InsertAsync(logTimestamp);
     }
 

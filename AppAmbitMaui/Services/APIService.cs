@@ -12,11 +12,11 @@ internal class APIService : IAPIService
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
         var httpClient = new HttpClient(){
-            Timeout = TimeSpan.FromMinutes(2), // Aumenta a 2 minutos
+            Timeout = TimeSpan.FromMinutes(2),
         };
         httpClient.DefaultRequestHeaders
             .Accept
-            .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
         
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         var responseString = await responseMessage.Content.ReadAsStringAsync();

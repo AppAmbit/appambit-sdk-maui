@@ -48,8 +48,54 @@ public static class Crashes
             Type = logType
         };
         var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-        await storageService?.LogEventAsync(log);
+        await SendOrSaveLogEventAsync(log);
+    }
+    
+    private static async Task SendOrSaveLogEventAsync(Log log)
+    {    
+        var hasInternet = ()=> Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
+        
+        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
+        if (hasInternet() && !string.IsNullOrEmpty(token))
+        {
+            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
+            var registerEndpoint = new LogEndpoint(log);
             
+            var retryCounter = 0;
+            var hasErrors = false;
+            var hasCompleted = false;
+            do{
+                try
+                {
+                    var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+                    hasCompleted = true;
+                }
+                catch (Exception ex)
+                {
+                    hasErrors = true;
+                }
+            } while( hasErrors && hasInternet() && retryCounter++ < 3  );
+
+            if (!hasCompleted)
+            {
+                await StoreLogInDB(log);
+            }
+        }
+        else
+        {
+            await StoreLogInDB(log);
+        }
+    }
+
+    private static async Task StoreLogInDB(Log log)
+    {
+        var logTimestamp = log.ConvertTo<LogTimestamp>();
+        logTimestamp.Id = Guid.NewGuid();
+        logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
+        
+        var storeService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+        await storeService.LogEventAsync(logTimestamp);
     }
     
     private static string Truncate(string value, int maxLength)
