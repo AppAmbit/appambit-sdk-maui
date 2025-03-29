@@ -38,7 +38,6 @@ public static class Crashes
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
         var log = new Log
         {
-            Id = Guid.NewGuid(),
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
             ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
             FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
@@ -48,20 +47,8 @@ public static class Crashes
             Context = new Dictionary<string, object>(),
             Type = logType
         };
-                
-        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
-        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet && !string.IsNullOrEmpty(token))
-        {
-            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-            var registerEndpoint = new LogEndpoint(log);
-            var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
-        }
-        else
-        {
-            var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-            await storageService?.LogEventAsync(log);
-        }
+        var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+        await storageService?.LogEventAsync(log);
+            
     }
 }

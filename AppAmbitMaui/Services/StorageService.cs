@@ -2,6 +2,7 @@ using AppAmbit.Models;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
+using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using SQLite;
 
@@ -25,7 +26,7 @@ internal class StorageService : IStorageService
 
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
-        await _database.CreateTableAsync<Log>();
+        await _database.CreateTableAsync<LogTimestamp>();
         await _database.CreateTableAsync<AnalyticsLog>();
     }
     
@@ -107,7 +108,6 @@ internal class StorageService : IStorageService
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
         var log = new Log
         {
-            Id = Guid.NewGuid(),
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
             ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
             FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
@@ -117,12 +117,52 @@ internal class StorageService : IStorageService
             Context = new Dictionary<string, object>(),
             Type = LogType.Crash
         };
-        await _database.InsertAsync(log);
+        await LogEventAsync(log);
     }
     
+    //Based on the requirements:
+    //https://www.figma.com/board/1exe6mAUjls7rNGqK2s94c/AppAmbit-Reqs?node-id=0-1&p=f&t=goikMoM2R1vFFRbI-0
     public async Task LogEventAsync(Log log)
+    {    
+        var hasInternet = ()=> Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
+        
+        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
+        if (hasInternet() && !string.IsNullOrEmpty(token))
+        {
+            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
+            var registerEndpoint = new LogEndpoint(log);
+            
+            var retryCounter = 0;
+            var hasErrors = false;
+            var hasCompleted = false;
+            do{
+                try
+                {
+                    var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+                    hasCompleted = true;
+                }
+                catch (Exception ex)
+                {
+                    hasErrors = true;
+                }
+            } while( hasErrors && hasInternet() && retryCounter++ < 3  );
+            
+            if(!hasCompleted)
+                await StoreLogInDB(log);
+        }
+        else
+        {
+            await StoreLogInDB(log);
+        }
+    }
+
+    private async Task StoreLogInDB(Log log)
     {
-        await _database.InsertAsync(log);
+        var logTimestamp = log.ConvertTo<LogTimestamp>();
+        logTimestamp.Id = Guid.NewGuid();
+        logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
+        await _database.InsertAsync(logTimestamp);
     }
 
     public async Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog)

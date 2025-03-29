@@ -10,9 +10,6 @@ namespace AppAmbit.Models.Logs;
 //http://staging-appambit.com/docs#logs
 public class Log
 {
-    [PrimaryKey]
-    public Guid Id { get; set; }
-    
     [JsonProperty("app_version")]
     public string? AppVersion { get; set; }
     
@@ -28,7 +25,8 @@ public class Log
     [JsonProperty("message")]
     public string? Message { get; set; } = String.Empty;
 
-    [JsonProperty("stack_trace")] public string? StackTrace { get; set; } = AppConstants.NO_STACKTRACE_AVAILABLE;
+    [JsonProperty("stack_trace")] 
+    public string? StackTrace { get; set; } = AppConstants.NO_STACKTRACE_AVAILABLE;
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
