@@ -35,12 +35,7 @@ public partial class MainPage : ContentPage
     
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        Crashes.LogError( LogMessage, LogType.Error);
-    }
-    
-    private async void OnTestCrashLogClicked(object sender, EventArgs e)
-    {
-        Crashes.LogError( LogMessage, LogType.Crash);
+        Crashes.LogError( LogMessage);
     }
     
     private void OnGenerateTestCrash(object sender, EventArgs e)

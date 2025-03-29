@@ -6,8 +6,6 @@ using SQLite;
 
 namespace AppAmbit.Models.Logs;
 
-//Based on the specification:
-//http://staging-appambit.com/docs#logs
 public class Log
 {
     [JsonProperty("app_version")]
@@ -26,7 +24,7 @@ public class Log
     public string? Message { get; set; } = String.Empty;
 
     [JsonProperty("stack_trace")] 
-    public string? StackTrace { get; set; } = AppConstants.NO_STACKTRACE_AVAILABLE;
+    public string? StackTrace { get; set; } = AppConstants.NoStackTraceAvailable;
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
@@ -36,7 +34,7 @@ public class Log
         set => ContextJson = JsonConvert.SerializeObject(value);
     }
 
-    // internat field for storing on Sqlite
+    // internal field for storing on Sqlite
     [JsonIgnore]
     public string ContextJson { get; set; }
     

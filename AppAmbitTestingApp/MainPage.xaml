@@ -21,9 +21,6 @@
                 Text="Test adding error log" 
                 Clicked="OnTestErrorLogClicked" />
             <Button
-                Text="Test adding crash log" 
-                Clicked="OnTestCrashLogClicked" />
-            <Button
                 Text="Test logging crash" 
                 Clicked="OnCounterClicked" />
             <Button

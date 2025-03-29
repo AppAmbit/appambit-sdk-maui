@@ -8,7 +8,7 @@ internal class AppConstants
 
     internal static string DatabasePath => Path.Combine(FileSystem.AppDataDirectory, DatabaseFileName);
     
-    internal const string UNKNOWNFILENAME = "UnknownFile"; 
-    internal const string UNKNOWNCLASS = "UnknownClass"; 
-    internal const string NO_STACKTRACE_AVAILABLE = "NoStackTraceAvailable";
+    internal const string UnknownFileName = "UnknownFile"; 
+    internal const string UnknownClass = "UnknownClass"; 
+    internal const string NoStackTraceAvailable = "NoStackTraceAvailable";
 }

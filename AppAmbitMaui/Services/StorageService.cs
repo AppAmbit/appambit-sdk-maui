@@ -105,12 +105,12 @@ internal class StorageService : IStorageService
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
         var message = exception.Message;
         var stackTrace = exception?.StackTrace;
-        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
+        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
-            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
+            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
+            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
             Message = exception?.Message,
             StackTrace = stackTrace,

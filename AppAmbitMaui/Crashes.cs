@@ -15,16 +15,16 @@ public static class Crashes
         {
             foreach (var item in properties.TakeWhile(item => tempDict.Count <= 80))
             {
-                tempDict.Add(item.Key, item.Value.Truncate( 125));
+                tempDict.Add(item.Key, Truncate(item.Value, 125));
             }
         }
         
-        await LogEvent( ex?.StackTrace, LogType.Crash, ex, JsonConvert.SerializeObject(tempDict));
+        await LogEvent( ex?.StackTrace, LogType.Error, ex, JsonConvert.SerializeObject(tempDict));
     }
     
-    public static async Task LogError(string message, LogType logType)
+    public static async Task LogError(string message)
     {
-        await LogEvent(message, logType);
+        await LogEvent(message, LogType.Error);
     }
 
     public static async Task GenerateTestCrash()
@@ -35,12 +35,12 @@ public static class Crashes
     private static async Task LogEvent(string? message, LogType logType, Exception? exception = null, string properties = null)
     {
         var stackTrace = exception?.StackTrace;
-        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NO_STACKTRACE_AVAILABLE : stackTrace;
+        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UNKNOWNCLASS,
-            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UNKNOWNFILENAME,
+            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
+            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
             Message = "" + message,
             StackTrace = stackTrace,
@@ -50,5 +50,11 @@ public static class Crashes
         var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.LogEventAsync(log);
             
+    }
+    
+    private static string Truncate(string value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value)) return value;
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 }
