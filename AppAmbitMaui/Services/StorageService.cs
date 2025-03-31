@@ -11,11 +11,6 @@ namespace AppAmbit.Services;
 internal class StorageService : IStorageService
 {
     private SQLiteAsyncConnection _database;
-    
-    public StorageService()
-    {
-        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-    }
 
     public async Task InitializeAsync()
     {
@@ -28,12 +23,6 @@ internal class StorageService : IStorageService
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogTimestamp>();
         await _database.CreateTableAsync<AnalyticsLog>();
-    }
-    
-    public void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
-    {
-        LogUnhandledException(unhandledExceptionEventArgs);
-        Core.OnSleep();
     }
 
     public async Task SetToken(string? token)
@@ -100,29 +89,6 @@ internal class StorageService : IStorageService
         return appSecrets?.SessionId;
     }
 
-    public async Task LogUnhandledException(UnhandledExceptionEventArgs unhandledExceptionEventArgs)
-    {
-        var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        var message = exception.Message;
-        var stackTrace = exception?.StackTrace;
-        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
-        var log = new Log
-        {
-            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
-            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
-            LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
-            Message = exception?.Message,
-            StackTrace = stackTrace,
-            Context = new Dictionary<string, object>(),
-            Type = LogType.Crash
-        };
-        
-        var logTimestamp = log.ConvertTo<LogTimestamp>();
-        logTimestamp.Id = Guid.NewGuid();
-        logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
-        await LogEventAsync(logTimestamp);
-    }
     
     public async Task LogEventAsync(LogTimestamp logTimestamp)
     {    

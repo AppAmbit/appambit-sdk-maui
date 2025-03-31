@@ -10,11 +10,19 @@ public static class ObjectExtensions
         
         var jsonSerializerSettings = new JsonSerializerSettings
         {
-            MissingMemberHandling = MissingMemberHandling.Ignore // Ignore unknown properties
+            MissingMemberHandling = MissingMemberHandling.Ignore
         };
 
-        // Serialize the source object to JSON and deserialize it into the target type
-        string json = JsonConvert.SerializeObject(source);
-        return JsonConvert.DeserializeObject<T>(json,jsonSerializerSettings) ?? new T();
+        
+        try
+        {
+            string json = JsonConvert.SerializeObject(source);
+            var result = JsonConvert.DeserializeObject<T>(json, jsonSerializerSettings);
+            return result ?? throw new InvalidOperationException("Deserialization failed for object.");
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to convert object", ex);
+        }
     }
 }

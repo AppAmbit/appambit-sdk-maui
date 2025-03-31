@@ -8,6 +8,11 @@ namespace AppAmbit;
 
 public static class Analytics
 {
+    static Analytics()
+    { 
+        AppDomain.CurrentDomain.UnhandledException -= Logging.OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += Logging.OnUnhandledException;
+    }
     public static async Task GenerateTestEvent()
     {
         await SendOrSaveEvent("Test Event", new Dictionary<string, string>()

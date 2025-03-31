@@ -36,7 +36,7 @@ public class Log
 
     // internal field for storing on Sqlite
     [JsonIgnore]
-    public string ContextJson { get; set; }
+    public string ContextJson { get; set; } = "{}";
     
     [JsonProperty("type")]
     public LogType? Type { get; set; }
