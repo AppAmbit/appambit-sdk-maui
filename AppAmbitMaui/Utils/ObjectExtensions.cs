@@ -12,7 +12,6 @@ public static class ObjectExtensions
         {
             MissingMemberHandling = MissingMemberHandling.Ignore
         };
-
         
         try
         {
