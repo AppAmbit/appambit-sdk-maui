@@ -26,9 +26,9 @@ public static class Crashes
         await LogEvent( ex?.Message, LogType.Error, ex, properties);
     }
     
-    public static async Task LogError(string message)
+    public static async Task LogError(string message, Dictionary<string, object> properties = null)
     {
-        await LogEvent(message, LogType.Error);
+        await LogEvent(message, LogType.Error,null,properties);
     }
 
     public static async Task GenerateTestCrash()
