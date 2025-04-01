@@ -28,6 +28,11 @@ public partial class MainPage : ContentPage
         this.BindingContext = this;
     }
 
+    private async void OnSendTestLog(object sender, EventArgs e)
+    {
+        await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}});
+    }
+
     private void OnCounterClicked(object sender, EventArgs e)
     {
         throw new NullReferenceException();
