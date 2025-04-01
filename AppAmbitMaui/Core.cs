@@ -165,6 +165,7 @@ public static class Core
         
     private static async Task InitializeServices()
     {
+        Crashes.Initialize();
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();

@@ -1,15 +1,25 @@
+using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 
+
 namespace AppAmbit;
 
 internal class Logging
-{   
+{
+    public static void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {   
+        var exception = e?.Exception;
+        var message = exception?.Message;
+        Logging.LogEvent(message, LogType.Crash, exception);
+        Core.OnSleep();
+    }
     public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        var message = exception.Message;
+        var message = exception?.Message;
         Logging.LogEvent(message, LogType.Crash, exception);
         Core.OnSleep();
     }

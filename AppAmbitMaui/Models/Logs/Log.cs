@@ -6,7 +6,7 @@ using SQLite;
 
 namespace AppAmbit.Models.Logs;
 
-public class Log
+internal class Log
 {
     [JsonProperty("app_version")]
     public string? AppVersion { get; set; }
