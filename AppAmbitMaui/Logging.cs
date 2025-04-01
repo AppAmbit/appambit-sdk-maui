@@ -9,7 +9,6 @@ namespace AppAmbit;
 
 internal class Logging
 {
-    
     public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null)
     {
         var stackTrace = exception?.StackTrace;

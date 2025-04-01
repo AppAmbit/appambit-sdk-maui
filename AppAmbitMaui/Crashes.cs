@@ -10,11 +10,6 @@ public static class Crashes
 {
     public static void Initialize()
     {
-        RegisterUnhandledExceptions();
-    }
-
-    private static void RegisterUnhandledExceptions()
-    {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
