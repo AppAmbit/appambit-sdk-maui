@@ -15,11 +15,10 @@ public static class Crashes
 
     private static void RegisterUnhandledExceptions()
     {
-        AppDomain.CurrentDomain.UnhandledException -= Logging.OnUnhandledException;
-        AppDomain.CurrentDomain.UnhandledException += Logging.OnUnhandledException;
-        TaskScheduler.UnobservedTaskException -= Logging.UnobservedTaskException;
-        TaskScheduler.UnobservedTaskException += Logging.UnobservedTaskException;
-
+        AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
+        TaskScheduler.UnobservedTaskException += UnobservedTaskException;
     }
     
     public static async Task LogError(Exception? ex, Dictionary<string, object> properties = null)
@@ -47,5 +46,20 @@ public static class Crashes
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+    
+    private static void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {   
+        var exception = e?.Exception;
+        var message = exception?.Message;
+        LogEvent(message, LogType.Crash, exception);
+        Core.OnSleep();
+    }
+    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+    {
+        var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
+        var message = exception?.Message;
+        LogEvent(message, LogType.Crash, exception);
+        Core.OnSleep();
     }
 }

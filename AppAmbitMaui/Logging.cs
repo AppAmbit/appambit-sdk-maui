@@ -9,20 +9,6 @@ namespace AppAmbit;
 
 internal class Logging
 {
-    public static void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
-    {   
-        var exception = e?.Exception;
-        var message = exception?.Message;
-        Logging.LogEvent(message, LogType.Crash, exception);
-        Core.OnSleep();
-    }
-    public static void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
-    {
-        var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        var message = exception?.Message;
-        Logging.LogEvent(message, LogType.Crash, exception);
-        Core.OnSleep();
-    }
     
     public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null)
     {
