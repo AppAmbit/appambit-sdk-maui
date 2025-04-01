@@ -50,11 +50,11 @@ public static class Crashes
         LogEvent(message, LogType.Crash, exception);
         Core.OnSleep();
     }
-    private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+    private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
         var message = exception?.Message;
-        LogEvent(message, LogType.Crash, exception);
+        await LogEvent(message, LogType.Crash, exception);
         Core.OnSleep();
     }
 }
