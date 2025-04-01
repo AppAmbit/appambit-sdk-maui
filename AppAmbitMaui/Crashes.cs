@@ -1,5 +1,4 @@
 using System.Diagnostics;
-//using AndroidX.Lifecycle.ViewModels;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
