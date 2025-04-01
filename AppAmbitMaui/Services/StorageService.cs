@@ -58,7 +58,6 @@ internal class StorageService : IStorageService
         {
             appSecrets.AppId = appId;
             await _database.UpdateAsync(appSecrets);
-
         }
         else
         {
@@ -88,7 +87,6 @@ internal class StorageService : IStorageService
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
         return appSecrets?.SessionId;
     }
-
     
     public async Task LogEventAsync(LogTimestamp logTimestamp)
     {    

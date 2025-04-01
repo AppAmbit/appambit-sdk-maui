@@ -20,7 +20,7 @@ public static class Analytics
     {
         await SendOrSaveEvent(eventTitle, data);
     }
-
+    
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
