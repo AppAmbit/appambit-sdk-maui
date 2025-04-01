@@ -43,18 +43,18 @@ public static class Crashes
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
     
-    private static void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {   
         var exception = e?.Exception;
         var message = exception?.Message;
-        LogEvent(message, LogType.Crash, exception);
-        Core.OnSleep();
+        await LogEvent(message, LogType.Crash, exception);
+        await Core.OnSleep();
     }
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
         var message = exception?.Message;
         await LogEvent(message, LogType.Crash, exception);
-        Core.OnSleep();
+        await Core.OnSleep();
     }
 }
