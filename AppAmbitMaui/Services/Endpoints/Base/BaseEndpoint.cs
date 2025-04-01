@@ -6,7 +6,7 @@ internal class BaseEndpoint : IEndpoint
 {
     public string Url { get; set; }
     
-    public string BaseUrl { get; set; } = "https://appambitv2-restless-morning-3748.fly.dev/api";
+    public string BaseUrl { get; set; } = "http://staging-appambit.com/api";
     
     public bool SkipAuthorization { get; set;  } = false;
     

@@ -7,11 +7,9 @@ internal interface IStorageService
 {
     #region Logs
 
-    Task LogUnhandledException(UnhandledExceptionEventArgs unhandledExceptionEventArgs);
-
     Task InitializeAsync();
 
-    Task LogEventAsync(Log log);
+    Task LogEventAsync(LogTimestamp logTimestamp);
 
     Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog);
 
@@ -21,8 +19,6 @@ internal interface IStorageService
     
     Task DeleteAllLogs();
     
-    void OnUnhandledException(object sender, UnhandledExceptionEventArgs e);
-
     #endregion
 
     #region Sensetive data

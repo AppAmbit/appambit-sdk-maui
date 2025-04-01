@@ -11,9 +11,14 @@ internal class APIService : IAPIService
 {
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
-        using var client = new HttpClient();
+        var httpClient = new HttpClient(){
+            Timeout = TimeSpan.FromMinutes(2),
+        };
+        httpClient.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
         
-        var responseMessage = await HttpResponseMessage(endpoint, client);
+        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         var responseString = await responseMessage.Content.ReadAsStringAsync();
         
         return TryDeserializeJson<T>(responseString);
@@ -58,30 +63,6 @@ internal class APIService : IAPIService
             return null;
         }
         
-        if (endpoint is SendLogsAndSummaryEndpoint)
-        {
-            var formData = new MultipartFormDataContent();
-            foreach (var property in payload.GetType().GetProperties())
-            {
-                var propertyName = property.Name;
-                var propertyValue = property.GetValue(payload);
-                if (propertyName == "logFile")
-                {
-                    var filePath = Path.Combine(FileSystem.AppDataDirectory, "logs.txt");
-                    var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
-                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-                    formData.Add(fileContent, "logFile", Path.GetFileName(filePath));
-                    continue;
-                }
-                if (propertyValue != null)
-                {
-                    var json = JsonConvert.SerializeObject(propertyValue);
-                    formData.Add(new StringContent(json, Encoding.UTF8, "application/json"), propertyName);
-                }
-            }
-            return formData;
-        }
-
         var data = JsonConvert.SerializeObject(payload);
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
@@ -127,7 +108,8 @@ internal class APIService : IAPIService
                     result = await client.GetAsync(SerializedGetURL(url, payload));
                     break;
                 case HttpMethodEnum.Post:
-                    result = await client.PostAsync(url, await SerializeJSONPayload(payload, endpoint));
+                    var payloadJson = await SerializeJSONPayload(payload, endpoint);
+                    result = await client.PostAsync(url,payloadJson );
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)

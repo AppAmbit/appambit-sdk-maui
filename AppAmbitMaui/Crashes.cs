@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using AppAmbit.Models.Logs;
+using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
 
@@ -6,55 +8,33 @@ namespace AppAmbit;
 
 public static class Crashes
 {
-    public static async Task TrackError(Exception? ex, Dictionary<string, string> properties = null)
+    public static void Initialize()
     {
-        var tempDict = new Dictionary<string, string>();
-        if (properties != null)
-        {
-            foreach (var item in properties.TakeWhile(item => tempDict.Count <= 80))
-            {
-                tempDict.Add(item.Key, Truncate(item.Value, 125));
-            }
-        }
-        
-        await LogEvent(ex.Message, ex.StackTrace, LogType.Crash, ex, JsonConvert.SerializeObject(tempDict));
+        AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
+        TaskScheduler.UnobservedTaskException += UnobservedTaskException;
     }
     
-    public static async Task TrackError(string title, string message, LogType logType)
+    public static async Task LogError(Exception? ex, Dictionary<string, object> properties = null)
     {
-        await LogEvent(title, message, logType);
+        await LogEvent( ex?.Message, LogType.Error, ex, properties);
+    }
+    
+    public static async Task LogError(string message, Dictionary<string, object> properties = null)
+    {
+        await LogEvent(message, LogType.Error,null,properties);
     }
 
     public static async Task GenerateTestCrash()
     {
-        await LogEvent("Test Crash", "This is a test crash", LogType.Crash);
-        await Core.SendSummaryAndFile();
+        throw new NullReferenceException();
     }
-    
-    private static async Task LogEvent(string? title, string? message, LogType logType, Exception? exception = null, string properties = null)
+
+    private static async Task LogEvent(string? message, LogType logType, Exception? exception = null,
+        Dictionary<string,object> properties = null)
     {
-        var logService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-        
-        var description = exception != null ? exception.Message : message;
-        var titleText = exception != null
-            ? !string.IsNullOrEmpty(exception.StackTrace) 
-                ? exception.StackTrace 
-                : title 
-            : title;
-        
-        var log = new Log
-        {   
-            Id = Guid.NewGuid(),
-            AppVersionBuild = $"{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})",
-            StackTrace = exception?.StackTrace,
-            Description = Truncate(description, 80),
-            Title = Truncate(titleText, 80) ,
-            Properties = properties,
-            Timestamp = DateTime.Now,
-            Type = logType
-        };
-        
-        await logService?.LogEventAsync(log);
+        await Logging.LogEvent(message, LogType.Error,exception, properties);
     }
     
     private static string Truncate(string value, int maxLength)
@@ -62,13 +42,19 @@ public static class Crashes
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
-}
-
-public enum LogType
-{
-    Debug,
-    Information,
-    Warning,
-    Error,
-    Crash
+    
+    private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {   
+        var exception = e?.Exception;
+        var message = exception?.Message;
+        await LogEvent(message, LogType.Crash, exception);
+        await Core.OnSleep();
+    }
+    private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+    {
+        var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
+        var message = exception?.Message;
+        await LogEvent(message, LogType.Crash, exception);
+        await Core.OnSleep();
+    }
 }

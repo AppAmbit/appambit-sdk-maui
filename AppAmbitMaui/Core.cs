@@ -78,7 +78,6 @@ public static class Core
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
-            await SendSummaryAndFile();
             await SendAnalytics();
         }
         
@@ -102,7 +101,7 @@ public static class Core
     {
         var appId = await storageService?.GetAppId();
         var deviceId = await storageService.GetDeviceId();
-        
+
         if (appId == null)
         {
             await storageService.SetAppId(appKey);
@@ -113,24 +112,22 @@ public static class Core
             var id = Guid.NewGuid().ToString();
             await storageService.SetDeviceId(id);
         }
-        
+
         var consumer = new Consumer
         {
-            AppVersion = appInfoService.AppVersion,
+            AppKey = appKey,
             DeviceId = await storageService.GetDeviceId(),
-            UserId = "1",
-            IsGuest = false,
+            DeviceModel = appInfoService.DeviceModel,
+            UserId = Guid.NewGuid().ToString(),
+            IsGuest = true,
             UserEmail = "test@gmail.com",
             OS = appInfoService.OS,
-            Platform = appInfoService.Platform,
-            DeviceModel = appInfoService.DeviceModel,
             Country = appInfoService.Country,
             Language = appInfoService.Language,
-            AppKey = appKey,
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-            
+
         await storageService.SetToken(remoteToken?.Token);
     }
 
@@ -165,111 +162,14 @@ public static class Core
             var result = await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
         }
     }
-    
-    internal static async Task SendSummaryAndFile()
-    {
-        var logs = await storageService?.GetAllLogsAsync();
-        if (logs.Count == 0)
-        {
-            return;
-        }
-        
-        var summary = new LogSummary
-        {
-            DeviceId = await storageService?.GetDeviceId(),
-            DeviceModel = appInfoService?.DeviceModel,
-            Platform = appInfoService?.Platform,
-            CountryISO = appInfoService?.Country,
-            Groups = new List<LogGrouping>()
-        };
-
-        foreach (var log in logs)
-        {
-            if (summary.Groups.Count == 0 || summary.Groups.Any(logGrouping => logGrouping.Title != log.Title))
-            {
-                summary.Groups.Add(new LogGrouping
-                {
-                    Timestamp = log.Timestamp.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    AppVersionBuild = log.AppVersionBuild,
-                    StackTrace = log.StackTrace,
-                    Description = log.Description,
-                    Title = log.Title, 
-                    Properties = log.Properties,
-                    LogType = GetLogTypeString(log.Type),
-                    Count = 1
-                });
-            }
-            else if (summary.Groups.Any(logGrouping => logGrouping.Title == log.Title))
-            {
-                var logGrouping = summary.Groups.FirstOrDefault(logGrouping => logGrouping.Title == log.Title);
-                if (logGrouping != null)
-                {
-                    logGrouping.Count++;
-                }
-            }
-
-            switch (log.Type)
-            {
-                case LogType.Crash:
-                    summary.CrashCount++;
-                    break;
-                case LogType.Debug:
-                    summary.DebugCount++;
-                    break;
-                case LogType.Error:
-                    summary.ErrorCount++;
-                    break;
-                case LogType.Information:
-                    summary.InformationCount++;
-                    break;
-                case LogType.Warning:
-                    summary.WarningCount++;
-                    break;
-            }
-        }
-        
-        var filePath = Path.Combine(FileSystem.AppDataDirectory, "logs.txt");
-        var jsonString = JsonSerializer.Serialize(logs);
-        await File.WriteAllTextAsync(filePath, jsonString);
-
-        var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
-        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-        
-
-        var result = await apiService?.ExecuteRequest<string>(new SendLogsAndSummaryEndpoint(fileContent, summary));
-        
-        await storageService.DeleteAllLogs();
-    }
         
     private static async Task InitializeServices()
     {
+        Crashes.Initialize();
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
     }
-
-    private static string GetLogTypeString(LogType logType)
-    {
-        var result = "";
-        switch (logType)
-        {
-            case LogType.Error:
-                result = "error";
-            break;
-            case LogType.Crash:
-                result = "crash";
-                break;
-            case LogType.Warning:
-                result = "warn";
-            break;
-            case LogType.Debug:
-                result = "debug";
-            break;
-            case LogType.Information:
-                result = "info";
-            break;
-        }
-        return result;
-    }
+    
 }

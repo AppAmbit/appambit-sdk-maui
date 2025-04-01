@@ -13,11 +13,7 @@
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a race car number eight" />
             
-            <Entry Placeholder="Type log title"
-                   Text="{Binding LogTitle }"
-                   TextChanged="TitleInputView_OnTextChanged"/>
-            
-            <Editor Placeholder="Type log message"
+            <Entry Placeholder="Type log message"
                     Text="{Binding LogMessage}"
                     TextChanged="MessageInputView_OnTextChanged"/>
             
@@ -25,19 +21,10 @@
                 Text="Test adding error log" 
                 Clicked="OnTestErrorLogClicked" />
             <Button
-                Text="Test adding crash log" 
-                Clicked="OnTestCrashLogClicked" />
+                Text="Send Test LogError " 
+                Clicked="OnSendTestLog" />
             <Button
-                Text="Test adding info log" 
-                Clicked="OnTestInfoLogClicked" />
-            <Button
-                Text="Test adding debug log" 
-                Clicked="OnTestDebugLogClicked" />
-            <Button
-                Text="Test adding warn log" 
-                Clicked="OnTestWarnLogClicked" />
-            <Button
-                Text="Test logging crash" 
+                Text="Test Crash" 
                 Clicked="OnCounterClicked" />
             <Button
                 Text="Generate test crash" 
