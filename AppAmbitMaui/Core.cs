@@ -128,7 +128,7 @@ public static class Core
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
 
-        await storageService.SetToken(remoteToken?.Token);
+        apiService.SetToken(remoteToken?.Token);
     }
 
     private static async Task StartSession()
@@ -165,11 +165,11 @@ public static class Core
         
     private static async Task InitializeServices()
     {
-        Crashes.Initialize();
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
+        Crashes.Initialize(apiService,storageService);
     }
     
 }

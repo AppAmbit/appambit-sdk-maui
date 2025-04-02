@@ -8,12 +8,13 @@ namespace AppAmbit;
 
 public static class Crashes
 {
-    public static void Initialize()
+    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+        Logging.Initialize(apiService,storageService);
     }
     
     public static async Task LogError(Exception? ex, Dictionary<string, object> properties = null)
@@ -48,13 +49,11 @@ public static class Crashes
         var exception = e?.Exception;
         var message = exception?.Message;
         await LogEvent(message, LogType.Crash, exception);
-        await Core.OnSleep();
     }
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
         var message = exception?.Message;
         await LogEvent(message, LogType.Crash, exception);
-        await Core.OnSleep();
     }
 }

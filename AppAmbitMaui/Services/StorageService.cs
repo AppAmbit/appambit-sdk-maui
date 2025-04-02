@@ -18,24 +18,11 @@ internal class StorageService : IStorageService
         {
             return;
         }
-
+        
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogTimestamp>();
         await _database.CreateTableAsync<AnalyticsLog>();
-    }
-
-    public async Task SetToken(string? token)
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.Token = token;
-        await _database.UpdateAsync(appSecrets);
-    }
-    
-    public async Task<string?> GetToken()
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        return appSecrets?.Token;
     }
     
     public async Task SetDeviceId(string? deviceId)

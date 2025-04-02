@@ -7,8 +7,16 @@ using AppAmbit.Services.Interfaces;
 
 namespace AppAmbit;
 
-internal class Logging
+internal static class Logging
 {
+    private static IAPIService? _apiService;
+    private static IStorageService? _storageService;
+    public static void Initialize(IAPIService? apiService,IStorageService? storageService)
+    {
+        _apiService = apiService;
+        _storageService = storageService;
+    }
+
     public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null)
     {
         var stackTrace = exception?.StackTrace;
@@ -30,12 +38,10 @@ internal class Logging
     private static async Task SendOrSaveLogEventAsync(Log log)
     {
         bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()
-                             ?? throw new InvalidOperationException("StorageService is not available.");
-        var token = await storageService.GetToken();
+        var token = _apiService?.GetToken();
         
         //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet() && !string.IsNullOrEmpty(token))
+        if (hasInternet() && !string.IsNullOrEmpty(token) && log.Type!=LogType.Crash)
         {
             var registerEndpoint = new LogEndpoint(log);
             
@@ -47,9 +53,7 @@ internal class Logging
             do{
                 try
                 {
-                    var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>()
-                                     ?? throw new InvalidOperationException("APIService is not available.");
-                    var logResponse = await apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+                    var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
                     hasCompleted = true;
                 }
                 catch (Exception ex)
@@ -65,21 +69,21 @@ internal class Logging
 
             if (!hasCompleted)
             {
-                await StoreLogInDb(log, storageService);
+                await StoreLogInDb(log);
             }
         }
         else
         {
-            await StoreLogInDb(log, storageService);
+            await StoreLogInDb(log);
         }
     }
 
-    private static async Task StoreLogInDb(Log log,IStorageService storeService )
+    private static async Task StoreLogInDb(Log log)
     {
         var logTimestamp = log.ConvertTo<LogTimestamp>();
         logTimestamp.Id = Guid.NewGuid();
         logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
         
-        await storeService.LogEventAsync(logTimestamp);
+        await _storageService?.LogEventAsync(logTimestamp);
     }
 }
