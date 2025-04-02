@@ -35,7 +35,7 @@ public static class Crashes
     private static async Task LogEvent(string? message, LogType logType, Exception? exception = null,
         Dictionary<string,object> properties = null)
     {
-        await Logging.LogEvent(message, LogType.Error,exception, properties);
+        await Logging.LogEvent(message, logType,exception, properties);
     }
     
     private static string Truncate(string value, int maxLength)
