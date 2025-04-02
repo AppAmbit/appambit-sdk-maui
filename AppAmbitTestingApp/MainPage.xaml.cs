@@ -33,6 +33,23 @@ public partial class MainPage : ContentPage
         await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}});
     }
 
+    private async void OnSendTestException(object sender, EventArgs e)
+    {
+        try
+        {
+            throw new NullReferenceException();
+        }
+        catch (Exception exception)
+        {
+            await Crashes.LogError(exception,new Dictionary<string, object>(){{"user_id",1}});
+        }
+    }
+
+    private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
+    {
+        await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}}, this.GetType().FullName);
+    }
+
     private void OnCounterClicked(object sender, EventArgs e)
     {
         throw new NullReferenceException();
