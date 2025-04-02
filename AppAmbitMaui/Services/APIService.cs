@@ -9,6 +9,8 @@ namespace AppAmbit.Services;
 
 internal class APIService : IAPIService
 {
+    private string? _token;
+    
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
         var httpClient = new HttpClient(){
@@ -49,7 +51,7 @@ internal class APIService : IAPIService
     
     private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
     {
-        var token = await Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>()?.GetToken();
+        var token = GetToken();
         if (!string.IsNullOrEmpty(token))
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -133,5 +135,15 @@ internal class APIService : IAPIService
             throw new Exception();
         }
         return result;
+    }
+    
+    public string? GetToken()
+    {
+        return _token;
+    }
+    
+    public void SetToken( string? token)
+    {
+        _token = token;
     }
 }

@@ -22,10 +22,6 @@ internal interface IStorageService
     #endregion
 
     #region Sensetive data
-
-    Task SetToken(string? token);
-
-    Task<string?> GetToken();
     
     Task SetDeviceId(string? token);
 
