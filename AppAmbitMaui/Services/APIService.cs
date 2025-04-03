@@ -85,7 +85,7 @@ internal class APIService : IAPIService
         return content;
     }
     
-    private async Task<HttpContent> SerializeToMultipartFormDataContent(object payload)
+    private HttpContent SerializeToMultipartFormDataContent(object payload)
     {
         var formData = new MultipartFormDataContent();
 
@@ -101,11 +101,13 @@ internal class APIService : IAPIService
 
             if (propertyName == "file")
             {
+                /*
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, $"log-{DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH_mm_ss_fffZ")}.txt");
                 var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 formData.Add(fileContent, "file", Path.GetFileName(filePath));
                 continue;
+                */
             }
             
             if (propertyValue != null)

@@ -5,7 +5,13 @@ using System.Text;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Process = System.Diagnostics.Process;
+
+#if ANDROID
+using Android.OS;
+#elif IOS
 using UIKit;
+#endif
 
 
 namespace AppAmbit;
