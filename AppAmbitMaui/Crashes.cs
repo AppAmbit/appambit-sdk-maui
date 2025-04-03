@@ -1,8 +1,14 @@
 using System.Diagnostics;
+using System.Text;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+    
+#if ANDROID
+#elif IOS
+using UIKit;
+#endif
 
 namespace AppAmbit;
 

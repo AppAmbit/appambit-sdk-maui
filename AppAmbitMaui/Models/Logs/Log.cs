@@ -40,6 +40,9 @@ internal class Log
     
     [JsonProperty("type")]
     public LogType? Type { get; set; }
+    
+    [JsonProperty("file")] 
+    public string? file { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]

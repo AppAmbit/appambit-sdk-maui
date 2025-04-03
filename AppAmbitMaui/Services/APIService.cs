@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
@@ -58,16 +59,62 @@ internal class APIService : IAPIService
         }
     }
 
-    private async Task<HttpContent> SerializeJSONPayload(object payload, IEndpoint endpoint = null)
+    private async Task<HttpContent> SerializePayload(object payload, IEndpoint endpoint = null)
     {
         if (payload == null)
         {
             return null;
         }
+
+        HttpContent content;
+        if (payload is LogTimestamp timestamp)
+        {
+            content = SerializeToMultipartFormDataContent(timestamp);
+        }
+        else
+        {
+            content = SerializeToJSONStringContent(payload);
+        }
+        return content;
+    }
+    private static HttpContent SerializeToJSONStringContent(object payload)
+    {
         
         var data = JsonConvert.SerializeObject(payload);
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
+    }
+    
+    private async Task<HttpContent> SerializeToMultipartFormDataContent(object payload)
+    {
+        var formData = new MultipartFormDataContent();
+
+        if (payload == null)
+        {
+            return null;
+        }
+
+        foreach (var property in payload.GetType().GetProperties())
+        {
+            var propertyName = property.Name;
+            var propertyValue = property.GetValue(payload);
+
+            if (propertyName == "file")
+            {
+                var filePath = Path.Combine(FileSystem.AppDataDirectory, $"log-{DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH_mm_ss_fffZ")}.txt");
+                var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
+                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+                formData.Add(fileContent, "file", Path.GetFileName(filePath));
+                continue;
+            }
+            
+            if (propertyValue != null)
+            {
+                var json = JsonConvert.SerializeObject(propertyValue);
+                formData.Add(new StringContent(json, Encoding.UTF8, "application/json"), propertyName);
+            }
+        }
+        return formData;
     }
 
     private string SerializeStringPayload(object payload)
@@ -110,18 +157,18 @@ internal class APIService : IAPIService
                     result = await client.GetAsync(SerializedGetURL(url, payload));
                     break;
                 case HttpMethodEnum.Post:
-                    var payloadJson = await SerializeJSONPayload(payload, endpoint);
+                    var payloadJson = await SerializePayload(payload, endpoint);
                     result = await client.PostAsync(url,payloadJson );
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)
                     {
-                        Content = await SerializeJSONPayload(payload)
+                        Content = await SerializePayload(payload)
                     };
                     result = await client.SendAsync(requestMessage);
                     break;
                 case HttpMethodEnum.Put:
-                    result = await client.PutAsync(url, await SerializeJSONPayload(payload));
+                    result = await client.PutAsync(url, await SerializePayload(payload));
                     break;
                 case HttpMethodEnum.Delete:
                     result = await client.DeleteAsync(url);
