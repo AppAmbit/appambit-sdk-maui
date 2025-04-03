@@ -31,6 +31,7 @@ public partial class MainPage : ContentPage
     private async void OnSendTestLog(object sender, EventArgs e)
     {
         await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}});
+        await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
     private async void OnSendTestException(object sender, EventArgs e)
@@ -42,12 +43,14 @@ public partial class MainPage : ContentPage
         catch (Exception exception)
         {
             await Crashes.LogError(exception,new Dictionary<string, object>(){{"user_id",1}});
+            await DisplayAlert("Info", "LogError Sent", "Ok");
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
         await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}}, this.GetType().FullName);
+        await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
@@ -57,12 +60,14 @@ public partial class MainPage : ContentPage
     
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        Crashes.LogError( LogMessage);
+        await Crashes.LogError( LogMessage);
+        await DisplayAlert("Info", "LogError Sent", "Ok");
     }
     
-    private void OnGenerateTestCrash(object sender, EventArgs e)
+    private async void OnGenerateTestCrash(object sender, EventArgs e)
     {
-        Crashes.GenerateTestCrash();
+        await Crashes.GenerateTestCrash();
+        await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
