@@ -17,17 +17,17 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null)
+    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null,string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
-            FileName = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
-            LineNumber = exception?.GetLineNumberFromStackTrace() ?? 0,
-            Message = "" + message,
+            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? classFqn ?? AppConstants.UnknownClass,
+            FileName = exception?.GetFileNameFromStackTrace() ?? fileName ??  AppConstants.UnknownFileName,
+            LineNumber = exception?.GetLineNumberFromStackTrace() ?? lineNumber ??  0,
+            Message = exception?.Message ?? ( String.IsNullOrEmpty(message) ?  "" : message),
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string, object>(),
             Type = logType
