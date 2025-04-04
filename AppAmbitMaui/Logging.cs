@@ -38,6 +38,7 @@ internal static class Logging
         Console.WriteLine($"log.file: {log.file}");
         Debug.WriteLine($"log.file:");
         Debug.WriteLine($"{log.file}");
+        Debugger.Break();
         await SendOrSaveLogEventAsync(log);
     }
     
