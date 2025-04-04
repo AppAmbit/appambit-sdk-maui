@@ -1,0 +1,121 @@
+Package: com.companyname.appambittestingapp
+Version Code: 1
+Version Name: 1.0
+Android: Tiramisu
+Android Build: sdk_gphone64_arm64-userdebug 13 TE1A.220922.029 10205419 dev-keys
+Manufacturer: Google
+Model: sdk_gphone64_arm64
+CrashReporter Key: 94d757df-3271-4708-86fb-aee56a1bed4b
+Start Date: 2025-04-04T17:23:37.7862143Z
+Date: 2025-04-04T17:23:57.7889962Z
+
+Xamarin Exception Stack:
+   at AppAmbitTestingApp.MainPage.OnSendTestException(Object sender, EventArgs e) in /Users/luishernandez/Documents/GitHub/maui-core/AppAmbitTestingApp/MainPage.xaml.cs:line 41
+
+Thread 2 - main (RUNNABLE):
+0       at dalvik.system.VMStack.getThreadStackTrace (VMStack.java:-2)
+1       at java.lang.Thread.getStackTrace (Thread.java:1841)
+2       at java.lang.Thread.getAllStackTraces (Thread.java:1909)
+3       at mono.java.lang.RunnableImplementor.n_run (RunnableImplementor.java:-2)
+4       at mono.java.lang.RunnableImplementor.run (RunnableImplementor.java:31)
+5       at android.os.Handler.handleCallback (Handler.java:942)
+6       at android.os.Handler.dispatchMessage (Handler.java:99)
+7       at android.os.Looper.loopOnce (Looper.java:201)
+8       at android.os.Looper.loop (Looper.java:288)
+9       at android.app.ActivityThread.main (ActivityThread.java:7872)
+10      at java.lang.reflect.Method.invoke (Method.java:-2)
+11      at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run (RuntimeInit.java:548)
+12      at com.android.internal.os.ZygoteInit.main (ZygoteInit.java:936)
+
+Thread 39 - Signal Catcher (WAITING):
+
+Thread 41 - HeapTaskDaemon (WAITING):
+
+Thread 42 - ReferenceQueueDaemon (WAITING):
+0       at java.lang.Object.wait (Object.java:-2)
+1       at java.lang.Object.wait (Object.java:442)
+2       at java.lang.Object.wait (Object.java:568)
+3       at java.lang.Daemons$ReferenceQueueDaemon.runInternal (Daemons.java:232)
+4       at java.lang.Daemons$Daemon.run (Daemons.java:140)
+5       at java.lang.Thread.run (Thread.java:1012)
+
+Thread 43 - Jit thread pool worker thread 0 (RUNNABLE):
+
+Thread 44 - FinalizerDaemon (WAITING):
+0       at java.lang.Object.wait (Object.java:-2)
+1       at java.lang.Object.wait (Object.java:442)
+2       at java.lang.ref.ReferenceQueue.remove (ReferenceQueue.java:203)
+3       at java.lang.ref.ReferenceQueue.remove (ReferenceQueue.java:224)
+4       at java.lang.Daemons$FinalizerDaemon.runInternal (Daemons.java:300)
+5       at java.lang.Daemons$Daemon.run (Daemons.java:140)
+6       at java.lang.Thread.run (Thread.java:1012)
+
+Thread 45 - FinalizerWatchdogDaemon (TIMED_WAITING):
+0       at java.lang.Thread.sleep (Thread.java:-2)
+1       at java.lang.Thread.sleep (Thread.java:450)
+2       at java.lang.Thread.sleep (Thread.java:355)
+3       at java.lang.Daemons$FinalizerWatchdogDaemon.sleepForNanos (Daemons.java:438)
+4       at java.lang.Daemons$FinalizerWatchdogDaemon.waitForProgress (Daemons.java:480)
+5       at java.lang.Daemons$FinalizerWatchdogDaemon.runInternal (Daemons.java:369)
+6       at java.lang.Daemons$Daemon.run (Daemons.java:140)
+7       at java.lang.Thread.run (Thread.java:1012)
+
+Thread 46 - binder:5442_1 (RUNNABLE):
+
+Thread 47 - binder:5442_2 (RUNNABLE):
+
+Thread 48 - binder:5442_3 (RUNNABLE):
+
+Thread 49 - Profile Saver (RUNNABLE):
+
+Thread 50 - Thread-2 (RUNNABLE):
+
+Thread 51 - Thread-3 (RUNNABLE):
+
+Thread 52 - Thread-4 (RUNNABLE):
+
+Thread 53 - Thread-5 (RUNNABLE):
+
+Thread 54 - Thread-6 (RUNNABLE):
+
+Thread 55 - Thread-7 (RUNNABLE):
+
+Thread 56 - Thread-8 (RUNNABLE):
+
+Thread 57 - Thread-9 (RUNNABLE):
+
+Thread 58 - Thread-10 (RUNNABLE):
+
+Thread 59 - Thread-11 (RUNNABLE):
+
+Thread 60 - Thread-12 (RUNNABLE):
+
+Thread 61 - RenderThread (RUNNABLE):
+
+Thread 62 - AsyncTask #1 (TIMED_WAITING):
+0       at jdk.internal.misc.Unsafe.park (Unsafe.java:-2)
+1       at java.util.concurrent.locks.LockSupport.parkNanos (LockSupport.java:234)
+2       at java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill (SynchronousQueue.java:463)
+3       at java.util.concurrent.SynchronousQueue$TransferStack.transfer (SynchronousQueue.java:361)
+4       at java.util.concurrent.SynchronousQueue.poll (SynchronousQueue.java:939)
+5       at java.util.concurrent.ThreadPoolExecutor.getTask (ThreadPoolExecutor.java:1062)
+6       at java.util.concurrent.ThreadPoolExecutor.runWorker (ThreadPoolExecutor.java:1123)
+7       at java.util.concurrent.ThreadPoolExecutor$Worker.run (ThreadPoolExecutor.java:637)
+8       at java.lang.Thread.run (Thread.java:1012)
+
+Thread 63 - AsyncTask #2 (TIMED_WAITING):
+0       at jdk.internal.misc.Unsafe.park (Unsafe.java:-2)
+1       at java.util.concurrent.locks.LockSupport.parkNanos (LockSupport.java:234)
+2       at java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill (SynchronousQueue.java:463)
+3       at java.util.concurrent.SynchronousQueue$TransferStack.transfer (SynchronousQueue.java:361)
+4       at java.util.concurrent.SynchronousQueue.poll (SynchronousQueue.java:939)
+5       at java.util.concurrent.ThreadPoolExecutor.getTask (ThreadPoolExecutor.java:1062)
+6       at java.util.concurrent.ThreadPoolExecutor.runWorker (ThreadPoolExecutor.java:1123)
+7       at java.util.concurrent.ThreadPoolExecutor$Worker.run (ThreadPoolExecutor.java:637)
+8       at java.lang.Thread.run (Thread.java:1012)
+
+Thread 64 - hwuiTask0 (RUNNABLE):
+
+Thread 65 - hwuiTask1 (RUNNABLE):
+
+

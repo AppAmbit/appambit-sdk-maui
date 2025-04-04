@@ -1,0 +1,638 @@
+Package: com.companyname.appambittestingapp
+Version Code: 1
+Version Name: 1.0
+iOS: 18.2
+Device: iPhone
+Manufacturer: Apple
+Model: arm64
+CrashReporter Key: 0dd0ce03-85ea-4202-98cb-bff4b27c91c0
+Start Date: 2025-04-04T17:19:14.0428810Z
+2025-04-04 11:19:34.124778-0600 AppAmbitTestingApp[46165:1145150] Date: 2025-04-04T17:19:34.0433440Z
+
+Xamarin Exception Stack:
+   at AppAmbitTestingApp.MainPage.OnSendTestException(Object sender, EventArgs e) in /Users/luishernandez/Documents/GitHub/maui-core/AppAmbitTestingApp/MainPage.xaml.cs:line 41
+
+Thread 0: tid_103
+2025-04-04 11:19:34.124859-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.124936-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.124991-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.125038-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.125103-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.125177-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.125242-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.125295-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.125345-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.125392-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.125442-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+2025-04-04 11:19:34.125493-0600 AppAmbitTestingApp[46165:1145150] Thread 1: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.125541-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.125585-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.125625-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.125679-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.125737-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.125783-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.125829-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.125873-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.125921-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.125958-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.125994-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 2: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.126029-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.126078-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.126125-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.126172-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.126214-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.126310-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.126347-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.126379-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.126423-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.126469-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.126507-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 3: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.126542-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.126594-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.126638-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.126678-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.126715-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.126758-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.126801-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.126842-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.126880-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.126916-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.126955-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 4: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.126993-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.127038-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.127080-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.127118-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.127157-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.127197-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.127233-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+2025-04-04 11:19:34.127271-0600 AppAmbitTestingApp[46165:1145150]   20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.127317-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.127357-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.127394-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 5: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.127434-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.127479-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.127521-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.127562-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.127606-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.127645-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.127688-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+2025-04-04 11:19:34.127729-0600 AppAmbitTestingApp[46165:1145150]   20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.127771-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.127819-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.127856-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 6: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.127897-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.127937-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.127981-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.128022-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.128063-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.128107-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.128148-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.128191-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.128226-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.128266-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+2025-04-04 11:19:34.128304-0600 AppAmbitTestingApp[46165:1145150]   28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 7: tid_103
+2025-04-04 11:19:34.128350-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.128387-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.128432-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.128471-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.128513-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.128553-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.128592-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.128631-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.128671-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.128709-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+2025-04-04 11:19:34.128745-0600 AppAmbitTestingApp[46165:1145150]   28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 8: tid_103
+2025-04-04 11:19:34.128790-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.128835-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.128876-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.128918-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.128956-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.128998-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.129041-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.129077-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.129112-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.129152-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.129190-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 9: tid_103
+2025-04-04 11:19:34.129225-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.129262-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.129297-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.129331-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.129368-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.129407-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.129449-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.129486-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.129528-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.129572-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.129613-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.129653-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 10: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.129689-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.129733-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.129771-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.129810-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.129846-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.129892-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.129934-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.129977-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.130015-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.130048-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.130085-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 11: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.130125-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.130170-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.130211-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.130246-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.130279-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.130320-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.130360-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.130398-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.130439-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.130473-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.130505-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 12: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.130540-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.130576-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.130609-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.130642-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.130683-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.130723-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.130768-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+2025-04-04 11:19:34.130803-0600 AppAmbitTestingApp[46165:1145150]   20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.130843-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.130886-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.130929-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 13: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.130969-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.131009-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.131050-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+  8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+2025-04-04 11:19:34.131093-0600 AppAmbitTestingApp[46165:1145150]   9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.131131-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.131171-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.131205-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+2025-04-04 11:19:34.131246-0600 AppAmbitTestingApp[46165:1145150]   20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.131282-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+2025-04-04 11:19:34.131321-0600 AppAmbitTestingApp[46165:1145150]   26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.131359-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 14: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.131402-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.131442-0600 AppAmbitTestingApp[46165:1145150]   4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+2025-04-04 11:19:34.131480-0600 AppAmbitTestingApp[46165:1145150]   7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.131517-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+  10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+2025-04-04 11:19:34.131550-0600 AppAmbitTestingApp[46165:1145150]   11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+2025-04-04 11:19:34.131591-0600 AppAmbitTestingApp[46165:1145150]   14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+2025-04-04 11:19:34.131625-0600 AppAmbitTestingApp[46165:1145150]   17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+2025-04-04 11:19:34.131657-0600 AppAmbitTestingApp[46165:1145150]   20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+2025-04-04 11:19:34.131691-0600 AppAmbitTestingApp[46165:1145150]   23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.131727-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+2025-04-04 11:19:34.131759-0600 AppAmbitTestingApp[46165:1145150]   29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 15: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+2025-04-04 11:19:34.131794-0600 AppAmbitTestingApp[46165:1145150]   1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.131831-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.131872-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.131920-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.131965-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.132011-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.132051-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.132086-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.132119-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.132161-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+2025-04-04 11:19:34.132197-0600 AppAmbitTestingApp[46165:1145150]   28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 16: tid_103
+2025-04-04 11:19:34.132241-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.132282-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.132319-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.132355-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.132399-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.132437-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.132470-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.132504-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.132541-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+2025-04-04 11:19:34.132573-0600 AppAmbitTestingApp[46165:1145150]   25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+  27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+2025-04-04 11:19:34.132604-0600 AppAmbitTestingApp[46165:1145150]   28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+
+Thread 17: tid_103
+2025-04-04 11:19:34.132638-0600 AppAmbitTestingApp[46165:1145150]   0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.132675-0600 AppAmbitTestingApp[46165:1145150]   3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+  5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+2025-04-04 11:19:34.132710-0600 AppAmbitTestingApp[46165:1145150]   6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.132745-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.132781-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+  12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+2025-04-04 11:19:34.132815-0600 AppAmbitTestingApp[46165:1145150]   13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+  15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+2025-04-04 11:19:34.132848-0600 AppAmbitTestingApp[46165:1145150]   16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+  18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+2025-04-04 11:19:34.132884-0600 AppAmbitTestingApp[46165:1145150]   19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+  21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+2025-04-04 11:19:34.132927-0600 AppAmbitTestingApp[46165:1145150]   22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.132965-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.133001-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+  30  ???                                 0x0000000106142274 0x0 + 4396950132
+2025-04-04 11:19:34.133039-0600 AppAmbitTestingApp[46165:1145150] Thread 18: tid_103
+  0   libmonosgen-2.0.dylib               0x00000001072cbef8 do_icall + 176
+  1   libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.133078-0600 AppAmbitTestingApp[46165:1145150]   2   libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  3   libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  4   libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.133114-0600 AppAmbitTestingApp[46165:1145150]   5   libmonosgen-2.0.dylib               0x00000001073891f0 mono_runtime_try_invoke + 156
+  6   libmonosgen-2.0.dylib               0x000000010738b390 mono_runtime_invoke + 484
+  7   AppAmbitTestingApp                  0x00000001057af7ac _ZL30native_to_managed_trampoline_9P11objc_objectP13objc_selectorPP11_MonoMethodj + 316
+2025-04-04 11:19:34.133145-0600 AppAmbitTestingApp[46165:1145150]   8   AppAmbitTestingApp                  0x00000001057b00cc -[__MonoMac_NSAsyncSynchronizationContextDispatcher xamarinApplySelector] + 44
+  9   Foundation                          0x0000000180f465ec __NSThreadPerformPerform + 124
+2025-04-04 11:19:34.133183-0600 AppAmbitTestingApp[46165:1145150]   10  CoreFoundation                      0x000000018041d294 __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__ + 24
+  11  CoreFoundation                      0x000000018041d1dc __CFRunLoopDoSource0 + 172
+2025-04-04 11:19:34.133218-0600 AppAmbitTestingApp[46165:1145150]   12  CoreFoundation                      0x000000018041c99c __CFRunLoopDoSources0 + 324
+  13  CoreFoundation                      0x0000000180416e84 __CFRunLoopRun + 788
+  14  CoreFoundation                      0x00000001804166f4 CFRunLoopRunSpecific + 552
+2025-04-04 11:19:34.133258-0600 AppAmbitTestingApp[46165:1145150]   15  GraphicsServices                    0x00000001905e5b10 GSEventRunModal + 160
+  16  UIKitCore                           0x0000000185b319dc -[UIApplication _run] + 796
+  17  UIKitCore                           0x0000000185b35bd4 UIApplicationMain + 124
+2025-04-04 11:19:34.133303-0600 AppAmbitTestingApp[46165:1145150]   18  libxamarin-dotnet-debug.dylib       0x000000010669b1e4 xamarin_UIApplicationMain + 60
+  19  libmonosgen-2.0.dylib               0x00000001072cbf84 do_icall + 316
+  20  libmonosgen-2.0.dylib               0x00000001072ca54c do_icall_wrapper + 356
+2025-04-04 11:19:34.133345-0600 AppAmbitTestingApp[46165:1145150]   21  libmonosgen-2.0.dylib               0x00000001072bfe74 mono_interp_exec_method + 2948
+  22  libmonosgen-2.0.dylib               0x00000001072bda14 interp_runtime_invoke + 244
+  23  libmonosgen-2.0.dylib               0x00000001071df12c mono_jit_runtime_invoke + 1296
+2025-04-04 11:19:34.133390-0600 AppAmbitTestingApp[46165:1145150]   24  libmonosgen-2.0.dylib               0x00000001073877ec mono_runtime_invoke_checked + 148
+  25  libmonosgen-2.0.dylib               0x000000010738e990 mono_runtime_exec_main_checked + 116
+  26  libmonosgen-2.0.dylib               0x0000000107230a4c mono_jit_exec + 364
+2025-04-04 11:19:34.133427-0600 AppAmbitTestingApp[46165:1145150]   27  libxamarin-dotnet-debug.dylib       0x00000001066db984 xamarin_main + 2324
+  28  AppAmbitTestingApp                  0x000000010585a47c main + 72
+  29  dyld                                0x0000000106401410 start_sim + 20
+2025-04-04 11:19:34.133965-0600 AppAmbitTestingApp[46165:1145150]   30  ???                                 0x0000000106142274 0x0 + 4396950132
