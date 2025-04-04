@@ -7,13 +7,6 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Process = System.Diagnostics.Process;
 
-#if ANDROID
-using Android.OS;
-#elif IOS
-using UIKit;
-#endif
-
-
 namespace AppAmbit;
 
 internal static class Logging
@@ -39,7 +32,8 @@ internal static class Logging
             Message = "" + message,
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string, object>(),
-            Type = logType
+            Type = logType,
+            file = (exception != null ) ? CrashFileGenerator.GenerateCrashLog(exception): null
         };
         await SendOrSaveLogEventAsync(log);
     }
@@ -94,60 +88,5 @@ internal static class Logging
         logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
         
         await _storageService?.LogEventAsync(logTimestamp);
-    }
-    
-    
-    
-    private static string GenerateCrashLog(Exception ex)
-    {
-        StringBuilder log = new StringBuilder();
-
-        // Basic App & Device Info
-        log.AppendLine($"Package: {AppInfo.PackageName}");
-        log.AppendLine($"Version Code: {AppInfo.BuildString}");
-        log.AppendLine($"Version Name: {AppInfo.VersionString}");
-        
-#if ANDROID
-        log.AppendLine($"Android: {Build.VERSION.SdkInt}");
-        log.AppendLine($"Android Build: {Build.Display}");
-        log.AppendLine($"Manufacturer: {Build.Manufacturer}");
-        log.AppendLine($"Model: {Build.Model}");
-#elif IOS
-        log.AppendLine($"iOS: {UIDevice.CurrentDevice.SystemVersion}");
-        log.AppendLine($"Device: {UIDevice.CurrentDevice.Model}");
-        log.AppendLine($"Manufacturer: Apple");
-        log.AppendLine($"Model: {DeviceInfo.Model}");
-#endif
-
-        log.AppendLine($"CrashReporter Key: {Guid.NewGuid()}"); // Simulated unique crash key
-        log.AppendLine($"Start Date: {DateTime.UtcNow.AddSeconds(-20):O}");
-        log.AppendLine($"Date: {DateTime.UtcNow:O}");
-        log.AppendLine();
-
-        // Exception Stack Trace
-        log.AppendLine("Xamarin Exception Stack:");
-        log.AppendLine(ex.ToString());
-        log.AppendLine();
-        
-        addThreadsInfo(log);
-
-        return log.ToString();
-    }
-    
-    public static void addThreadsInfo(StringBuilder log) {
-        
-        // Log all running threads
-        //log.AppendLine("Active Threads Stack Traces:");
-        foreach (var thread in Process.GetCurrentProcess().Threads.Cast<ProcessThread>())
-        {
-            try
-            {
-                log.AppendLine($"Thread {thread.Id}: {thread.ThreadState}");
-            }
-            catch (Exception ex)
-            {
-                log.AppendLine($"Failed to get thread info: {ex.Message}");
-            }
-        }
     }
 }
