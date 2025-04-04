@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Java.Lang;
 using Exception = System.Exception;
 using Process = System.Diagnostics.Process;
 using StringBuilder = System.Text.StringBuilder;
@@ -26,7 +25,7 @@ internal static class CrashFileGenerator
 
         // Exception Stack Trace
         log.AppendLine("Xamarin Exception Stack:");
-        log.AppendLine(ex.StackTrace.ToString());
+        log.AppendLine(ex.StackTrace);
         
         log.AppendLine();
         

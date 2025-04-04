@@ -35,6 +35,9 @@ internal static class Logging
             Type = logType,
             file = (exception != null ) ? CrashFileGenerator.GenerateCrashLog(exception): null
         };
+        Console.WriteLine($"log.file: {log.file}");
+        Debug.WriteLine($"log.file:");
+        Debug.WriteLine($"{log.file}");
         await SendOrSaveLogEventAsync(log);
     }
     
