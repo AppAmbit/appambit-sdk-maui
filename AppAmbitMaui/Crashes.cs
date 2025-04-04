@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Runtime.CompilerServices;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -23,25 +24,27 @@ public static class Crashes
         Logging.Initialize(apiService,storageService);
     }
     
-    public static async Task LogError(Exception? ex, Dictionary<string, object> properties = null)
+    public static async Task LogError(Exception? exception, Dictionary<string, object> properties = null, string? classFqn = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int lineNumber = 0)
     {
-        await LogEvent( ex?.Message, LogType.Error, ex, properties);
+        classFqn = classFqn ?? await GetCallerClassAsync(); 
+        await Logging.LogEvent("", LogType.Error,exception, properties,classFqn,fileName,lineNumber);
     }
     
-    public static async Task LogError(string message, Dictionary<string, object> properties = null)
+    public static async Task LogError(string message, Dictionary<string, object> properties = null, string? classFqn = null, Exception? exception = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int? lineNumber = null)
     {
-        await LogEvent(message, LogType.Error,null,properties);
+        classFqn = classFqn ?? await GetCallerClassAsync();
+        await Logging.LogEvent(message, LogType.Error,exception, properties,classFqn,fileName,lineNumber);
     }
 
     public static async Task GenerateTestCrash()
     {
         throw new NullReferenceException();
     }
-
-    private static async Task LogEvent(string? message, LogType logType, Exception? exception = null,
-        Dictionary<string,object> properties = null)
+    
+    private static async Task LogCrash(Exception? exception = null)
     {
-        await Logging.LogEvent(message, logType,exception, properties);
+        var message = exception?.Message;
+        await Logging.LogEvent(message, LogType.Crash,exception);
     }
     
     private static string Truncate(string value, int maxLength)
@@ -51,15 +54,48 @@ public static class Crashes
     }
     
     private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
-    {   
+    {
         var exception = e?.Exception;
-        var message = exception?.Message;
-        await LogEvent(message, LogType.Crash, exception);
+        await LogCrash(exception);
     }
+    
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        var message = exception?.Message;
-        await LogEvent(message, LogType.Crash, exception);
+        await LogCrash(exception);
+    }
+    
+    private static async Task<string?> GetCallerClassAsync()
+    {
+        var listSystemNames = new List<string>()
+        {
+            $"System.",
+            $"AppAmbit.",
+            $"Foundation.",
+            $"UIKit.",
+        };
+        await Task.Yield();
+        var stackTrace = new StackTrace();
+        var classFqn = (string?)null;
+        foreach (var frame in stackTrace.GetFrames())
+        {
+            var method = frame?.GetMethod();
+            var fullName =  method?.DeclaringType?.FullName ?? "";
+            if(!ContainsFromList(fullName,listSystemNames))
+            {
+                classFqn = fullName;
+            }
+        }
+        return classFqn;
+    }
+
+    private static bool ContainsFromList(string word, List<string> list)
+    {
+        foreach (var s in list)
+        {
+            if(word.Contains(s))
+                return true;
+        }
+        return false;
     }
 }

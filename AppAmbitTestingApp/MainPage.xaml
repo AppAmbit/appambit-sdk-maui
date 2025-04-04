@@ -24,7 +24,13 @@
                 Text="Send Test LogError " 
                 Clicked="OnSendTestLog" />
             <Button
-                Text="Test Crash" 
+                Text="Send Test Log Exception " 
+                Clicked="OnSendTestException" />
+            <Button
+                Text="Send Test LogError with classFQN " 
+                Clicked="OnSendTestLogWithClassFQN" />
+            <Button
+                Text="Test Crash ( App crashes )" 
                 Clicked="OnCounterClicked" />
             <Button
                 Text="Generate test crash" 
