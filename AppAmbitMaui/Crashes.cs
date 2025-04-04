@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using System.Runtime.CompilerServices;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
