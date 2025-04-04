@@ -27,7 +27,7 @@ internal static class CrashFileGeneratorAndroid
     public static void AddThreads(StringBuilder log)
     {
         var threadSet = Java.Lang.Thread.AllStackTraces;
-        var sortedThreads = threadSet.Keys.OrderBy(thread => thread.Id); // Sort by thread ID
+        var sortedThreads = threadSet.Keys.OrderBy(thread => thread.Id);
 
         foreach (var thread in sortedThreads)
         {
