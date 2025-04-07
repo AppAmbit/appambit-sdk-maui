@@ -101,13 +101,14 @@ internal class APIService : IAPIService
 
             if (propertyName == "file")
             {
-                /*
-                var filePath = Path.Combine(FileSystem.AppDataDirectory, $"log-{DateTime.Now.ToUniversalTime().ToString("yyyy-MM-ddTHH_mm_ss_fffZ")}.txt");
-                var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
+                var dateFormat = "yyyy-MM-ddTHH_mm_ss_fffZ";
+                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
+                var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+                var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
+                var fileContent = new ByteArrayContent(encodedBytes);
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 formData.Add(fileContent, "file", Path.GetFileName(filePath));
                 continue;
-                */
             }
             
             if (propertyValue != null)
