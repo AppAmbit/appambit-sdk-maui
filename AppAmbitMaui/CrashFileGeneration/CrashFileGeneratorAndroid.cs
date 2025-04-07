@@ -11,7 +11,7 @@ namespace AppAmbit;
 
 internal static class CrashFileGeneratorAndroid
 {
-    public static void AddHeader(StringBuilder log)
+    public static void AddHeader(StringBuilder log, string deviceId)
     {
         log.AppendLine($"Package: {AppInfo.PackageName}");
         log.AppendLine($"Version Code: {AppInfo.BuildString}");
@@ -20,8 +20,7 @@ internal static class CrashFileGeneratorAndroid
         log.AppendLine($"Android Build: {Build.Display}");
         log.AppendLine($"Manufacturer: {Build.Manufacturer}");
         log.AppendLine($"Model: {Build.Model}");
-        log.AppendLine($"CrashReporter Key: {Guid.NewGuid()}");
-        log.AppendLine($"Start Date: {DateTime.UtcNow.AddSeconds(-20):O}");
+        log.AppendLine($"Device Id: {deviceId}");
         log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
     public static void AddThreads(StringBuilder log)

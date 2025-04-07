@@ -25,7 +25,7 @@ internal partial class CrashFileGeneratorIOS
     [DllImport("libc")]
     private static extern IntPtr backtrace_symbols(IntPtr[] buffer, int size);
 
-    public static void AddHeader(StringBuilder log)
+    public static void AddHeader(StringBuilder log, string deviceId)
     {
         log.AppendLine($"Package: {AppInfo.PackageName}");
         log.AppendLine($"Version Code: {AppInfo.BuildString}");
@@ -34,8 +34,7 @@ internal partial class CrashFileGeneratorIOS
         log.AppendLine($"Device: {UIDevice.CurrentDevice.Model}");
         log.AppendLine($"Manufacturer: Apple");
         log.AppendLine($"Model: {DeviceInfo.Model}");
-        log.AppendLine($"CrashReporter Key: {Guid.NewGuid()}"); // Simulated unique crash key
-        log.AppendLine($"Start Date: {DateTime.UtcNow.AddSeconds(-20):O}");
+        log.AppendLine($"Device Id: {deviceId}");
         log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
     

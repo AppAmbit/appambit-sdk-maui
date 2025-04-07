@@ -10,15 +10,15 @@ namespace AppAmbit;
 
 internal static class CrashFileGenerator
 {
-    public static string GenerateCrashLog(Exception ex)
+    public static string GenerateCrashLog(Exception ex, string deviceId)
     {
         StringBuilder log = new StringBuilder();
         
         // Header
 #if ANDROID
-        CrashFileGeneratorAndroid.AddHeader(log);
+        CrashFileGeneratorAndroid.AddHeader(log,deviceId);
 #elif IOS
-        CrashFileGeneratorIOS.AddHeader(log);
+        CrashFileGeneratorIOS.AddHeader(log,deviceId);
 #endif
         
         log.AppendLine();
