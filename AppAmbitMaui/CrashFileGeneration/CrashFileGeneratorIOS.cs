@@ -31,7 +31,6 @@ internal partial class CrashFileGeneratorIOS
         log.AppendLine($"Version Code: {AppInfo.BuildString}");
         log.AppendLine($"Version Name: {AppInfo.VersionString}");
         log.AppendLine($"iOS: {UIDevice.CurrentDevice.SystemVersion}");
-        log.AppendLine($"Device: {UIDevice.CurrentDevice.Model}");
         log.AppendLine($"Manufacturer: Apple");
         log.AppendLine($"Model: {DeviceInfo.Model}");
         log.AppendLine($"Device Id: {deviceId}");
