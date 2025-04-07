@@ -1,5 +1,6 @@
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
@@ -15,6 +16,20 @@ public static class Analytics
         _apiService = apiService;
         _storageService = storageService;
     }
+    
+
+    public static async Task StartSession()
+    {
+        var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        _storageService?.SetSessionId(response.SessionId);
+    }
+
+    public static async Task EndSession()
+    {
+        var sessionId = await _storageService?.GetSessionId();
+        await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
+    }
+    
     public static async Task GenerateTestEvent()
     {
         await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
@@ -60,6 +75,7 @@ public static class Analytics
         if (string.IsNullOrEmpty(value)) return value;
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
+
 
     public static async void SetUserId(string userId)
     {

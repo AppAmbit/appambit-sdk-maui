@@ -73,7 +73,7 @@ public static class Core
 
         await InitializeConsumer(appKey);
         
-        await StartSession();
+        await Analytics.StartSession();
 
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
@@ -88,13 +88,13 @@ public static class Core
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
-        await StartSession();
+        await Analytics.StartSession();
 
     }
     
     public static async Task OnSleep()
     {
-        await EndSession();
+        await Analytics.EndSession();
     }
 
     private static async Task InitializeConsumer(string appKey)
@@ -137,18 +137,6 @@ public static class Core
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
 
         apiService.SetToken(remoteToken?.Token);
-    }
-
-    private static async Task StartSession()
-    {
-        var response = await apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        storageService?.SetSessionId(response.SessionId);
-    }
-
-    private static async Task EndSession()
-    {
-        var sessionId = await storageService?.GetSessionId();
-        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
     }
 
     private static async Task SendAnalytics()
