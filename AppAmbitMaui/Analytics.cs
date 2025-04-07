@@ -8,6 +8,13 @@ namespace AppAmbit;
 
 public static class Analytics
 {
+    private static IAPIService? _apiService;
+    private static IStorageService? _storageService;
+    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
+    {
+        _apiService = apiService;
+        _storageService = storageService;
+    }
     public static async Task GenerateTestEvent()
     {
         await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
@@ -26,16 +33,13 @@ public static class Analytics
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
-            var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-            var apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-            
             var analyticsReport = new Models.Analytics.AnalyticsReport()
             {
                 EventTitle = eventTitle,
-                SessionId = await storageService.GetSessionId(),
+                SessionId = await _storageService.GetSessionId(),
                 Data = data.ToDictionary(item => item.Key, item => Truncate(item.Key, 125))
             };
-            await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
+            await _apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
         }
         else
         {
@@ -57,4 +61,23 @@ public static class Analytics
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 
+    public static async void SetUserId(string userId)
+    {
+        await _storageService.SetUserId(userId);
+    }
+
+    public static async Task<string?> GetUserId()
+    {
+        return await _storageService.GetUserId();
+    }
+
+    public static async void SetUserEmail(string userEmail)
+    {
+        await _storageService.SetUserEmail(userEmail);
+    }
+
+    public static async Task<string?> GetUserEmail()
+    {
+        return await _storageService.GetUserEmail();
+    }
 }

@@ -21,11 +21,42 @@ public partial class MainPage : ContentPage
             }
         }
     }
+
+    private string _userId = "";
+
+    public string UserId
+    {
+        get => _userId;
+        set
+        {
+            if (_userId != value)
+            {
+                _userId = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string _userEmail = "";
+
+    public string UserEmail
+    {
+        get => _userEmail;
+        set
+        {
+            if (_userEmail != value)
+            {
+                _userEmail = value;
+                OnPropertyChanged();
+            }
+        }
+    }
     
     public MainPage()
     {
         InitializeComponent();
         this.BindingContext = this;
+        UserId = Guid.NewGuid().ToString();
     }
 
     private async void OnSendTestLog(object sender, EventArgs e)
@@ -73,5 +104,15 @@ public partial class MainPage : ContentPage
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         _logMessage = e.NewTextValue;
+    }
+
+    private void OnChangeUserId(object? sender, EventArgs e)
+    {
+        Analytics.SetUserId(UserId);
+    }
+
+    private void OnChangeUserEmail(object? sender, EventArgs e)
+    {
+        Analytics.SetUserEmail(UserId);
     }
 }

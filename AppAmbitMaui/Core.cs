@@ -99,8 +99,10 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey)
     {
-        var appId = await storageService?.GetAppId();
+        var appId = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();
+        var userId = await storageService.GetUserId();
+        var userEmail = await storageService.GetUserEmail();
 
         if (appId == null)
         {
@@ -113,14 +115,20 @@ public static class Core
             await storageService.SetDeviceId(id);
         }
 
+        if (userId == null)
+        {
+            var id = Guid.NewGuid().ToString();
+            await storageService.SetUserId(id);
+        }
+
         var consumer = new Consumer
         {
             AppKey = appKey,
             DeviceId = await storageService.GetDeviceId(),
             DeviceModel = appInfoService.DeviceModel,
-            UserId = Guid.NewGuid().ToString(),
+            UserId = userId,
             IsGuest = true,
-            UserEmail = "test@gmail.com",
+            UserEmail = userEmail,
             OS = appInfoService.OS,
             Country = appInfoService.Country,
             Language = appInfoService.Language,

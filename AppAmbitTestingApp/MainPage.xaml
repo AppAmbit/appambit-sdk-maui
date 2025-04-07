@@ -13,6 +13,20 @@
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a race car number eight" />
             
+            <Entry Placeholder="User id"
+                   Text="{Binding UserId}"/>
+            
+            <Button
+                Text="Change user id" 
+                Clicked="OnChangeUserId" />
+            
+            <Entry Placeholder="User email"
+                   Text="{Binding UserEmail}"/>
+            
+            <Button
+                Text="Change user email" 
+                Clicked="OnChangeUserEmail" />
+            
             <Entry Placeholder="Type log message"
                     Text="{Binding LogMessage}"
                     TextChanged="MessageInputView_OnTextChanged"/>
