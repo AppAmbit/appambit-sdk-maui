@@ -1,11 +1,6 @@
-using System.Diagnostics;
-using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using Process = System.Diagnostics.Process;
 
 namespace AppAmbit;
 
@@ -35,12 +30,7 @@ internal static class Logging
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string, object>(),
             Type = logType,
-            file = file
         };
-        Console.WriteLine($"log.file: {log.file}");
-        Debug.WriteLine($"log.file:");
-        Debug.WriteLine($"{log.file}");
-        Debugger.Break();
         await SendOrSaveLogEventAsync(log);
     }
     
