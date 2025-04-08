@@ -30,6 +30,29 @@ public static class Analytics
         await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
     }
     
+    
+
+
+    public static async void SetUserId(string userId)
+    {
+        await _storageService.SetUserId(userId);
+    }
+
+    public static async Task<string?> GetUserId()
+    {
+        return await _storageService.GetUserId();
+    }
+
+    public static async void SetUserEmail(string userEmail)
+    {
+        await _storageService.SetUserEmail(userEmail);
+    }
+
+    public static async Task<string?> GetUserEmail()
+    {
+        return await _storageService.GetUserEmail();
+    }
+    
     public static async Task GenerateTestEvent()
     {
         await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
@@ -74,26 +97,5 @@ public static class Analytics
     {
         if (string.IsNullOrEmpty(value)) return value;
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
-    }
-
-
-    public static async void SetUserId(string userId)
-    {
-        await _storageService.SetUserId(userId);
-    }
-
-    public static async Task<string?> GetUserId()
-    {
-        return await _storageService.GetUserId();
-    }
-
-    public static async void SetUserEmail(string userEmail)
-    {
-        await _storageService.SetUserEmail(userEmail);
-    }
-
-    public static async Task<string?> GetUserEmail()
-    {
-        return await _storageService.GetUserEmail();
     }
 }
