@@ -86,6 +86,32 @@ internal class StorageService : IStorageService
         return appSecrets?.AppId;
     }
 
+    public async Task SetUserId(string userId)
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        appSecrets.UserId = userId;
+        await _database.UpdateAsync(appSecrets);
+    }
+
+    public async Task<string?> GetUserId()
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        return appSecrets?.UserId;
+    }
+
+    public async Task SetUserEmail(string userEmail)
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        appSecrets.UserEmail = userEmail;
+        await _database.UpdateAsync(appSecrets);
+    }
+
+    public async Task<string?> GetUserEmail()
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        return appSecrets?.UserEmail;
+    }
+
     public async Task SetSessionId(string sessionId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
