@@ -1,9 +1,6 @@
-using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-
 
 namespace AppAmbit;
 
@@ -21,6 +18,8 @@ internal static class Logging
     {
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
+        var deviceId = await _storageService.GetDeviceId();
+        var file = (exception != null) ? CrashFileGenerator.GenerateCrashLog(exception,deviceId) : null;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
@@ -30,7 +29,7 @@ internal static class Logging
             Message = exception?.Message ?? ( String.IsNullOrEmpty(message) ?  "" : message),
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string, object>(),
-            Type = logType
+            Type = logType,
         };
         await SendOrSaveLogEventAsync(log);
     }
