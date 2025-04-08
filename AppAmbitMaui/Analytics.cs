@@ -17,7 +17,6 @@ public static class Analytics
         _storageService = storageService;
     }
     
-
     internal static async Task StartSession()
     {
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
@@ -30,9 +29,6 @@ public static class Analytics
         await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
     }
     
-    
-
-
     public static async void SetUserId(string userId)
     {
         await _storageService.SetUserId(userId);
