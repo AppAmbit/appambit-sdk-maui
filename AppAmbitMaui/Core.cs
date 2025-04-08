@@ -97,7 +97,7 @@ public static class Core
         await Analytics.EndSession();
     }
 
-    public static async Task InitializeConsumer(string appKey = "")
+    private static async Task InitializeConsumer(string appKey = "")
     {
         var appId = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();

@@ -62,14 +62,12 @@ public partial class MainPage : ContentPage
     private async void OnChangeUserId(object? sender, EventArgs e)
     {
         Analytics.SetUserId(UserId);
-        Core.InitializeConsumer();
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
     private async void OnChangeUserEmail(object? sender, EventArgs e)
     {
-        Analytics.SetUserEmail(UserId);
-        Core.InitializeConsumer();
+        Analytics.SetUserEmail(UserEmail);
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
