@@ -18,13 +18,13 @@ public static class Analytics
     }
     
 
-    public static async Task StartSession()
+    internal static async Task StartSession()
     {
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
         _storageService?.SetSessionId(response.SessionId);
     }
 
-    public static async Task EndSession()
+    internal static async Task EndSession()
     {
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
