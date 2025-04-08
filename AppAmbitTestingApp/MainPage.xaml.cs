@@ -63,7 +63,6 @@ public partial class MainPage : ContentPage
     {
         Analytics.SetUserId(UserId);
         Core.InitializeConsumer();
-        Analytics.StartSession();
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
@@ -71,7 +70,6 @@ public partial class MainPage : ContentPage
     {
         Analytics.SetUserEmail(UserId);
         Core.InitializeConsumer();
-        Analytics.StartSession();
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
