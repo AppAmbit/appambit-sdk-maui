@@ -22,7 +22,6 @@ internal class APIService : IAPIService
         
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         var responseString = await responseMessage.Content.ReadAsStringAsync();
-        
         return TryDeserializeJson<T>(responseString);
     }
     

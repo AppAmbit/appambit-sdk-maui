@@ -73,7 +73,7 @@ public static class Core
 
         await InitializeConsumer(appKey);
         
-        await StartSession();
+        await Analytics.StartSession();
 
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
@@ -88,19 +88,21 @@ public static class Core
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
-        await StartSession();
+        await Analytics.StartSession();
 
     }
     
     public static async Task OnSleep()
     {
-        await EndSession();
+        await Analytics.EndSession();
     }
 
-    private static async Task InitializeConsumer(string appKey)
+    private static async Task InitializeConsumer(string appKey = "")
     {
-        var appId = await storageService?.GetAppId();
+        var appId = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();
+        var userId = await storageService.GetUserId();
+        var userEmail = await storageService.GetUserEmail();
 
         if (appId == null)
         {
@@ -113,14 +115,20 @@ public static class Core
             await storageService.SetDeviceId(id);
         }
 
+        if (userId == null)
+        {
+            var id = Guid.NewGuid().ToString();
+            await storageService.SetUserId(id);
+        }
+
         var consumer = new Consumer
         {
             AppKey = appKey,
-            DeviceId = await storageService.GetDeviceId(),
+            DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
-            UserId = Guid.NewGuid().ToString(),
+            UserId = userId,
             IsGuest = true,
-            UserEmail = "test@gmail.com",
+            UserEmail = userEmail,
             OS = appInfoService.OS,
             Country = appInfoService.Country,
             Language = appInfoService.Language,
@@ -129,18 +137,6 @@ public static class Core
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
 
         apiService.SetToken(remoteToken?.Token);
-    }
-
-    private static async Task StartSession()
-    {
-        var response = await apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        storageService?.SetSessionId(response.SessionId);
-    }
-
-    private static async Task EndSession()
-    {
-        var sessionId = await storageService?.GetSessionId();
-        await apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
     }
 
     private static async Task SendAnalytics()
@@ -170,6 +166,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         Crashes.Initialize(apiService,storageService);
+        Analytics.Initialize(apiService,storageService);
     }
     
 }
