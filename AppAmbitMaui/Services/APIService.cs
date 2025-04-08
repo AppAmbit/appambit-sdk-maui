@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
@@ -23,8 +22,6 @@ internal class APIService : IAPIService
         
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         var responseString = await responseMessage.Content.ReadAsStringAsync();
-        Debug.WriteLine($"responseString:{responseString}");
-        Debugger.Break();
         return TryDeserializeJson<T>(responseString);
     }
     
@@ -68,7 +65,6 @@ internal class APIService : IAPIService
         }
         
         var data = JsonConvert.SerializeObject(payload);
-        Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
     }
