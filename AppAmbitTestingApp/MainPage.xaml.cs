@@ -37,7 +37,7 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private string _userEmail = "";
+    private string _userEmail = "test@gmail.com";
 
     public string UserEmail
     {
@@ -57,6 +57,22 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
+    }
+
+    private async void OnChangeUserId(object? sender, EventArgs e)
+    {
+        Analytics.SetUserId(UserId);
+        Core.InitializeConsumer();
+        Analytics.StartSession();
+        await DisplayAlert("Info", "LogError Sent", "Ok");
+    }
+
+    private async void OnChangeUserEmail(object? sender, EventArgs e)
+    {
+        Analytics.SetUserEmail(UserId);
+        Core.InitializeConsumer();
+        Analytics.StartSession();
+        await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
     private async void OnSendTestLog(object sender, EventArgs e)
@@ -104,15 +120,5 @@ public partial class MainPage : ContentPage
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         _logMessage = e.NewTextValue;
-    }
-
-    private void OnChangeUserId(object? sender, EventArgs e)
-    {
-        Analytics.SetUserId(UserId);
-    }
-
-    private void OnChangeUserEmail(object? sender, EventArgs e)
-    {
-        Analytics.SetUserEmail(UserId);
     }
 }

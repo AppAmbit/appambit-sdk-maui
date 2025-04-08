@@ -97,7 +97,7 @@ public static class Core
         await Analytics.EndSession();
     }
 
-    private static async Task InitializeConsumer(string appKey)
+    public static async Task InitializeConsumer(string appKey = "")
     {
         var appId = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();
@@ -124,7 +124,7 @@ public static class Core
         var consumer = new Consumer
         {
             AppKey = appKey,
-            DeviceId = await storageService.GetDeviceId(),
+            DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
             UserId = userId,
             IsGuest = true,
@@ -166,6 +166,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         Crashes.Initialize(apiService,storageService);
+        Analytics.Initialize(apiService,storageService);
     }
     
 }
