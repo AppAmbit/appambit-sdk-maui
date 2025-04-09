@@ -67,24 +67,24 @@ public static class Analytics
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
-            var analyticsReport = new Models.Analytics.Event()
+            var _event = new Event()
             {
                 Name = Truncate(eventTitle, 125),
                 Data = data
             };
-            await _apiService.ExecuteRequest<object>(new SendEventEndpoint(analyticsReport));
+            await _apiService.ExecuteRequest<object>(new SendEventEndpoint(_event));
         }
         else
         {
-            var logService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-            var log = new EventEntity()
+            var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+            var eventEntity = new EventEntity()
             {   
                 Id = Guid.NewGuid(),    
                 Name = Truncate(eventTitle, 125),
                 Data = data
             };
         
-            await logService?.LogAnalyticsEventAsync(log);
+            await storageService?.LogAnalyticsEventAsync(eventEntity);
         }
     }
     

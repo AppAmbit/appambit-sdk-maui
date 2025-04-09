@@ -157,7 +157,7 @@ internal class StorageService : IStorageService
 
     public async Task<List<AnalyticsLog>> GetAllAnalyticsAsync()
     {
-        return await _database.Table<EventEntity>().ToListAsync();
+        return await _database.Table<AnalyticsLog>().ToListAsync();
     }
 
     public async Task DeleteAllLogs()
