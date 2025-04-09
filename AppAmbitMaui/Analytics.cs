@@ -51,38 +51,37 @@ public static class Analytics
     
     public static async Task GenerateTestEvent()
     {
-        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+        await SendOrSaveEvent("Test Event", new Dictionary<string, object>()
         {
             { "Event", "Custom event" }
         });
     }
     
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, object> data = null)
     {
         await SendOrSaveEvent(eventTitle, data);
     }
     
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, object> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
         {
-            var analyticsReport = new Models.Analytics.AnalyticsReport()
+            var analyticsReport = new Models.Analytics.Event()
             {
-                EventTitle = eventTitle,
-                SessionId = await _storageService.GetSessionId(),
-                Data = data.ToDictionary(item => item.Key, item => Truncate(item.Key, 125))
+                Name = Truncate(eventTitle, 125),
+                Data = data
             };
-            await _apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
+            await _apiService.ExecuteRequest<object>(new SendEventEndpoint(analyticsReport));
         }
         else
         {
             var logService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-            var log = new AnalyticsLog
+            var log = new EventEntity()
             {   
                 Id = Guid.NewGuid(),    
-                EventTitle = eventTitle,
-                Data = JsonConvert.SerializeObject(data.ToDictionary(item => item.Key, item => Truncate(item.Key, 125)))
+                Name = Truncate(eventTitle, 125),
+                Data = data
             };
         
             await logService?.LogAnalyticsEventAsync(log);

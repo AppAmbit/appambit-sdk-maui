@@ -79,7 +79,7 @@ internal static class Logging
 
     private static async Task StoreLogInDb(Log log)
     {
-        var logTimestamp = log.ConvertTo<LogTimestamp>();
+        var logTimestamp = log.ConvertTo<LogEntity>();
         logTimestamp.Id = Guid.NewGuid();
         logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
         
