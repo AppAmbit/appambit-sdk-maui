@@ -121,7 +121,6 @@ public static class Core
             DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
             UserId = userId,
-            IsGuest = true,
             UserEmail = userEmail,
             OS = appInfoService.OS,
             Country = appInfoService.Country,
