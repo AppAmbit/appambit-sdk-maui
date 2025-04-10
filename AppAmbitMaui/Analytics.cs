@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
@@ -9,26 +10,45 @@ namespace AppAmbit;
 
 public static class Analytics
 {
+    private static bool _manualSession = false;
+    private static bool _sessionStarted = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
-    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
+
+    internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
     {
         _apiService = apiService;
         _storageService = storageService;
     }
     
-    internal static async Task StartSession()
+    public static void EnableManualSession()
     {
-        var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        _storageService?.SetSessionId(response.SessionId);
+        _manualSession = true;
     }
 
-    internal static async Task EndSession()
+    public static async Task StartSession()
     {
+        if (_sessionStarted)
+        {
+            EndSession();
+        }
+
+        var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        _storageService?.SetSessionId(response.SessionId);
+        _sessionStarted = true;
+    }
+
+    public static async Task EndSession()
+    {
+        if (!_sessionStarted)
+        {
+            return;
+        }
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
+        _sessionStarted = false;
     }
-    
+
     public static async void SetUserId(string userId)
     {
         await _storageService.SetUserId(userId);
@@ -48,21 +68,21 @@ public static class Analytics
     {
         return await _storageService.GetUserEmail();
     }
-    
+
     public static async Task GenerateTestEvent()
     {
-        await SendOrSaveEvent("Test Event", new Dictionary<string,string>()
+        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
         {
             { "Event", "Custom event" }
         });
     }
-    
-    public static async Task TrackEvent(string eventTitle, Dictionary<string,string> data = null)
+
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         await SendOrSaveEvent(eventTitle, data);
     }
-    
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string,string> data = null)
+
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)
@@ -78,19 +98,19 @@ public static class Analytics
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var eventEntity = new EventEntity()
-            {   
-                Id = Guid.NewGuid(),    
+            {
+                Id = Guid.NewGuid(),
                 Name = Truncate(eventTitle, 125),
                 Data = data
             };
-        
+
             await storageService?.LogAnalyticsEventAsync(eventEntity);
         }
     }
-    
+
     private static string Truncate(string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value)) return value;
-            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 }
