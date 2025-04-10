@@ -9,7 +9,7 @@ internal interface IStorageService
 
     Task InitializeAsync();
 
-    Task LogEventAsync(LogTimestamp logTimestamp);
+    Task LogEventAsync(LogEntity logEntity);
 
     Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog);
 

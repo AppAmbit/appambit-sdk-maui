@@ -21,7 +21,7 @@ internal class StorageService : IStorageService
         
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
-        await _database.CreateTableAsync<LogTimestamp>();
+        await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<AnalyticsLog>();
     }
     
@@ -101,9 +101,9 @@ internal class StorageService : IStorageService
         return appSecrets?.SessionId;
     }
     
-    public async Task LogEventAsync(LogTimestamp logTimestamp)
+    public async Task LogEventAsync(LogEntity logEntity)
     {    
-        await _database.InsertAsync(logTimestamp);
+        await _database.InsertAsync(logEntity);
     }
 
     public async Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog)
