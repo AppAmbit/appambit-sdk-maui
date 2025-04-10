@@ -104,8 +104,7 @@ internal class APIService : IAPIService
 
         object logTypeValue = null;
         string logTypeJsonValue = null;
-
-        // First: find 'type' value and resolve enum name
+        
         foreach (var prop in payload.GetType().GetProperties())
         {
             var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
