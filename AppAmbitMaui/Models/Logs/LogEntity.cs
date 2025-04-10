@@ -4,7 +4,7 @@ using SQLite;
 namespace AppAmbit.Models.Logs;
 
 //This class is created for storing on the database and send it in the bulk upload
-internal class LogTimestamp : Log
+internal class LogEntity : Log
 {
     [PrimaryKey]
     public Guid Id { get; set; }
