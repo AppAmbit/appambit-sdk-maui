@@ -34,7 +34,7 @@ public static class Analytics
         if (_hasSessionStarted)
         {
             Debug.WriteLine("Session alredy started, closing previous session");
-            EndSession();
+            await EndSession();
         }
 
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
