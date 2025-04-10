@@ -73,6 +73,10 @@ internal class APIService : IAPIService
         {
             log.Type = LogType.Crash;
             content = SerializeToMultipartFormDataContent(log);
+            await DebugMultipartFormDataContent(content as MultipartFormDataContent);
+            log.file = null;
+            var data = JsonConvert.SerializeObject(payload);
+            Debug.WriteLine($"data:{data}");
         }
         else
         {
@@ -145,8 +149,9 @@ internal class APIService : IAPIService
                 var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
-                var fileContent = new ByteArrayContent(encodedBytes);
-                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+                var fileContent = new StreamContent(encodedBytes);
+                //var fileContent = new ByteArrayContent(encodedBytes);
+                //fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 formData.Add(fileContent, "file", Path.GetFileName(filePath));
                 continue;
             }
@@ -168,8 +173,8 @@ internal class APIService : IAPIService
                     foreach (var item in arrayRepresentation)
                     {
                         var value = JsonConvert.SerializeObject(item.value);
-                        var propertyArrayName = $"{propertyName}[{count++}]";
-                        formData.Add(new StringContent(value, Encoding.UTF8, "application/json"),propertyArrayName );
+                        var propertyArrayName = $"{propertyName}[{count++}].{item.key}";
+                        formData.Add(new StringContent(value),propertyArrayName);
                     }
                 }
                 
@@ -181,7 +186,7 @@ internal class APIService : IAPIService
                     var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
                     serializedValue = enumAttr?.Value ?? enumValue.ToString();
                     Debug.WriteLine($"property serializedValue: {propertyName}:{serializedValue}");
-                    formData.Add(new StringContent($"\"{serializedValue}\"", Encoding.UTF8, "application/json"), propertyName);
+                    formData.Add(new StringContent($"\"{serializedValue}\"", Encoding.UTF8), propertyName);
                 }
                 else
                 {
@@ -193,6 +198,25 @@ internal class APIService : IAPIService
             }
         }
         return formData;
+    }
+    
+    private async Task DebugMultipartFormDataContent(MultipartFormDataContent formData)
+    {
+        foreach (var content in formData)
+        {
+            Debug.WriteLine("Headers:");
+            foreach (var header in content.Headers)
+            {
+                if (header.Key == "file")
+                    continue;
+                Debug.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
+            }
+
+            var body = await content.ReadAsStringAsync();
+            Debug.WriteLine("Body:");
+            Debug.WriteLine(body);
+            Debug.WriteLine("----------------------------");
+        }
     }
 
     private string SerializeStringPayload(object payload)
