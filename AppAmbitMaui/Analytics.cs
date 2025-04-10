@@ -11,7 +11,7 @@ namespace AppAmbit;
 
 public static class Analytics
 {
-    internal static bool _isManualSessionEnabled = false;
+    internal static bool IsManualSessionEnabled = false;
     private static bool _hasSessionStarted = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
@@ -24,15 +24,12 @@ public static class Analytics
     
     public static void EnableManualSession()
     {
-        _isManualSessionEnabled = true;
+        IsManualSessionEnabled = true;
         Debug.WriteLine("Manual Session enabled");
     }
 
     public static async Task StartSession()
     {
-        if(_isManualSessionEnabled)
-            return;
-        
         Debug.WriteLine("StartSession called");
         if (_hasSessionStarted)
         {
@@ -47,9 +44,6 @@ public static class Analytics
 
     public static async Task EndSession()
     {
-        if(_isManualSessionEnabled)
-            return;
-        
         Debug.WriteLine("EndSession called");
         if (!_hasSessionStarted)
         {

@@ -81,7 +81,7 @@ public static class Core
 
         await InitializeConsumer(appKey);
 
-        if (!Analytics._isManualSessionEnabled)
+        if (!Analytics.IsManualSessionEnabled)
         {
             await Analytics.StartSession();
         }
@@ -94,7 +94,7 @@ public static class Core
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
         
-        if (!Analytics._isManualSessionEnabled)
+        if (!Analytics.IsManualSessionEnabled)
         {
             await Analytics.StartSession();
         }
@@ -102,7 +102,7 @@ public static class Core
     
     public static async Task OnSleep()
     {
-        if (!Analytics._isManualSessionEnabled)
+        if (!Analytics.IsManualSessionEnabled)
         {
             await Analytics.EndSession();
         }
