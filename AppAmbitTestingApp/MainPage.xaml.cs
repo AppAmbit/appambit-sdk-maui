@@ -73,7 +73,7 @@ public partial class MainPage : ContentPage
 
     private async void OnSendTestLog(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}});
+        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}});
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
@@ -85,14 +85,14 @@ public partial class MainPage : ContentPage
         }
         catch (Exception exception)
         {
-            await Crashes.LogError(exception,new Dictionary<string, object>(){{"user_id",1}});
+            await Crashes.LogError(exception,new Dictionary<string,string>(){{"user_id","1"}});
             await DisplayAlert("Info", "LogError Sent", "Ok");
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string, object>(){{"user_id",1}}, this.GetType().FullName);
+        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}}, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
