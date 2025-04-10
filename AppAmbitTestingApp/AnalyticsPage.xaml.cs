@@ -11,7 +11,7 @@ public partial class AnalyticsPage : ContentPage
 
     private async void Button_OnClicked(object? sender, EventArgs e)
     {
-        await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, object> { { "Count", "41" }});
+        await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
     }
     
     private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
