@@ -24,6 +24,7 @@ internal class APIService : IAPIService
             .Add(new MediaTypeWithQualityHeaderValue("application/json"));
         
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+        Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
         var responseString = await responseMessage.Content.ReadAsStringAsync();
         Debug.WriteLine($"responseString:{responseString}");
         return TryDeserializeJson<T>(responseString);
@@ -74,7 +75,7 @@ internal class APIService : IAPIService
             log.Type = LogType.Crash;
             content = SerializeToMultipartFormDataContent(log);
             await DebugMultipartFormDataContent(content as MultipartFormDataContent);
-            log.file = null;
+            log.file = "_FILE_";
             var data = JsonConvert.SerializeObject(payload);
             Debug.WriteLine($"data:{data}");
         }
@@ -148,7 +149,7 @@ internal class APIService : IAPIService
                 continue;
             }
             
-            if (propertyName == "context" && propertyValue is Dictionary<string, object> contextDict)
+            if (propertyName == "context" && propertyValue is Dictionary<string,string> contextDict)
             {
                 int count = 0;
                 foreach (var kvp in contextDict)
@@ -193,12 +194,17 @@ internal class APIService : IAPIService
             foreach (var header in content.Headers)
             {
                 if (header.Key == "file")
+                {
+                    Debug.WriteLine($"{header.Key}: FILE");
                     continue;
+                }
+                
                 Debug.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
             }
 
             var body = await content.ReadAsStringAsync();
             Debug.WriteLine("Body:");
+            Debug.WriteLine("----------------------------");
             Debug.WriteLine(body);
             Debug.WriteLine("----------------------------");
         }
