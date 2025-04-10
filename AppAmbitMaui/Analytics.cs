@@ -12,7 +12,7 @@ namespace AppAmbit;
 public static class Analytics
 {
     internal static bool _isManualSessionEnabled = false;
-    private static bool _hasSessionStarted = false;
+    private static bool _isSessionActive = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -31,28 +31,27 @@ public static class Analytics
     public static async Task StartSession()
     {
         Debug.WriteLine("StartSession called");
-        if (_hasSessionStarted)
+        if (_isSessionActive)
         {
-            Debug.WriteLine("Session alredy started, closing previous session");
-            await EndSession();
+            return;
         }
 
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
         _storageService?.SetSessionId(response.SessionId);
-        _hasSessionStarted = true;
+        _isSessionActive = true;
     }
 
     public static async Task EndSession()
     {
         Debug.WriteLine("EndSession called");
-        if (!_hasSessionStarted)
+        if (!_isSessionActive)
         {
             Debug.WriteLine("Session didn't started");
             return;
         }
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
-        _hasSessionStarted = false;
+        _isSessionActive = false;
     }
 
     public static async void SetUserId(string userId)
