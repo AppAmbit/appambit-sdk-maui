@@ -99,14 +99,12 @@ internal class APIService : IAPIService
         var formData = new MultipartFormDataContent();
 
         if (payload == null)
-        {
             return null;
-        }
-        
+
         object logTypeValue = null;
         string logTypeJsonValue = null;
 
-        // First pass to extract type early
+        // First: find 'type' value and resolve enum name
         foreach (var prop in payload.GetType().GetProperties())
         {
             var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
@@ -131,72 +129,59 @@ internal class APIService : IAPIService
             var jsonIgnoreAttribute = property.GetCustomAttribute<JsonIgnoreAttribute>();
             if (jsonIgnoreAttribute != null)
                 continue;
+            
             var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
             var propertyName = jsonPropertyAttribute?.PropertyName ?? property.Name;
             var propertyValue = property.GetValue(payload);
             
-            /*if (property.PropertyType == typeof(Dictionary<string, string>))
-            {
-                propertyValue = JsonConvert.SerializeObject(propertyValue);
-            }*/
-
             if (propertyName == "file")
             {
                 if (logTypeJsonValue != "crash")
                     continue;
-                
+
                 var dateFormat = "yyyy-MM-ddTHH_mm_ss_fffZ";
                 var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
-                //var fileContent = new StreamContent(encodedBytes);
                 var fileContent = new ByteArrayContent(encodedBytes);
-                //fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 formData.Add(fileContent, "file", Path.GetFileName(filePath));
+                continue;
+            }
+            
+            if (propertyName == "context" && propertyValue is Dictionary<string, object> contextDict)
+            {
+                int count = 0;
+                foreach (var kvp in contextDict)
+                {
+                    var key = kvp.Key;
+                    var value = kvp.Value?.ToString() ?? "";
+                    var contextKey = $"context[{count++}].{key}";
+                    formData.Add(new StringContent(value), contextKey);
+                }
+                continue;
+            }
+            
+            var type = property.PropertyType;
+            var isNullable = Nullable.GetUnderlyingType(type) != null;
+            var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
+
+            if (actualType != null && actualType.IsEnum && propertyValue != null)
+            {
+                var enumVal = Enum.Parse(actualType, propertyValue.ToString());
+                var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
+                var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
+                var enumValueStr = enumAttr?.Value ?? enumVal.ToString();
+                formData.Add(new StringContent(enumValueStr), propertyName);
                 continue;
             }
             
             if (propertyValue != null)
             {
-                string serializedValue;
-
-                var type = property.PropertyType;
-                var isNullable = Nullable.GetUnderlyingType(type) != null;
-                var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
-                
-                if (propertyValue is Dictionary<string, string> dict)
-                {
-                    var arrayRepresentation = dict.Select(kvp => new { key = kvp.Key, value = kvp.Value }).ToArray();
-                    serializedValue = JsonConvert.SerializeObject(arrayRepresentation);
-                    Debug.WriteLine($"property serializedValue: {propertyName}:{serializedValue}");
-                    var count = 0;
-                    foreach (var item in arrayRepresentation)
-                    {
-                        var value = JsonConvert.SerializeObject(item.value);
-                        var propertyArrayName = $"{propertyName}[{count++}].{item.key}";
-                        formData.Add(new StringContent(value),propertyArrayName);
-                    }
-                }
-                
-                if (actualType != null && actualType.IsEnum)
-                {
-                    // Try to get EnumMember value
-                    var enumValue = Enum.Parse(actualType, propertyValue.ToString());
-                    var enumMember = actualType.GetMember(enumValue.ToString()).FirstOrDefault();
-                    var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                    serializedValue = enumAttr?.Value ?? enumValue.ToString();
-                    Debug.WriteLine($"property serializedValue: {propertyName}:{serializedValue}");
-                    formData.Add(new StringContent($"\"{serializedValue}\"", Encoding.UTF8), propertyName);
-                }
-                else
-                {
-                    var json = JsonConvert.SerializeObject(propertyValue);
-                    
-                    Debug.WriteLine($"property json: {propertyName}:{json}");
-                    formData.Add(new StringContent(json, Encoding.UTF8, "application/json"), propertyName);
-                }
+                var stringValue = propertyValue.ToString();
+                formData.Add(new StringContent(stringValue), propertyName);
             }
         }
+
         return formData;
     }
     
