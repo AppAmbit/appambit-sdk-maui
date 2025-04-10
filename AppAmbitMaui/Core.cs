@@ -30,15 +30,6 @@ public static class Core
                 {
                     Start(appKey);
                 });
-                android.OnResume(activity =>
-                {
-                    if (_initialized)
-                        OnResume();
-                });
-                android.OnPause(activity =>
-                {
-                    OnSleep();
-                });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -47,14 +38,6 @@ public static class Core
                 {
                     Start(appKey);
                     return true;
-                });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
                 });
             });
 #endif
@@ -72,23 +55,13 @@ public static class Core
         await InitializeServices();
 
         await InitializeConsumer(appKey);
-        
-        await Analytics.StartSession();
+
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.StartSession();
+        }
         
         _initialized = true;
-    }
-
-    private static async Task OnResume()
-    {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-        await Analytics.StartSession();
-
-    }
-    
-    public static async Task OnSleep()
-    {
-        await Analytics.EndSession();
     }
 
     private static async Task InitializeConsumer(string appKey = "")
@@ -131,7 +104,7 @@ public static class Core
 
         apiService.SetToken(remoteToken?.Token);
     }
-        
+    
     private static async Task InitializeServices()
     {
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();

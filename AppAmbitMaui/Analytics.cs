@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Logs;
@@ -10,8 +11,8 @@ namespace AppAmbit;
 
 public static class Analytics
 {
-    private static bool _manualSession = false;
-    private static bool _sessionStarted = false;
+    internal static bool _isManualSessionEnabled = false;
+    private static bool _hasSessionStarted = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -23,30 +24,35 @@ public static class Analytics
     
     public static void EnableManualSession()
     {
-        _manualSession = true;
+        _isManualSessionEnabled = true;
+        Debug.WriteLine("Manual Session enabled");
     }
 
     public static async Task StartSession()
     {
-        if (_sessionStarted)
+        Debug.WriteLine("StartSession called");
+        if (_hasSessionStarted)
         {
+            Debug.WriteLine("Session alredy started, closing previous session");
             EndSession();
         }
 
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
         _storageService?.SetSessionId(response.SessionId);
-        _sessionStarted = true;
+        _hasSessionStarted = true;
     }
 
     public static async Task EndSession()
     {
-        if (!_sessionStarted)
+        Debug.WriteLine("EndSession called");
+        if (!_hasSessionStarted)
         {
+            Debug.WriteLine("Session didn't started");
             return;
         }
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
-        _sessionStarted = false;
+        _hasSessionStarted = false;
     }
 
     public static async void SetUserId(string userId)
