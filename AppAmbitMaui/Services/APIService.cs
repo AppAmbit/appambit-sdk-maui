@@ -72,18 +72,23 @@ internal class APIService : IAPIService
         HttpContent content;
         if (payload is Log log)
         {
-            log.Type = LogType.Crash;
+            PrintLogWithoutFile(log);
             content = SerializeToMultipartFormDataContent(log);
-            await DebugMultipartFormDataContent(content as MultipartFormDataContent);
-            log.file = "_FILE_";
-            var data = JsonConvert.SerializeObject(payload);
-            Debug.WriteLine($"data:{data}");
+            DebugMultipartFormDataContent(content as MultipartFormDataContent);
         }
         else
         {
             content = SerializeToJSONStringContent(payload);
         }
         return content;
+    }
+    
+    [Conditional("DEBUG")]
+    private static void PrintLogWithoutFile(Log log)
+    {
+        log.file = "_FILE_";
+        var data = JsonConvert.SerializeObject(log);
+        Debug.WriteLine($"data:{data}");
     }
 
     private static HttpContent SerializeToJSONStringContent(object payload)
@@ -185,7 +190,8 @@ internal class APIService : IAPIService
         return formData;
     }
     
-    private async Task DebugMultipartFormDataContent(MultipartFormDataContent formData)
+    [Conditional("DEBUG")]
+    private async void DebugMultipartFormDataContent(MultipartFormDataContent formData)
     {
         foreach (var content in formData)
         {
