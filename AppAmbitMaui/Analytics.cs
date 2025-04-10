@@ -51,18 +51,18 @@ public static class Analytics
     
     public static async Task GenerateTestEvent()
     {
-        await SendOrSaveEvent("Test Event", new Dictionary<string, object>()
+        await SendOrSaveEvent("Test Event", new Dictionary<string,string>()
         {
             { "Event", "Custom event" }
         });
     }
     
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, object> data = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string,string> data = null)
     {
         await SendOrSaveEvent(eventTitle, data);
     }
     
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, object> data = null)
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string,string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         if (hasInternet)

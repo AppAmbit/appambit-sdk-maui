@@ -28,9 +28,9 @@ internal class Log
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
-    public Dictionary<string, object> Context 
+    public Dictionary<string,string> Context 
     { 
-        get => string.IsNullOrEmpty(ContextJson) ? new Dictionary<string, object>() : JsonConvert.DeserializeObject<Dictionary<string, object>>(ContextJson);
+        get => string.IsNullOrEmpty(ContextJson) ? new Dictionary<string,string>() : JsonConvert.DeserializeObject<Dictionary<string,string>>(ContextJson);
         set => ContextJson = JsonConvert.SerializeObject(value);
     }
 

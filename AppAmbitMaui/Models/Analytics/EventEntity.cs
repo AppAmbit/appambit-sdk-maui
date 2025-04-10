@@ -11,9 +11,9 @@ public class EventEntity : Event
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
-    public Dictionary<string, object> Data 
+    public Dictionary<string,string> Data 
     { 
-        get => string.IsNullOrEmpty(DataJson) ? new Dictionary<string, object>() : JsonConvert.DeserializeObject<Dictionary<string, object>>(DataJson);
+        get => string.IsNullOrEmpty(DataJson) ? new Dictionary<string,string>() : JsonConvert.DeserializeObject<Dictionary<string,string>>(DataJson);
         set => DataJson = JsonConvert.SerializeObject(value);
     }
 
