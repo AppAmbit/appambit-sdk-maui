@@ -9,11 +9,11 @@
             <Button Text="Start Session"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked=""/>
+                    Clicked="Button_OnStartSession"/>
             <Button Text="End Session"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked=""/>
+                    Clicked="Button_OnEndSession"/>
             <Button Text="Send custom analytics event"
                     HeightRequest="50"
                     Padding="30"
