@@ -10,7 +10,7 @@ public class EventEntity : Event
     public Guid Id { get; set; }
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
-    [JsonProperty("context")]
+    [JsonProperty("metadata")]
     public Dictionary<string,string> Data 
     { 
         get => string.IsNullOrEmpty(DataJson) ? new Dictionary<string,string>() : JsonConvert.DeserializeObject<Dictionary<string,string>>(DataJson);
