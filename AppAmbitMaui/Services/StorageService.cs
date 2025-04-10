@@ -22,7 +22,7 @@ internal class StorageService : IStorageService
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogEntity>();
-        await _database.CreateTableAsync<AnalyticsLog>();
+        await _database.CreateTableAsync<EventEntity>();
     }
     
     public async Task SetDeviceId(string? deviceId)
@@ -106,7 +106,7 @@ internal class StorageService : IStorageService
         await _database.InsertAsync(logEntity);
     }
 
-    public async Task LogAnalyticsEventAsync(AnalyticsLog analyticsLog)
+    public async Task LogAnalyticsEventAsync(EventEntity analyticsLog)
     {
         await _database.InsertAsync(analyticsLog);
     }
@@ -116,9 +116,9 @@ internal class StorageService : IStorageService
         return await _database.Table<Log>().ToListAsync();
     }
 
-    public async Task<List<AnalyticsLog>> GetAllAnalyticsAsync()
+    public async Task<List<EventEntity>> GetAllAnalyticsAsync()
     {
-        return await _database.Table<AnalyticsLog>().ToListAsync();
+        return await _database.Table<EventEntity>().ToListAsync();
     }
 
     public async Task DeleteAllLogs()

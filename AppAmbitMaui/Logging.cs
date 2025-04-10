@@ -14,7 +14,7 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, object>? properties = null,string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string,string>? properties = null,string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
@@ -28,7 +28,7 @@ internal static class Logging
             LineNumber = exception?.GetLineNumberFromStackTrace() ?? lineNumber ??  0,
             Message = exception?.Message ?? ( String.IsNullOrEmpty(message) ?  "" : message),
             StackTrace = stackTrace,
-            Context = properties ?? new Dictionary<string, object>(),
+            Context = properties ?? new Dictionary<string,string>(),
             Type = logType,
             file = file,
         };
@@ -80,10 +80,10 @@ internal static class Logging
 
     private static async Task StoreLogInDb(Log log)
     {
-        var logTimestamp = log.ConvertTo<LogEntity>();
-        logTimestamp.Id = Guid.NewGuid();
-        logTimestamp.Timestamp = DateTime.Now.ToUniversalTime();
+        var logEntity = log.ConvertTo<LogEntity>();
+        logEntity.Id = Guid.NewGuid();
+        logEntity.Timestamp = DateTime.Now.ToUniversalTime();
         
-        await _storageService?.LogEventAsync(logTimestamp);
+        await _storageService?.LogEventAsync(logEntity);
     }
 }

@@ -74,12 +74,6 @@ public static class Core
         await InitializeConsumer(appKey);
         
         await Analytics.StartSession();
-
-        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        if (hasInternet)
-        {
-            await SendAnalytics();
-        }
         
         _initialized = true;
     }
@@ -137,26 +131,6 @@ public static class Core
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
 
         apiService.SetToken(remoteToken?.Token);
-    }
-
-    private static async Task SendAnalytics()
-    {
-        var analytics = await storageService?.GetAllAnalyticsAsync();
-        if (analytics.Count == 0)
-        {
-            return;
-        }
-        
-        foreach (var item in analytics)
-        {
-            var analyticsReport = new Models.Analytics.AnalyticsReport()
-            {
-                EventTitle = item.EventTitle,
-                SessionId = await storageService.GetSessionId(),
-                Data = JsonConvert.DeserializeObject<Dictionary<string, string>>(item.Data)
-            };
-            var result = await apiService.ExecuteRequest<object>(new SendAnalyticsEndpoint(analyticsReport));
-        }
     }
         
     private static async Task InitializeServices()

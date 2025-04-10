@@ -9,13 +9,13 @@ public partial class AnalyticsPage : ContentPage
         InitializeComponent();
     }
 
-    private void Button_OnClicked(object? sender, EventArgs e)
+    private async void Button_OnClicked(object? sender, EventArgs e)
     {
-        Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
+        await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
     }
     
-    private void Button_OnClickedTestEvent(object? sender, EventArgs e)
+    private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
     {
-        Analytics.GenerateTestEvent();
+        await Analytics.GenerateTestEvent();
     }
 }
