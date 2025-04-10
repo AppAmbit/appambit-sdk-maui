@@ -16,9 +16,6 @@ public class Consumer
     [JsonProperty("user_id")]
     public string UserId { get; set; }
 
-    [JsonProperty("is_guest")]
-    public bool IsGuest { get; set; }
-
     [JsonProperty("user_email")]
     public string UserEmail { get; set; }
 
