@@ -158,5 +158,4 @@ public static class Core
         Crashes.Initialize(apiService,storageService);
         Analytics.Initialize(apiService,storageService);
     }
-    
 }
