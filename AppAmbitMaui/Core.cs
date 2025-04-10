@@ -56,6 +56,14 @@ public static class Core
                     Start(appKey);
                     return true;
                 });
+                ios.WillEnterForeground(application =>
+                {
+                    OnResume();
+                });
+                ios.DidEnterBackground(application =>
+                {
+                    OnSleep();
+                });
             });
 #endif
         });

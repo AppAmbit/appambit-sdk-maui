@@ -30,6 +30,9 @@ public static class Analytics
 
     public static async Task StartSession()
     {
+        if(_isManualSessionEnabled)
+            return;
+        
         Debug.WriteLine("StartSession called");
         if (_hasSessionStarted)
         {
@@ -44,6 +47,9 @@ public static class Analytics
 
     public static async Task EndSession()
     {
+        if(_isManualSessionEnabled)
+            return;
+        
         Debug.WriteLine("EndSession called");
         if (!_hasSessionStarted)
         {
@@ -51,7 +57,7 @@ public static class Analytics
             return;
         }
         var sessionId = await _storageService?.GetSessionId();
-        await _apiService?.ExecuteRequest<string>(new EndSessionEndpoint(sessionId));
+        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
         _hasSessionStarted = false;
     }
 
