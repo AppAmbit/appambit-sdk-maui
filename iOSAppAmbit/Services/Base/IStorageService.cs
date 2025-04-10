@@ -38,6 +38,13 @@ internal interface IStorageService
     Task SetAppId(string? appId);
 
     Task<string?> GetAppId();
+    Task SetUserId(string userId);
+
+    Task<string?> GetUserId();
+
+    Task SetUserEmail(string userEmail);
+
+    Task<string?> GetUserEmail();
     
     Task SetSessionId(string sessionId);
     

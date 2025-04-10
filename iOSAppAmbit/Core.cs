@@ -51,6 +51,8 @@ public static class Core
     {
         var appId = await storageService?.GetAppId();
         var deviceId = await storageService.GetDeviceId();
+        var userId = await storageService.GetUserId();
+        var userEmail = ""+ await storageService.GetUserEmail();
         
         if (appId == null)
         {
@@ -62,14 +64,20 @@ public static class Core
             var id = Guid.NewGuid().ToString();
             await storageService.SetDeviceId(id);
         }
+
+        if (userId == null)
+        {
+            var id = Guid.NewGuid().ToString();
+            await storageService.SetUserId(id);
+        }
         
         var consumer = new Consumer
         {
             AppVersion = appInfoService.AppVersion,
             DeviceId = await storageService.GetDeviceId(),
-            UserId = "1",
+            UserId = userId,
             IsGuest = false,
-            UserEmail = "test@gmail.com",
+            UserEmail = userEmail,
             OS = appInfoService.OS,
             Platform = appInfoService.Platform,
             DeviceModel = appInfoService.DeviceModel,
