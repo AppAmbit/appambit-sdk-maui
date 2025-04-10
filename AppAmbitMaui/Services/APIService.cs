@@ -149,8 +149,8 @@ internal class APIService : IAPIService
                 var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
-                var fileContent = new StreamContent(encodedBytes);
-                //var fileContent = new ByteArrayContent(encodedBytes);
+                //var fileContent = new StreamContent(encodedBytes);
+                var fileContent = new ByteArrayContent(encodedBytes);
                 //fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
                 formData.Add(fileContent, "file", Path.GetFileName(filePath));
                 continue;
