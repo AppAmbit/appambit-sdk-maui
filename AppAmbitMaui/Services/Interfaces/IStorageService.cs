@@ -43,5 +43,9 @@ internal interface IStorageService
     
     Task<string?> GetSessionId();
     
+    Task SetCrashedLastSession(bool crashedLastSession);
+    
+    Task<bool> GetCrashedLastSession();
+    
     #endregion"
 }

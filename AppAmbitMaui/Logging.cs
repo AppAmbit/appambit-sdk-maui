@@ -19,7 +19,7 @@ internal static class Logging
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var deviceId = await _storageService.GetDeviceId();
-        var file = (exception != null) ? CrashFileGenerator.GenerateCrashLog(exception,deviceId) : null;
+        var file = ( logType == LogType.Crash && exception != null) ? CrashFileGenerator.GenerateCrashLog(exception,deviceId) : null;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -9,12 +10,16 @@ namespace AppAmbit;
 
 public static class Crashes
 {
+    private static readonly bool? _crashedInLastSession = null;
+    private static IStorageService? _storageService;
+    private static Guid _currentRunId = Guid.NewGuid();
     internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+        _storageService = storageService;
         Logging.Initialize(apiService,storageService);
     }
     
@@ -35,9 +40,21 @@ public static class Crashes
         throw new NullReferenceException();
     }
     
+    public static async Task<bool> CrashedInLastSession()
+    {
+        var crashedLastSession = false;
+        if (_crashedInLastSession == null)
+        {
+            crashedLastSession = await _storageService!.GetCrashedLastSession();
+            await _storageService!.SetCrashedLastSession(false);
+        }
+        return crashedLastSession;
+    }
+    
     private static async Task LogCrash(Exception? exception = null)
     {
         var message = exception?.Message;
+        await _storageService!.SetCrashedLastSession(true);
         await Logging.LogEvent(message, LogType.Crash,exception);
     }
     

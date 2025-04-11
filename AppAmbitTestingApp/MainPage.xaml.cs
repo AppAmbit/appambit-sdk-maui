@@ -59,6 +59,14 @@ public partial class MainPage : ContentPage
         UserId = Guid.NewGuid().ToString();
     }
 
+    private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
+    {
+        if (await Crashes.CrashedInLastSession())
+        {
+            await DisplayAlert("Info", "Application crashed the last session", "Ok");
+        }
+    }
+
     private async void OnChangeUserId(object? sender, EventArgs e)
     {
         Analytics.SetUserId(UserId);

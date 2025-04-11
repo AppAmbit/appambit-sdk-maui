@@ -13,6 +13,10 @@
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a race car number eight" />
             
+            <Button
+                Text="App Has crashed the last session" 
+                Clicked="OnHasCrashedTheLastSession" />
+            
             <Entry Placeholder="User id"
                    Text="{Binding UserId}"/>
             
