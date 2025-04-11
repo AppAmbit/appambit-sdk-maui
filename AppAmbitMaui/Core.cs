@@ -39,6 +39,14 @@ public static class Core
                 {
                     OnSleep();
                 });
+                ios.WillEnterForeground(application =>
+                {
+                    OnResume();
+                });
+                ios.DidEnterBackground(application =>
+                {
+                    OnSleep();
+                });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -72,8 +80,11 @@ public static class Core
         await InitializeServices();
 
         await InitializeConsumer(appKey);
-        
-        await Analytics.StartSession();
+
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.StartSession();
+        }
         
         _initialized = true;
     }
@@ -82,13 +93,19 @@ public static class Core
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
-        await Analytics.StartSession();
-
+        
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.StartSession();
+        }
     }
     
     public static async Task OnSleep()
     {
-        await Analytics.EndSession();
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.EndSession();
+        }
     }
 
     private static async Task InitializeConsumer(string appKey = "")
@@ -131,7 +148,7 @@ public static class Core
 
         apiService.SetToken(remoteToken?.Token);
     }
-        
+    
     private static async Task InitializeServices()
     {
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
@@ -141,5 +158,4 @@ public static class Core
         Crashes.Initialize(apiService,storageService);
         Analytics.Initialize(apiService,storageService);
     }
-    
 }
