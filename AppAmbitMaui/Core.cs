@@ -85,6 +85,8 @@ public static class Core
         {
             await Analytics.StartSession();
         }
+
+        Crashes.LoadCrashFileIfExists();
         
         _initialized = true;
     }
@@ -122,14 +124,14 @@ public static class Core
 
         if (deviceId == null)
         {
-            var id = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(id);
+            deviceId = Guid.NewGuid().ToString();
+            await storageService.SetDeviceId(deviceId);
         }
 
         if (userId == null)
         {
-            var id = Guid.NewGuid().ToString();
-            await storageService.SetUserId(id);
+            userId = Guid.NewGuid().ToString();
+            await storageService.SetUserId(userId);
         }
 
         var consumer = new Consumer
@@ -155,7 +157,8 @@ public static class Core
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
-        Crashes.Initialize(apiService,storageService);
+        var deviceId = await storageService.GetDeviceId();
+        Crashes.Initialize(apiService,storageService,deviceId);
         Analytics.Initialize(apiService,storageService);
     }
 }

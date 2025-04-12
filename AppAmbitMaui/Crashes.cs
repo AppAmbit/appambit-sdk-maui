@@ -10,16 +10,17 @@ namespace AppAmbit;
 
 public static class Crashes
 {
-    private static readonly bool? _crashedInLastSession = null;
     private static IStorageService? _storageService;
-    private static Guid _currentRunId = Guid.NewGuid();
-    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
+    private static string _deviceId;
+    private static bool _crashedInLastSession = false;
+    internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
         _storageService = storageService;
+        _deviceId = deviceId;
         Logging.Initialize(apiService,storageService);
     }
     
@@ -40,18 +41,30 @@ public static class Crashes
         throw new NullReferenceException();
     }
     
-    public static async Task<bool> CrashedInLastSession()
+    
+    public static async void LoadCrashFileIfExists()
     {
-        var crashedLastSession = false;
-        if (_crashedInLastSession == null)
+        var crashFile = Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+
+        if (!File.Exists(crashFile))
         {
-            crashedLastSession = await _storageService!.GetCrashedLastSession();
-            await _storageService!.SetCrashedLastSession(false);
+            _crashedInLastSession = false;
+            return;
         }
-        return crashedLastSession;
+
+        var json = await File.ReadAllTextAsync(crashFile);
+        File.Delete(crashFile);
+        var exceptionInfo = JsonConvert.DeserializeObject<ExceptionInfo>(json);
+        await LogCrash(exceptionInfo);
+        _crashedInLastSession = true;
     }
     
-    private static async Task LogCrash(Exception? exception = null)
+    public static async Task<bool> CrashedInLastSession()
+    {
+        return _crashedInLastSession;
+    }
+    
+    private static async Task LogCrash(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
         await _storageService!.SetCrashedLastSession(true);
@@ -66,14 +79,20 @@ public static class Crashes
     
     private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        var exception = e?.Exception;
+        var exception = ExceptionInfo.FromException(e?.Exception);
         await LogCrash(exception);
     }
     
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
-        var exception = unhandledExceptionEventArgs.ExceptionObject as Exception;
-        await LogCrash(exception);
+        if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
+            return;
+
+        var info = ExceptionInfo.FromException(ex,_deviceId);
+        var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+        Debug.WriteLine($"AppDataDirectory:{FileSystem.AppDataDirectory}");
+        var crashFile = Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+        File.WriteAllText(crashFile, json);
     }
     
     private static async Task<string?> GetCallerClassAsync()

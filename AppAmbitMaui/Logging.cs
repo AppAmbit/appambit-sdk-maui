@@ -14,23 +14,30 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string,string>? properties = null,string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message,LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    {
+        var deviceId = await _storageService.GetDeviceId();
+        var exceptionInfo = ExceptionInfo.FromException(exception,deviceId);
+        LogEvent(message, logType, exceptionInfo, properties,classFqn,fileName,lineNumber);
+    }
+
+    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo exception = null, Dictionary<string,string>? properties = null,string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var deviceId = await _storageService.GetDeviceId();
-        var file = ( logType == LogType.Crash && exception != null) ? CrashFileGenerator.GenerateCrashLog(exception,deviceId) : null;
+        var file = exception.CrashLogFile;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.TargetSite?.DeclaringType?.FullName ?? classFqn ?? AppConstants.UnknownClass,
-            FileName = exception?.GetFileNameFromStackTrace() ?? fileName ??  AppConstants.UnknownFileName,
-            LineNumber = exception?.GetLineNumberFromStackTrace() ?? lineNumber ??  0,
+            ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
+            FileName = exception?.FileNameFromStackTrace ?? fileName ??  AppConstants.UnknownFileName,
+            LineNumber = exception?.LineNumberFromStackTrace ?? lineNumber ??  0,
             Message = exception?.Message ?? ( String.IsNullOrEmpty(message) ?  "" : message),
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string,string>(),
             Type = logType,
-            file = file,
+            file = (exception != null)? file:null,
         };
         await SendOrSaveLogEventAsync(log);
     }
@@ -41,7 +48,7 @@ internal static class Logging
         var token = _apiService?.GetToken();
         
         //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet() && !string.IsNullOrEmpty(token) && log.Type!=LogType.Crash)
+        if (hasInternet() && !string.IsNullOrEmpty(token))
         {
             var registerEndpoint = new LogEndpoint(log);
             
