@@ -68,6 +68,7 @@ public partial class MainPage : ContentPage
         {
             await Crashes.LogError("Test Batch LogError");
         }
+        await DisplayAlert("Info", "Logs generated", "Ok");
     }
 
     private async void OnChangeUserId(object? sender, EventArgs e)

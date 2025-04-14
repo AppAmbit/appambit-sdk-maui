@@ -9,6 +9,6 @@ internal class LogEntity : Log
     [PrimaryKey]
     public Guid Id { get; set; }
     
-    [JsonProperty("timestamp")]
-    public DateTime Timestamp { get; set; }
+    [JsonProperty("created_at")]
+    public DateTime CreatedAt { get; set; }
 }

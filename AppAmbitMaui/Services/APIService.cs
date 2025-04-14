@@ -81,7 +81,7 @@ internal class APIService : IAPIService
         }
         
         HttpContent content;
-        if (payload is Log log)
+        if (payload is Log log)//TODO: LogEntity ?
         {
             PrintLogWithoutFile(log);
             content = SerializeToMultipartFormDataContent(log);
@@ -92,6 +92,7 @@ internal class APIService : IAPIService
         {
             var list = ToObjectList(payload);
             content = SerializeArrayToMultipartFormDataContent(list);
+            DebugMultipartFormDataContent(content as MultipartFormDataContent);
         }
         else
         {
@@ -110,8 +111,11 @@ internal class APIService : IAPIService
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        
-        var data = JsonConvert.SerializeObject(payload);
+        var options = new JsonSerializerSettings() 
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+        };
+        var data = JsonConvert.SerializeObject(payload,options);
         Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
@@ -199,8 +203,13 @@ internal class APIService : IAPIService
             
             if (propertyValue != null)
             {
-                var stringValue = propertyValue.ToString();
-                formData.Add(new StringContent(stringValue), propertyName);
+                var options = new JsonSerializerSettings() 
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DateFormatString = "yyyy-MM-dd HH:mm:ss"
+                };
+                var data = JsonConvert.SerializeObject(propertyValue,options);
+                formData.Add(new StringContent(data), propertyName);
             }
         }
 
@@ -296,7 +305,13 @@ internal class APIService : IAPIService
 
                 if (propValue != null)
                 {
-                    formData.Add(new StringContent(propValue.ToString()), multipartKey);
+                    var options = new JsonSerializerSettings() 
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DateFormatString = "yyyy-MM-dd HH:mm:ss"
+                    };
+                    var data = JsonConvert.SerializeObject(propValue,options);
+                    formData.Add(new StringContent(data), multipartKey);
                 }
             }
         }

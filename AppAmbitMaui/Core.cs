@@ -23,6 +23,7 @@ public static class Core
     {
         builder.ConfigureLifecycleEvents(events =>
         {
+            //TODO:Handle internet state change events
 #if ANDROID
             events.AddAndroid(android =>
             {
@@ -70,7 +71,7 @@ public static class Core
     private static async Task Start(string appKey)
     {
         await InitializeServices();
-
+        //TODO: This does not work without wifi
         await InitializeConsumer(appKey);
 
         if (!Analytics._isManualSessionEnabled)
@@ -116,14 +117,14 @@ public static class Core
 
         if (deviceId == null)
         {
-            var id = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(id);
+            deviceId = Guid.NewGuid().ToString();
+            await storageService.SetDeviceId(deviceId);
         }
 
         if (userId == null)
         {
-            var id = Guid.NewGuid().ToString();
-            await storageService.SetUserId(id);
+            userId = Guid.NewGuid().ToString();
+            await storageService.SetUserId(userId);
         }
 
         var consumer = new Consumer

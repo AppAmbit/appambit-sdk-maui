@@ -106,5 +106,6 @@ public static class Crashes
         var logEntityList = await _storageService.GetOldest100LogsAsync();
         var endpoint = new LogBatchEndpoint(logEntityList);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
+        await _storageService.DeleteLogList(logEntityList);
     }
 }
