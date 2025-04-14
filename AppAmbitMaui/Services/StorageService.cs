@@ -113,7 +113,27 @@ internal class StorageService : IStorageService
 
     public async Task<List<Log>> GetAllLogsAsync()
     {
-        return await _database.Table<Log>().ToListAsync();
+        return await _database.Table<LogEntity>().ToListAsync();
+    }
+
+    public async Task<List<LogEntity>> GetOldest100LogsAsync()
+    {
+        return await _database.Table<LogEntity>()
+            .OrderBy(log => log.Timestamp)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task DeleteLogList(List<LogEntity> logs)
+    {
+        var ids = logs.Select(log => log.Id).ToList();
+        await _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM LogEntity WHERE Id = ?", id);
+            }
+        });
     }
 
     public async Task<List<EventEntity>> GetAllAnalyticsAsync()

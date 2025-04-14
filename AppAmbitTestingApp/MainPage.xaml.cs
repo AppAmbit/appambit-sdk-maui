@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using AppAmbit;
 using AppAmbit.Models.Logs;
+using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
 
@@ -57,6 +58,28 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
+    }
+    
+    private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
+    {
+        //The internet should be turned off mannually.
+        await DisplayAlert("Info", "Turn off internet", "Ok");
+        foreach (int index in Range( 1, 220 ))
+        {
+            await Crashes.LogError("Test Batch LogError");
+        }
+    }
+
+    private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
+    {
+        if (await Crashes.CrashedInLastSession())
+        {
+            await DisplayAlert("Info", "Application crashed in the last session", "Ok");
+        }
+        else
+        {
+            await DisplayAlert("Info", "Application did not crash in the last session", "Ok");
+        }
     }
 
     private async void OnChangeUserId(object? sender, EventArgs e)

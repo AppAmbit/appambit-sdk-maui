@@ -30,6 +30,16 @@ internal class APIService : IAPIService
         return TryDeserializeJson<T>(responseString);
     }
     
+    public string? GetToken()
+    {
+        return _token;
+    }
+    
+    public void SetToken( string? token)
+    {
+        _token = token;
+    }
+    
     private T TryDeserializeJson<T>(string response)
     {
         try
@@ -76,13 +86,19 @@ internal class APIService : IAPIService
             content = SerializeToMultipartFormDataContent(log);
             DebugMultipartFormDataContent(content as MultipartFormDataContent);
         }
+        else if (IsCollection ( payload ))
+
+        {
+            var list = ToObjectList(payload);
+            content = SerializeArrayToMultipartFormDataContent(list);
+        }
         else
         {
             content = SerializeToJSONStringContent(payload);
         }
         return content;
     }
-    
+
     [Conditional("DEBUG")]
     private static void PrintLogWithoutFile(Log log)
     {
@@ -190,6 +206,103 @@ internal class APIService : IAPIService
         return formData;
     }
     
+    private HttpContent SerializeArrayToMultipartFormDataContent(List<object> items)
+    {
+        var formData = new MultipartFormDataContent();
+
+        for (int index = 0; index < items.Count; index++)
+        {
+            var item = items[index];
+            string logTypeJsonValue = null;
+
+            // First, get the value of the "type" field to check for crash (needed for file handling)
+            foreach (var prop in item.GetType().GetProperties())
+            {
+                var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
+                var propName = jsonPropAttr?.PropertyName ?? prop.Name;
+
+                if (propName == "type")
+                {
+                    var logTypeValue = prop.GetValue(item);
+                    var actualType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                    if (actualType.IsEnum)
+                    {
+                        var enumVal = Enum.Parse(actualType, logTypeValue.ToString());
+                        var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
+                        var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
+                        logTypeJsonValue = enumAttr?.Value ?? enumVal.ToString();
+                    }
+                    else
+                    {
+                        logTypeJsonValue = logTypeValue?.ToString();
+                    }
+                    break;
+                }
+            }
+
+            foreach (var prop in item.GetType().GetProperties())
+            {
+                var jsonIgnoreAttr = prop.GetCustomAttribute<JsonIgnoreAttribute>();
+                if (jsonIgnoreAttr != null)
+                    continue;
+
+                var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
+                var propName = jsonPropAttr?.PropertyName ?? prop.Name;
+                var propValue = prop.GetValue(item);
+
+                string multipartKey = $"{index}[{propName}]";
+
+                if (propName == "file")
+                {
+                    if (logTypeJsonValue != "crash")
+                        continue;
+
+                    if (propValue is string path && File.Exists(path))
+                    {
+                        var streamContent = new StreamContent(File.OpenRead(path));
+                        formData.Add(streamContent, multipartKey, Path.GetFileName(path));
+                    }
+                    continue;
+                }
+
+                if (propName == "context" && propValue is Dictionary<string, string> contextDict)
+                {
+                    int contextIndex = 0;
+                    foreach (var kvp in contextDict)
+                    {
+                        var key = kvp.Key;
+                        var value = kvp.Value ?? string.Empty;
+                        var contextKey = $"{index}[context][{contextIndex}].{key}";
+                        formData.Add(new StringContent(value), contextKey);
+                        contextIndex++;
+                    }
+                    continue;
+                }
+
+                var type = prop.PropertyType;
+                var isNullable = Nullable.GetUnderlyingType(type) != null;
+                var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
+
+                if (actualType != null && actualType.IsEnum && propValue != null)
+                {
+                    var enumVal = Enum.Parse(actualType, propValue.ToString());
+                    var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
+                    var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
+                    var enumStr = enumAttr?.Value ?? enumVal.ToString();
+                    formData.Add(new StringContent(enumStr), multipartKey);
+                    continue;
+                }
+
+                if (propValue != null)
+                {
+                    formData.Add(new StringContent(propValue.ToString()), multipartKey);
+                }
+            }
+        }
+
+        return formData;
+    }
+    
     [Conditional("DEBUG")]
     private async void DebugMultipartFormDataContent(MultipartFormDataContent formData)
     {
@@ -282,13 +395,24 @@ internal class APIService : IAPIService
         return result;
     }
     
-    public string? GetToken()
+
+    private bool IsCollection(object obj)
     {
-        return _token;
+        if (obj == null) return false;
+
+        var type = obj.GetType();
+        return typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string);
     }
-    
-    public void SetToken( string? token)
+    List<object> ToObjectList(object collection)
     {
-        _token = token;
+        if (collection is not IEnumerable enumerable || collection is string)
+            return new List<object>(){collection};
+
+        var list = new List<object>();
+        foreach (var item in enumerable)
+        {
+            list.Add(item);
+        }
+        return list;
     }
 }

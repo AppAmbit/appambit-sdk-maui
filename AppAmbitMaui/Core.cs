@@ -87,6 +87,8 @@ public static class Core
         }
         
         _initialized = true;
+        
+        Crashes.SendBatchLogs();
     }
 
     private static async Task OnResume()

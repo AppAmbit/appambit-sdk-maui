@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
@@ -9,12 +10,21 @@ namespace AppAmbit;
 
 public static class Crashes
 {
-    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
+
+    private static IStorageService? _storageService;
+    private static IAPIService? _apiService;
+    private static string _deviceId;
+    private static bool _crashedInLastSession = false;
+    internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+
+        _storageService = storageService;
+        _apiService = apiService;
+        _deviceId = deviceId;
         Logging.Initialize(apiService,storageService);
     }
     
@@ -92,4 +102,19 @@ public static class Crashes
         }
         return false;
     }
+
+    public static async Task SendBatchLogs()
+    {
+        var logEntityList = _storageService.GetOldest100LogsAsync();
+        
+        //var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+        
+        var logResponse = await _apiService?.ExecuteRequest<Response>(logEntityList);
+    }
+    
+    /*
+    public async Task<List<Log>> GetAllLogsAsync()
+    {
+        return await _storageService.Table<Log>().ToListAsync();
+    }*/
 }

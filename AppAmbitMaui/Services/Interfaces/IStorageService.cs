@@ -42,6 +42,10 @@ internal interface IStorageService
     Task SetSessionId(string sessionId);
     
     Task<string?> GetSessionId();
-    
+
+    Task<List<LogEntity>> GetOldest100LogsAsync();
+
+    Task DeleteLogList(List<LogEntity> logs);
+
     #endregion"
 }
