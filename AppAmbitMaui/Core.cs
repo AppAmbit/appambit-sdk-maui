@@ -39,14 +39,6 @@ public static class Core
                 {
                     OnSleep();
                 });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
             });
 #elif IOS
             events.AddiOS(ios =>

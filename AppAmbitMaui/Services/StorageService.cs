@@ -111,7 +111,7 @@ internal class StorageService : IStorageService
         await _database.InsertAsync(analyticsLog);
     }
 
-    public async Task<List<Log>> GetAllLogsAsync()
+    public async Task<List<LogEntity>> GetAllLogsAsync()
     {
         return await _database.Table<LogEntity>().ToListAsync();
     }

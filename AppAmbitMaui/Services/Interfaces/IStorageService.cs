@@ -13,7 +13,7 @@ internal interface IStorageService
 
     Task LogAnalyticsEventAsync(EventEntity analyticsLog);
 
-    Task<List<Log>> GetAllLogsAsync();
+    Task<List<LogEntity>> GetAllLogsAsync();
     
     Task<List<EventEntity>> GetAllAnalyticsAsync();
     

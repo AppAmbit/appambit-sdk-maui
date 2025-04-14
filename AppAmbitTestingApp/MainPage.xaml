@@ -15,11 +15,7 @@
                 
             <Button
                 Text="Generate Logs for Batch upload" 
-                Clicked="" />
-            
-            <Button
-                Text="Did the app crash during your last session?" 
-                Clicked="OnHasCrashedTheLastSession" />
+                Clicked="OnGenerateLogsForBatch" />
                 
             <Entry Placeholder="User id"
                    Text="{Binding UserId}"/>

@@ -13,9 +13,8 @@ public static class Crashes
 
     private static IStorageService? _storageService;
     private static IAPIService? _apiService;
-    private static string _deviceId;
     private static bool _crashedInLastSession = false;
-    internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
+    internal static void Initialize(IAPIService? apiService,IStorageService? storageService)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -24,7 +23,6 @@ public static class Crashes
 
         _storageService = storageService;
         _apiService = apiService;
-        _deviceId = deviceId;
         Logging.Initialize(apiService,storageService);
     }
     
@@ -105,16 +103,8 @@ public static class Crashes
 
     public static async Task SendBatchLogs()
     {
-        var logEntityList = _storageService.GetOldest100LogsAsync();
-        
-        //var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
-        
-        var logResponse = await _apiService?.ExecuteRequest<Response>(logEntityList);
+        var logEntityList = await _storageService.GetOldest100LogsAsync();
+        var endpoint = new LogBatchEndpoint(logEntityList);
+        var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
     }
-    
-    /*
-    public async Task<List<Log>> GetAllLogsAsync()
-    {
-        return await _storageService.Table<Log>().ToListAsync();
-    }*/
 }
