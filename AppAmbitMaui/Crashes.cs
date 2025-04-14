@@ -51,12 +51,12 @@ public static class Crashes
             _crashedInLastSession = false;
             return;
         }
-
+        
+        _crashedInLastSession = true;
         var json = await File.ReadAllTextAsync(crashFile);
         File.Delete(crashFile);
         var exceptionInfo = JsonConvert.DeserializeObject<ExceptionInfo>(json);
         await LogCrash(exceptionInfo);
-        _crashedInLastSession = true;
     }
     
     public static async Task<bool> CrashedInLastSession()
