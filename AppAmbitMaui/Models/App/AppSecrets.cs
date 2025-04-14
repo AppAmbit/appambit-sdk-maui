@@ -16,6 +16,4 @@ public class AppSecrets
     public string? UserId { get; set; }
     
     public string? UserEmail { get; set; }
-    
-    public bool CrashedLastSession { get; set; }
 }

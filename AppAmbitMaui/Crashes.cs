@@ -67,7 +67,6 @@ public static class Crashes
     private static async Task LogCrash(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
-        await _storageService!.SetCrashedLastSession(true);
         await Logging.LogEvent(message, LogType.Crash,exception);
     }
     

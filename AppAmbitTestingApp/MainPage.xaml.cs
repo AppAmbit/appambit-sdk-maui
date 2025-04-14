@@ -63,7 +63,11 @@ public partial class MainPage : ContentPage
     {
         if (await Crashes.CrashedInLastSession())
         {
-            await DisplayAlert("Info", "Application crashed the last session", "Ok");
+            await DisplayAlert("Info", "Application crashed in the last session", "Ok");
+        }
+        else
+        {
+            await DisplayAlert("Info", "Application did not crash in the last session", "Ok");
         }
     }
 

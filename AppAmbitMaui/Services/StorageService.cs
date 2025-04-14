@@ -103,19 +103,6 @@ internal class StorageService : IStorageService
         return appSecrets?.SessionId;
     }
     
-    public async Task SetCrashedLastSession(bool crashedLastSession)
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.CrashedLastSession = crashedLastSession;
-        await _database.UpdateAsync(appSecrets);
-    }
-
-    public async Task<bool> GetCrashedLastSession()
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        return appSecrets?.CrashedLastSession ?? false;
-    }
-    
     public async Task LogEventAsync(LogEntity logEntity)
     {
         await _database.InsertAsync(logEntity);
