@@ -87,7 +87,6 @@ public static class Core
     private static async void OnConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
     {
         var access = e.NetworkAccess;
-        var profiles = e.ConnectionProfiles;
         
         if (access != NetworkAccess.Internet)
             return;
