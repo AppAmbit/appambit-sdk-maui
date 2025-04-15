@@ -14,7 +14,7 @@ namespace AppAmbit;
 
 public static class Core
 {
-    private static bool _initialized;
+    private static bool _initialized = false;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
@@ -23,7 +23,6 @@ public static class Core
     {
         builder.ConfigureLifecycleEvents(events =>
         {
-            //TODO:Handle internet state change events
 #if ANDROID
             events.AddAndroid(android =>
             {
@@ -60,7 +59,9 @@ public static class Core
             });
 #endif
         });
-
+        
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.ConnectivityChanged += OnConnectivityChanged;
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -68,10 +69,9 @@ public static class Core
         return builder;
     }
 
-    private static async Task Start(string appKey)
+    private static async Task Start(string appKey = "")
     {
         await InitializeServices();
-        //TODO: This does not work without wifi
         await InitializeConsumer(appKey);
 
         if (!Analytics._isManualSessionEnabled)
@@ -81,7 +81,21 @@ public static class Core
         
         _initialized = true;
         
-        Crashes.SendBatchLogs();
+        await Crashes.SendBatchLogs();
+    }
+
+    private static async void OnConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+    {
+        var access = e.NetworkAccess;
+        var profiles = e.ConnectionProfiles;
+        
+        if (access != NetworkAccess.Internet)
+            return;
+        
+        if ( ! _initialized )
+            await Start();
+        else
+            await Crashes.SendBatchLogs();
     }
 
     private static async Task OnResume()
@@ -140,7 +154,6 @@ public static class Core
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-
         apiService.SetToken(remoteToken?.Token);
     }
     
