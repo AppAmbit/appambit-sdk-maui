@@ -305,8 +305,6 @@ internal class APIService : IAPIService
 
                 if (propValue != null)
                 {
-                    //if (propName == "created_at")
-                    //    continue;
                     var options = new JsonSerializerSettings() 
                     {
                         NullValueHandling = NullValueHandling.Ignore,

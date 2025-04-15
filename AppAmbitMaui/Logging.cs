@@ -8,7 +8,6 @@ internal static class Logging
 {
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
-    private static DateTime _currentDateTime = DateTime.Now.AddDays(-100);
     private static long _logCount = 0;
     public static void Initialize(IAPIService? apiService,IStorageService? storageService)
     {
@@ -84,8 +83,7 @@ internal static class Logging
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        //TODO:remove test code.
-        logEntity.CreatedAt = _currentDateTime.AddDays(_logCount++); 
+        logEntity.CreatedAt = DateTime.Now.ToUniversalTime(); 
         
         await _storageService?.LogEventAsync(logEntity);
     }

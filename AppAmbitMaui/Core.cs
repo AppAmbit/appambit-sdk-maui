@@ -107,6 +107,8 @@ public static class Core
         {
             await Analytics.StartSession();
         }
+        
+        await Crashes.SendBatchLogs();
     }
     
     public static async Task OnSleep()

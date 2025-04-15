@@ -62,13 +62,13 @@ public partial class MainPage : ContentPage
     
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
     {
-        //The internet should be turned off mannually.
         await DisplayAlert("Info", "Turn off internet", "Ok");
         foreach (int index in Range( 1, 220 ))
         {
             await Crashes.LogError("Test Batch LogError");
         }
         await DisplayAlert("Info", "Logs generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
     }
 
     private async void OnChangeUserId(object? sender, EventArgs e)
