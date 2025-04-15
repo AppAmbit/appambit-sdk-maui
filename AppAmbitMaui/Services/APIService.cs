@@ -315,9 +315,17 @@ internal class APIService : IAPIService
                     };
                     var data = "";
                     data = JsonConvert.SerializeObject(propValue,options);
-                    if (propValue is DateTime dateTime)
+                    if (propValue is DateTime dateTime )
                     {
                         data = data.Trim('\"');
+                    }
+                    if (propValue is Guid )
+                    {
+                        data = data.Trim('\"');
+                    }
+                    if (propValue is string s)
+                    {
+                        data = s;
                     }
                     formData.Add(new StringContent(data), multipartKey);
                 }
