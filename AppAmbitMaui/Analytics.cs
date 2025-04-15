@@ -92,10 +92,10 @@ public static class Analytics
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         
-        //We group it by truncated name in order to avoid exceptions by collisions.
+        
         data = data
-            .Take(TrackEventMaxPropertyLimit)
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
+            .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
             g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
             g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
