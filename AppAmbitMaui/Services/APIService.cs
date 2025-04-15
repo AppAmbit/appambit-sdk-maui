@@ -93,8 +93,11 @@ internal class APIService : IAPIService
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        
-        var data = JsonConvert.SerializeObject(payload);
+        var options = new JsonSerializerSettings() 
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+        };
+        var data = JsonConvert.SerializeObject(payload,options);
         Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
