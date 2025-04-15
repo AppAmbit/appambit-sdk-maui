@@ -14,7 +14,7 @@ internal class AppConstants
     
     internal const string NoStackTraceAvailable = nameof(NoStackTraceAvailable);
 
-    internal const int TrackEventNameMaxLimit = 120;
+    internal const int TrackEventNameMaxLimit = 80;
 
     internal const int TrackEventMaxPropertyLimit = 20;
 
