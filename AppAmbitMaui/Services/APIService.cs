@@ -218,6 +218,7 @@ internal class APIService : IAPIService
     
     private HttpContent SerializeArrayToMultipartFormDataContent(List<object> items)
     {
+        Debug.WriteLine("SerializeArrayToMultipartFormDataContent");
         var formData = new MultipartFormDataContent();
 
         for (int index = 0; index < items.Count; index++)
@@ -305,12 +306,19 @@ internal class APIService : IAPIService
 
                 if (propValue != null)
                 {
+                    //if (propName == "created_at")
+                    //    continue;
                     var options = new JsonSerializerSettings() 
                     {
                         NullValueHandling = NullValueHandling.Ignore,
                         DateFormatString = "yyyy-MM-dd HH:mm:ss"
                     };
-                    var data = JsonConvert.SerializeObject(propValue,options);
+                    var data = "";
+                    data = JsonConvert.SerializeObject(propValue,options);
+                    if (propValue is DateTime dateTime)
+                    {
+                        data = data.Trim('\"');
+                    }
                     formData.Add(new StringContent(data), multipartKey);
                 }
             }
