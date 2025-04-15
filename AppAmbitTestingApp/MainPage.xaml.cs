@@ -7,7 +7,6 @@ namespace AppAmbitTestingApp;
 
 public partial class MainPage : ContentPage
 {
-
     private string _logMessage = "Test Log Message";
 
     public string LogMessage
