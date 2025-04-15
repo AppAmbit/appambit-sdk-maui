@@ -92,7 +92,6 @@ public static class Analytics
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         
-        
         data = data
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
