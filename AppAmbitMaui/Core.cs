@@ -14,7 +14,7 @@ namespace AppAmbit;
 
 public static class Core
 {
-    private static bool _initialized = false;
+    private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
