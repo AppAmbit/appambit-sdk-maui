@@ -14,6 +14,8 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
+    private const string _dateTimeFormatISO8601ForFile = "yyyy-MM-ddTHH_mm_ss_fffZ";
+    private const string _dateFormatStringApi = "yyyy-MM-dd HH:mm:ss";
     
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
@@ -163,9 +165,8 @@ internal class APIService : IAPIService
             {
                 if (logTypeJsonValue != "crash")
                     continue;
-
-                var dateFormat = "yyyy-MM-ddTHH_mm_ss_fffZ";
-                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
+                
+                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(_dateTimeFormatISO8601ForFile)}.txt";
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
                 var fileContent = new ByteArrayContent(encodedBytes);
@@ -205,7 +206,7 @@ internal class APIService : IAPIService
                 var options = new JsonSerializerSettings() 
                 {
                     NullValueHandling = NullValueHandling.Ignore,
-                    DateFormatString = "yyyy-MM-dd HH:mm:ss"
+                    DateFormatString = _dateFormatStringApi
                 };
                 var data = JsonConvert.SerializeObject(propertyValue,options);
                 formData.Add(new StringContent(data), propertyName);
@@ -225,7 +226,6 @@ internal class APIService : IAPIService
             var item = items[index];
             string logTypeJsonValue = null;
 
-            // First, get the value of the "type" field to check for crash (needed for file handling)
             foreach (var prop in item.GetType().GetProperties())
             {
                 var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
@@ -310,7 +310,7 @@ internal class APIService : IAPIService
                     var options = new JsonSerializerSettings() 
                     {
                         NullValueHandling = NullValueHandling.Ignore,
-                        DateFormatString = "yyyy-MM-dd HH:mm:ss"
+                        DateFormatString = _dateFormatStringApi
                     };
                     var data = "";
                     data = JsonConvert.SerializeObject(propValue,options);
