@@ -19,8 +19,7 @@ internal class StorageService : IStorageService
         {
             return;
         }
-
-        Debug.WriteLine($"DatabasePath:{AppConstants.DatabasePath}");
+        Debug.WriteLine($"DatabasePath: {AppConstants.DatabasePath}");
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogEntity>();
@@ -104,7 +103,7 @@ internal class StorageService : IStorageService
     }
     
     public async Task LogEventAsync(LogEntity logEntity)
-    {    
+    {
         await _database.InsertAsync(logEntity);
     }
 

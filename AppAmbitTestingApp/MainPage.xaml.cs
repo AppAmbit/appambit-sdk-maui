@@ -71,6 +71,18 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
     }
 
+    private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
+    {
+        if (await Crashes.DidCrashInLastSession())
+        {
+            await DisplayAlert("Info", "Application crashed in the last session", "Ok");
+        }
+        else
+        {
+            await DisplayAlert("Info", "Application did not crash in the last session", "Ok");
+        }
+    }
+
     private async void OnChangeUserId(object? sender, EventArgs e)
     {
         Analytics.SetUserId(UserId);

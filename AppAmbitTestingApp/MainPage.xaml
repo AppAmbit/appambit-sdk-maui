@@ -14,9 +14,13 @@
                 SemanticProperties.Description="dot net bot in a race car number eight" />
                 
             <Button
+                Text="Did the app crash during your last session?" 
+                Clicked="OnHasCrashedTheLastSession" />
+
+            <Button
                 Text="Generate Logs for Batch upload" 
                 Clicked="OnGenerateLogsForBatch" />
-                
+
             <Entry Placeholder="User id"
                    Text="{Binding UserId}"/>
             

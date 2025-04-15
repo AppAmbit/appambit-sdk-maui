@@ -78,6 +78,8 @@ public static class Core
         {
             await Analytics.StartSession();
         }
+
+        Crashes.LoadCrashFileIfExists();
         
         _initialized = true;
         
@@ -164,7 +166,8 @@ public static class Core
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
-        Crashes.Initialize(apiService,storageService);
+        var deviceId = await storageService.GetDeviceId();
+        Crashes.Initialize(apiService,storageService,deviceId);
         Analytics.Initialize(apiService,storageService);
     }
 }
