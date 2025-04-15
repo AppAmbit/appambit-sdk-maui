@@ -61,7 +61,7 @@ public partial class MainPage : ContentPage
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
     {
-        if (await Crashes.CrashedInLastSession())
+        if (await Crashes.DidCrashInLastSession())
         {
             await DisplayAlert("Info", "Application crashed in the last session", "Ok");
         }

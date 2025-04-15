@@ -12,7 +12,7 @@ public static class Crashes
 {
     private static IStorageService? _storageService;
     private static string _deviceId;
-    private static bool _crashedInLastSession = false;
+    private static bool _didCrashInLastSession = false;
     internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
@@ -42,32 +42,42 @@ public static class Crashes
     }
     
     
-    public static async void LoadCrashFileIfExists()
+    internal static async void LoadCrashFileIfExists()
     {
-        var crashFile = Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+        var crashFile = GetCrashFilePath();
 
-        if (!File.Exists(crashFile))
+        if (!CrashFileExists(crashFile))
         {
-            _crashedInLastSession = false;
+            SetCrashFlag(false);
             return;
         }
-        
-        _crashedInLastSession = true;
-        var json = await File.ReadAllTextAsync(crashFile);
-        File.Delete(crashFile);
-        var exceptionInfo = JsonConvert.DeserializeObject<ExceptionInfo>(json);
-        await LogCrash(exceptionInfo);
+
+        SetCrashFlag(true);
+
+        var exceptionInfo = await ReadAndDeleteCrashFileAsync(crashFile);
+
+        if (exceptionInfo is not null)
+        {
+            await LogCrash(exceptionInfo);
+        }
     }
     
-    public static async Task<bool> CrashedInLastSession()
+    
+    public static async Task<bool> DidCrashInLastSession()
     {
-        return _crashedInLastSession;
+        return _didCrashInLastSession;
     }
     
     private static async Task LogCrash(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
         await Logging.LogEvent(message, LogType.Crash,exception);
+    }
+    
+    private static async Task LogError(ExceptionInfo? exception = null)
+    {
+        var message = exception?.Message;
+        await Logging.LogEvent(message, LogType.Error,exception);
     }
     
     private static string Truncate(string value, int maxLength)
@@ -79,7 +89,7 @@ public static class Crashes
     private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
         var exception = ExceptionInfo.FromException(e?.Exception);
-        await LogCrash(exception);
+        await LogError(exception);
     }
     
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
@@ -89,8 +99,13 @@ public static class Crashes
 
         var info = ExceptionInfo.FromException(ex,_deviceId);
         var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-        Debug.WriteLine($"AppDataDirectory:{FileSystem.AppDataDirectory}");
-        var crashFile = Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+        
+        SaveCrashToFile(json);
+    }
+    private static void SaveCrashToFile(string json)
+    {
+        var crashFile = GetCrashFilePath();
+        Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
         File.WriteAllText(crashFile, json);
     }
     
@@ -126,5 +141,34 @@ public static class Crashes
                 return true;
         }
         return false;
+    }
+    
+    private static string GetCrashFilePath()
+    {
+        return Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+    }
+    
+    private static bool CrashFileExists(string path)
+    {
+        return File.Exists(path);
+    }
+    
+    private static void SetCrashFlag(bool didCrash)
+    {
+        _didCrashInLastSession = didCrash;
+    }
+    
+    private static async Task<ExceptionInfo?> ReadAndDeleteCrashFileAsync(string path)
+    {
+        try
+        {
+            var json = await File.ReadAllTextAsync(path);
+            File.Delete(path);
+            return JsonConvert.DeserializeObject<ExceptionInfo>(json);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
