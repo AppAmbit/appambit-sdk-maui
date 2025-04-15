@@ -91,12 +91,14 @@ public static class Analytics
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        
         //We group it by truncated name in order to avoid exceptions by collisions.
         data = data
-            .GroupBy(kvp => Truncate(kvp.Key, 80))
+            .Take(TrackEventMaxPropertyLimit)
+            .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .ToDictionary(
-            g => Truncate(g.Key, TrackEventPropertyMaxLimit),
-            g => Truncate(g.First().Value, TrackEventPropertyMaxLimit)
+            g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
+            g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
         if (hasInternet)

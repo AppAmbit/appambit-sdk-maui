@@ -16,5 +16,7 @@ internal class AppConstants
 
     internal const int TrackEventNameMaxLimit = 120;
 
-    internal const int TrackEventPropertyMaxLimit = 80;
+    internal const int TrackEventMaxPropertyLimit = 20;
+
+    internal const int TrackEventPropertyMaxCharacters = 80;
 }
