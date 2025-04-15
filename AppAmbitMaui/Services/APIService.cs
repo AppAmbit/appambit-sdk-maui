@@ -81,14 +81,13 @@ internal class APIService : IAPIService
         }
         
         HttpContent content;
-        if (payload is Log log)//TODO: LogEntity ?
+        if (payload is Log log)
         {
             PrintLogWithoutFile(log);
             content = SerializeToMultipartFormDataContent(log);
             DebugMultipartFormDataContent(content as MultipartFormDataContent);
         }
         else if (IsCollection ( payload ))
-
         {
             var list = ToObjectList(payload);
             content = SerializeArrayToMultipartFormDataContent(list);
