@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
@@ -14,6 +15,7 @@ namespace AppAmbit;
 
 public static class Core
 {
+    private static readonly SemaphoreSlim _startLock = new SemaphoreSlim(1, 1);
     private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
@@ -71,6 +73,11 @@ public static class Core
 
     private static async Task Start(string appKey = "")
     {
+        await _startLock.WaitAsync();
+        
+        if (_initialized)
+            return;
+            
         await InitializeServices();
         await InitializeConsumer(appKey);
 
@@ -84,6 +91,8 @@ public static class Core
         _initialized = true;
         
         await Crashes.SendBatchLogs();
+        
+        _startLock.Release();
     }
 
     private static async void OnConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
