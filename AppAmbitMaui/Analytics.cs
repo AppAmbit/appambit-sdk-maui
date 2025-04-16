@@ -6,6 +6,7 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using static AppAmbit.AppConstants;
 
 namespace AppAmbit;
 
@@ -90,11 +91,20 @@ public static class Analytics
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        
+        data = data
+            .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
+            .Take(TrackEventMaxPropertyLimit)
+            .ToDictionary(
+            g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
+            g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
+            );
+        eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
         if (hasInternet)
         {
             var _event = new Event()
             {
-                Name = Truncate(eventTitle, 125),
+                Name = eventTitle,
                 Data = data
             };
             await _apiService.ExecuteRequest<object>(new SendEventEndpoint(_event));
@@ -105,7 +115,7 @@ public static class Analytics
             var eventEntity = new EventEntity()
             {
                 Id = Guid.NewGuid(),
-                Name = Truncate(eventTitle, 125),
+                Name = eventTitle,
                 Data = data
             };
 

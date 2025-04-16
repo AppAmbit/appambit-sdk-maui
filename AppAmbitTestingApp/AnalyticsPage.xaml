@@ -22,6 +22,14 @@
                     HeightRequest="50"
                     Padding="30"
                     Clicked="Button_OnClickedTestEvent"/>
+            <Button Text="Generate test limits event"
+                    HeightRequest="50"
+                    Padding="30"
+                    Clicked="Button_OnClickedTestLimitsEvent"/>
+            <Button Text="Generate test Max properties"
+                    HeightRequest="50"
+                    Padding="30"
+                    Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
         </VerticalStackLayout>
     </ContentPage.Content>
 </ContentPage>
