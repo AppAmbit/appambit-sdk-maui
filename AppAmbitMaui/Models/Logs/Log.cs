@@ -43,7 +43,7 @@ internal class Log
     
     [JsonProperty("file")] 
     [MultipartFormDataFile]
-    public string? file { get; set; }
+    public string? File { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]

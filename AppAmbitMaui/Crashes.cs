@@ -148,7 +148,11 @@ public static class Crashes
     public static async Task SendBatchLogs()
     {
         var logEntityList = await _storageService.GetOldest100LogsAsync();
-        var endpoint = new LogBatchEndpoint(logEntityList);
+        if(logEntityList == null || logEntityList?.Count == 0)
+            return;
+            
+        var logBatch = new LogBatch() { Logs = logEntityList };
+        var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
         await _storageService.DeleteLogList(logEntityList);
     }

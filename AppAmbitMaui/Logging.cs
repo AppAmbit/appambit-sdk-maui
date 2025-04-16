@@ -38,7 +38,7 @@ internal static class Logging
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string,string>(),
             Type = logType,
-            file = (exception != null)? file:null,
+            File = (exception != null)? file:null,
         };
         await SendOrSaveLogEventAsync(log);
     }

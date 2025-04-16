@@ -1,5 +1,5 @@
 namespace AppAmbit;
 
-class MultipartFormDataFileAttribute : Attribute
+internal class MultipartFormDataFileAttribute : Attribute
 {
 }
