@@ -89,12 +89,17 @@ internal class APIService : IAPIService
             content = SerializeToMultipartFormDataContent(log);
             DebugMultipartFormDataContent(content as MultipartFormDataContent);
         }
-        else if (IsCollection ( payload ))
+        else if (payload is LogBatch logBatch)
+        {
+            content = SerializeToMultipartFormDataContent(logBatch);
+            DebugMultipartFormDataContent(content as MultipartFormDataContent);
+        }
+        /*else if (IsCollection ( payload ))
         {
             var list = ToObjectList(payload);
             content = SerializeArrayToMultipartFormDataContent(list);
             DebugMultipartFormDataContent(content as MultipartFormDataContent);
-        }
+        }*/
         else
         {
             content = SerializeToJSONStringContent(payload);
@@ -124,212 +129,168 @@ internal class APIService : IAPIService
     
     private HttpContent SerializeToMultipartFormDataContent(object payload)
     {
+        Debug.WriteLine("SerializeToMultipartFormDataContent");
         var formData = new MultipartFormDataContent();
-
-        if (payload == null)
-            return null;
-
-        object logTypeValue = null;
-        string logTypeJsonValue = null;
+        AddObjectToMultipartFormDataContent(payload, formData);
+        return formData;
+    }
+    private void AddObjectToMultipartFormDataContent(object obj, MultipartFormDataContent formData,  string prefix = "", bool useSquareBrakets = false)
+    {
+        Debug.WriteLine("AddObjectToMultipartFormDataContent");
         
-        foreach (var prop in payload.GetType().GetProperties())
+        if (obj is null )
+            return;
+        
+        if (obj is IDictionary dict)
         {
-            var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
-            var propName = jsonPropAttr?.PropertyName ?? prop.Name;
-
-            if (propName == "type")
-            {
-                logTypeValue = prop.GetValue(payload);
-                var actualType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                if (actualType.IsEnum)
-                {
-                    var enumVal = Enum.Parse(actualType, logTypeValue.ToString());
-                    var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
-                    var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                    logTypeJsonValue = enumAttr?.Value ?? enumVal.ToString();
-                }
-            }
+            AddDictionaryToMultipartFormDataContent( dict, formData, prefix);
+            return;
         }
 
-        foreach (var property in payload.GetType().GetProperties())
+        if (IsList ( obj ))
         {
-            var jsonIgnoreAttribute = property.GetCustomAttribute<JsonIgnoreAttribute>();
-            if (jsonIgnoreAttribute != null)
+            var list = ToObjectList(obj);
+            AddListToMultipartFormDataContent( list, formData, prefix);
+            return;
+        }
+
+        if ( obj is DateTime dateTime)
+        {
+            formData.Add(new StringContent(dateTime.ToString(_dateFormatStringApi)), prefix);
+            return;
+        }
+
+        if (IsSimpleType(obj))
+        {
+            formData.Add(new StringContent(obj.ToString() ?? "" ), prefix);
+            return;
+        }
+        
+        var objectProperties = obj.GetType().GetProperties();
+        foreach (var property in objectProperties)
+        {
+            var propName = property.Name;
+            var propValue = property.GetValue(obj);
+            
+            if (propValue == null)
                 continue;
             
-            var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
-            var propertyName = jsonPropertyAttribute?.PropertyName ?? property.Name;
-            var propertyValue = property.GetValue(payload);
-            
-            if (propertyName == "file")
-            {
-                if (logTypeJsonValue != "crash")
-                    continue;
-                
-                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(_dateTimeFormatISO8601ForFile)}.txt";
-                var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
-                var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
-                var fileContent = new ByteArrayContent(encodedBytes);
-                formData.Add(fileContent, "file", Path.GetFileName(filePath));
+            var jsonIgnoreAttr = property.GetCustomAttribute<JsonIgnoreAttribute>();
+            if (jsonIgnoreAttr != null)
                 continue;
-            }
+
+            var jsonPropAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
+            propName = jsonPropAttr?.PropertyName ?? property.Name;
             
-            if (propertyName == "context" && propertyValue is Dictionary<string,string> contextDict)
-            {
-                int count = 0;
-                foreach (var kvp in contextDict)
-                {
-                    var key = kvp.Key;
-                    var value = kvp.Value?.ToString() ?? "";
-                    var contextKey = $"context[{count++}].{key}";
-                    formData.Add(new StringContent(value), contextKey);
-                }
-                continue;
-            }
-            
+
+            string multipartKey = useSquareBrakets ? $"{prefix}[{propName}]":$"{prefix}{propName}";
             var type = property.PropertyType;
             var isNullable = Nullable.GetUnderlyingType(type) != null;
             var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
 
-            if (actualType != null && actualType.IsEnum && propertyValue != null)
+            if (actualType != null && actualType.IsEnum && propValue != null)
             {
-                var enumVal = Enum.Parse(actualType, propertyValue.ToString());
+                var enumVal = Enum.Parse(actualType, propValue.ToString());
                 var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
                 var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                var enumValueStr = enumAttr?.Value ?? enumVal.ToString();
-                formData.Add(new StringContent(enumValueStr), propertyName);
+                var enumStr = enumAttr?.Value ?? enumVal.ToString();
+                formData.Add(new StringContent(enumStr), multipartKey);
+                continue;
+            }
+
+            var multipartFormDataFileAttribute = property.GetCustomAttribute<MultipartFormDataFileAttribute>();
+            if (multipartFormDataFileAttribute != null)
+            {
+                if (propValue is string path && File.Exists(path))
+                {
+                    var streamContent = new StreamContent(File.OpenRead(path));
+                    formData.Add(streamContent, multipartKey, Path.GetFileName(path));
+                }
                 continue;
             }
             
-            if (propertyValue != null)
-            {
-                var options = new JsonSerializerSettings() 
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    DateFormatString = _dateFormatStringApi
-                };
-                var data = JsonConvert.SerializeObject(propertyValue,options);
-                formData.Add(new StringContent(data), propertyName);
-            }
+            string newPrefix = useSquareBrakets ? $"{prefix}[{propName}]":$"{prefix}{propName}";
+            AddObjectToMultipartFormDataContent(propValue, formData, newPrefix,true);
         }
+    }
+    private bool IsSimpleType(object obj)
+    {
+        if (obj == null) return false;
 
-        return formData;
+        var type = obj.GetType();
+        type = Nullable.GetUnderlyingType(type) ?? type;
+
+        return type.IsPrimitive
+               //|| type.IsEnum
+               || type == typeof(string)
+               || type == typeof(decimal)
+               //|| type == typeof(DateTime)
+               || type == typeof(Guid)
+               //|| type == typeof(DateTimeOffset)
+               //|| type == typeof(TimeSpan)
+               ;
     }
     
-    private HttpContent SerializeArrayToMultipartFormDataContent(List<object> items)
+    private void AddDictionaryToMultipartFormDataContent(IDictionary dict, MultipartFormDataContent formData, string prefix = "")
     {
-        Debug.WriteLine("SerializeArrayToMultipartFormDataContent");
-        var formData = new MultipartFormDataContent();
+        Debug.WriteLine("AddDictionaryToMultipartFormDataContent");
 
-        for (int index = 0; index < items.Count; index++)
+        if (dict == null)
+            return;
+
+        foreach (DictionaryEntry kvp in dict)
         {
-            var item = items[index];
-            string logTypeJsonValue = null;
-
-            foreach (var prop in item.GetType().GetProperties())
-            {
-                var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
-                var propName = jsonPropAttr?.PropertyName ?? prop.Name;
-
-                if (propName == "type")
-                {
-                    var logTypeValue = prop.GetValue(item);
-                    var actualType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                    if (actualType.IsEnum)
-                    {
-                        var enumVal = Enum.Parse(actualType, logTypeValue.ToString());
-                        var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
-                        var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                        logTypeJsonValue = enumAttr?.Value ?? enumVal.ToString();
-                    }
-                    else
-                    {
-                        logTypeJsonValue = logTypeValue?.ToString();
-                    }
-                    break;
-                }
-            }
-
-            foreach (var prop in item.GetType().GetProperties())
-            {
-                var jsonIgnoreAttr = prop.GetCustomAttribute<JsonIgnoreAttribute>();
-                if (jsonIgnoreAttr != null)
-                    continue;
-
-                var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
-                var propName = jsonPropAttr?.PropertyName ?? prop.Name;
-                var propValue = prop.GetValue(item);
-
-                string multipartKey = $"{index}[{propName}]";
-
-                if (propName == "file")
-                {
-                    if (logTypeJsonValue != "crash")
-                        continue;
-
-                    if (propValue is string path && File.Exists(path))
-                    {
-                        var streamContent = new StreamContent(File.OpenRead(path));
-                        formData.Add(streamContent, multipartKey, Path.GetFileName(path));
-                    }
-                    continue;
-                }
-
-                if (propName == "context" && propValue is Dictionary<string, string> contextDict)
-                {
-                    int contextIndex = 0;
-                    foreach (var kvp in contextDict)
-                    {
-                        var key = kvp.Key;
-                        var value = kvp.Value ?? string.Empty;
-                        var contextKey = $"{index}[context][{contextIndex}].{key}";
-                        formData.Add(new StringContent(value), contextKey);
-                        contextIndex++;
-                    }
-                    continue;
-                }
-
-                var type = prop.PropertyType;
-                var isNullable = Nullable.GetUnderlyingType(type) != null;
-                var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
-
-                if (actualType != null && actualType.IsEnum && propValue != null)
-                {
-                    var enumVal = Enum.Parse(actualType, propValue.ToString());
-                    var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
-                    var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                    var enumStr = enumAttr?.Value ?? enumVal.ToString();
-                    formData.Add(new StringContent(enumStr), multipartKey);
-                    continue;
-                }
-
-                if (propValue != null)
-                {
-                    var options = new JsonSerializerSettings() 
-                    {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DateFormatString = _dateFormatStringApi
-                    };
-                    var data = "";
-                    data = JsonConvert.SerializeObject(propValue,options);
-                    if (propValue is DateTime dateTime )
-                    {
-                        data = data.Trim('\"');
-                    }
-                    if (propValue is Guid )
-                    {
-                        data = data.Trim('\"');
-                    }
-                    if (propValue is string s)
-                    {
-                        data = s;
-                    }
-                    formData.Add(new StringContent(data), multipartKey);
-                }
-            }
+            var key = kvp.Key?.ToString() ?? string.Empty;
+            var value = kvp.Value ?? string.Empty;
+            var newPrefix = $"{prefix}[{key}]";
+            AddObjectToMultipartFormDataContent(value, formData, newPrefix, true);
         }
+    }
+    /*
+    private void AddDictionaryToMultipartFormDataContent(Dictionary<string, object> dict, MultipartFormDataContent formData,  string prefix = "")
+    {
+        Debug.WriteLine("AddDictionaryToMultipartFormDataContent");
+        
+        if (dict is not Dictionary<string, object> )
+            return;
+        
+        foreach (var kvp in dict)
+        {
+            var key = kvp.Key;
+            var value = kvp.Value ?? string.Empty;
+            var newPrefix = $"{prefix}[{key}]";
+            AddObjectToMultipartFormDataContent(value, formData, newPrefix, true);
+        }
+    }
+    
+    private void AddDictionaryToMultipartFormDataContent(Dictionary<string, string> dict, MultipartFormDataContent formData,  string prefix = "")
+    {
+        Debug.WriteLine("AddDictionaryToMultipartFormDataContent");
+        
+        if (dict is not Dictionary<string, string> )
+            return;
+        
+        foreach (var kvp in dict)
+        {
+            var key = kvp.Key;
+            var value = kvp.Value ?? string.Empty;
+            var newPrefix = $"{prefix}[{key}]";
+            AddObjectToMultipartFormDataContent(value, formData, newPrefix, true);
+        }
+    }
+    */
+    private void AddListToMultipartFormDataContent(List<object> list, MultipartFormDataContent formData,  string prefix = "")
+    {
+        Debug.WriteLine("AddListToMultipartFormDataContent");
+        
+        if (list is not List<object> )
+            return;
+            
+        Dictionary<string, object> dict = list
+            .Select((item, index) => new KeyValuePair<string, object>(index.ToString(), item))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-        return formData;
+        AddDictionaryToMultipartFormDataContent(dict, formData, prefix);
     }
     
     [Conditional("DEBUG")]
@@ -431,6 +392,13 @@ internal class APIService : IAPIService
 
         var type = obj.GetType();
         return typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string);
+    }
+    private bool IsList(object obj)
+    {
+        if (obj == null) return false;
+
+        var type = obj.GetType();
+        return typeof(System.Collections.IList).IsAssignableFrom(type);
     }
     List<object> ToObjectList(object collection)
     {

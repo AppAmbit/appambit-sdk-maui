@@ -42,6 +42,7 @@ internal class Log
     public LogType? Type { get; set; }
     
     [JsonProperty("file")] 
+    [MultipartFormDataFile]
     public string? file { get; set; }
 }
 

@@ -7,10 +7,10 @@ namespace AppAmbit.Services.Endpoints;
 
 internal class LogBatchEndpoint: BaseEndpoint, IEndpoint
 {
-    public LogBatchEndpoint(List<LogEntity> logEntityList)
+    public LogBatchEndpoint(LogBatch logBatch)
     {
         Url = "/log/batch";
         Method = HttpMethodEnum.Post;
-        Payload = logEntityList;
+        Payload = logBatch;
     }
 }
