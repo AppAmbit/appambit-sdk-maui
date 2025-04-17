@@ -1,14 +1,21 @@
+# based on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
 name: Build and Publish NuGet Package
 
 on:
+  pull_request:
   push:
-    tags:
-      - 'v*' # Only triggers when you push a tag like v1.0.0
+#      tags:
+#      - 'v*' # Only triggers when you push a tag like v1.0.0
+    branches: [ main ] #[ develop ] 
+  release:
+    types: [published]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    name: Build
+    env:
+      NUPKG_MAJOR: 0.999
+    runs-on: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -16,16 +23,59 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0.x' # or whatever version you're using
-
+        dotnet-version: '8.0.x' # or the current version
+#        dotnet-version: 9.0.x
+    - name: Install .NET MAUI
+      shell: pwsh
+      run: |
+        & dotnet nuget locals all --clear
+        & dotnet workload install maui --source https://api.nuget.org/v3/index.json
+        & dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
     - name: Restore dependencies
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      #run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release ./src 
+    - name: Package NuGets
+      shell: pwsh
+      run: |
+        $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
+        if ($env:GITHUB_EVENT_NAME -eq "release") {
+          $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
+        }
+        echo "::set-output name=pkgverci::$VERSION"
+        echo "PACKAGE VERSION: $VERSION"
+        
+        New-Item -ItemType Directory -Force -Path .\artifacts
+        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./src/MauiSettings/MauiSettings.csproj
+        
+    - name: Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: NuGet
+        path: ./artifacts
 
     - name: Pack
       run: dotnet pack --configuration Release --no-build -o out
+      
+#    - name: Push to NuGet
+#      run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
-    - name: Push to NuGet
-      run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+#  publish:
+#    name: Publish
+#    needs: build
+#    runs-on: windows-latest
+#    if: github.event_name == 'release'
+#    steps:
+#      - name: Download Artifacts
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: NuGet
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v3
+#        with:
+#          dotnet-version: '9.0.x'
+#      - name: Push NuGet
+#        run: |
+#          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}
