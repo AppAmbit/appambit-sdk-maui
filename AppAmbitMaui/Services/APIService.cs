@@ -85,14 +85,12 @@ internal class APIService : IAPIService
             PrintLogWithoutFile(log);
             var multipartFormDataContent = SerializeToMultipartFormDataContent(log);
             content = multipartFormDataContent;
-            multipartFormDataContent.DebugMultipartFormDataContent();
             
         }
         else if (payload is LogBatch logBatch)
         {
             var multipartFormDataContent = SerializeToMultipartFormDataContent(logBatch);
             content = multipartFormDataContent;
-            multipartFormDataContent.DebugMultipartFormDataContent();
         }
         else
         {

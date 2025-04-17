@@ -15,7 +15,9 @@ namespace AppAmbit;
 
 public static class Core
 {
+    private static NetworkAccess _currentNetworkAccess = NetworkAccess.Unknown;
     private static readonly SemaphoreSlim _startLock = new SemaphoreSlim(1, 1);
+    private static readonly SemaphoreSlim _conectivityLock = new SemaphoreSlim(1, 1);
     private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
@@ -64,6 +66,19 @@ public static class Core
         
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
+        //Workarround to the OnConnectivityChanged not firing.
+        Device.StartTimer(TimeSpan.FromSeconds(5), () =>
+        {
+            Debug.WriteLine("StartTimer");
+            var networkAccess = Connectivity.NetworkAccess;
+            Debug.WriteLine($"NetworkAccess:{Connectivity.NetworkAccess}");
+            if (_currentNetworkAccess != networkAccess)
+            {
+                _currentNetworkAccess = networkAccess;
+                OnConnectivityChanged(null, new ConnectivityChangedEventArgs(_currentNetworkAccess,new List<ConnectionProfile>()));
+            }
+            return true;
+        });
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -95,17 +110,33 @@ public static class Core
         _startLock.Release();
     }
 
-    private static async void OnConnectivityChanged(object sender, ConnectivityChangedEventArgs e)
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
-        var access = e.NetworkAccess;
-        
-        if (access != NetworkAccess.Internet)
-            return;
-        
-        if ( ! _initialized )
-            await Start();
-        else
-            await Crashes.SendBatchLogs();
+        await _conectivityLock.WaitAsync();
+        try
+        {
+            Debug.WriteLine("OnConnectivityChanged");
+            Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+            
+            var access = e.NetworkAccess;
+
+            if (access != NetworkAccess.Internet)
+                return;
+
+            if (!_initialized)
+                await Start();
+            else
+                await Crashes.SendBatchLogs();
+        }
+        catch (Exception exception)
+        {
+            Debug.WriteLine(exception);
+            throw;
+        }
+        finally
+        {
+            _conectivityLock.Release();
+        }
     }
 
     private static async Task OnResume()

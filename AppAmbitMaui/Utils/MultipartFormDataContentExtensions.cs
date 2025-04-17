@@ -13,7 +13,6 @@ internal static class MultipartFormDataContentExtensions
     private const string _dateFormatStringApi = "yyyy-MM-dd HH:mm:ss";
     public static void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData,object obj,  string prefix = "", bool useSquareBrakets = false)
     {
-        Debug.WriteLine("AddObjectToMultipartFormDataContent");
         
         if (obj is null )
             return;
