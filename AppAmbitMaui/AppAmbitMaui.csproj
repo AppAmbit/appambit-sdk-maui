@@ -23,6 +23,10 @@
         <Description>AppAmbit - Crashes and Analytics library to track sessions, collect device properties, events, and crash reports for your application</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>AppAmbitNet</PackageId>
+        <PackageProjectUrl>https://github.com/Kava-Up-LLC/appambit-sdko</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Kava-Up-LLC/appambit-sdk</RepositoryUrl>
         
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
