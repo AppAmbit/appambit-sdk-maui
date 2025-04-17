@@ -66,26 +66,6 @@ public static class Core
         
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
-        //Workarround to the OnConnectivityChanged not firing.
-        Device.StartTimer(TimeSpan.FromSeconds(5), () =>
-        {
-            Debug.WriteLine("StartTimer Connectivity");
-            var networkAccess = Connectivity.NetworkAccess;
-            Debug.WriteLine($"NetworkAccess:{Connectivity.NetworkAccess}");
-            if (_currentNetworkAccess != networkAccess)
-            {
-                _currentNetworkAccess = networkAccess;
-                OnConnectivityChanged(null, new ConnectivityChangedEventArgs(_currentNetworkAccess,new List<ConnectionProfile>()));
-            }
-            return true;
-        });
-        Device.StartTimer(TimeSpan.FromSeconds(10), () =>
-        {
-            Debug.WriteLine("StartTimer SendBatchLogs");
-            if (_currentNetworkAccess == NetworkAccess.Internet)
-                Crashes.SendBatchLogs();
-            return true;
-        });
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -96,25 +76,37 @@ public static class Core
     private static async Task Start(string appKey = "")
     {
         await _startLock.WaitAsync();
-        
-        if (_initialized)
-            return;
-            
-        await InitializeServices();
-        await InitializeConsumer(appKey);
-
-        if (!Analytics._isManualSessionEnabled)
+        try
         {
-            await Analytics.StartSession();
-        }
 
-        Crashes.LoadCrashFileIfExists();
-        
-        _initialized = true;
-        
-        await Crashes.SendBatchLogs();
-        
-        _startLock.Release();
+
+            if (_initialized)
+                return;
+
+            await InitializeServices();
+            await InitializeConsumer(appKey);
+
+            if (!Analytics._isManualSessionEnabled)
+            {
+                await Analytics.StartSession();
+            }
+
+            Crashes.LoadCrashFileIfExists();
+
+            _initialized = true;
+
+            await Crashes.SendBatchLogs();
+
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            _startLock.Release();
+        }
     }
 
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
