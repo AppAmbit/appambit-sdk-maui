@@ -69,7 +69,7 @@ public static class Core
         //Workarround to the OnConnectivityChanged not firing.
         Device.StartTimer(TimeSpan.FromSeconds(5), () =>
         {
-            Debug.WriteLine("StartTimer");
+            Debug.WriteLine("StartTimer Connectivity");
             var networkAccess = Connectivity.NetworkAccess;
             Debug.WriteLine($"NetworkAccess:{Connectivity.NetworkAccess}");
             if (_currentNetworkAccess != networkAccess)
@@ -77,6 +77,13 @@ public static class Core
                 _currentNetworkAccess = networkAccess;
                 OnConnectivityChanged(null, new ConnectivityChangedEventArgs(_currentNetworkAccess,new List<ConnectionProfile>()));
             }
+            return true;
+        });
+        Device.StartTimer(TimeSpan.FromSeconds(10), () =>
+        {
+            Debug.WriteLine("StartTimer SendBatchLogs");
+            if (_currentNetworkAccess == NetworkAccess.Internet)
+                Crashes.SendBatchLogs();
             return true;
         });
         builder.Services.AddSingleton<IAPIService, APIService>();
