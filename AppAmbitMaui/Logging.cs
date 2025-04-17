@@ -18,7 +18,7 @@ internal static class Logging
     public static async Task LogEvent(string? message,LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var deviceId = await _storageService.GetDeviceId();
-        var exceptionInfo = ExceptionInfo.FromException(exception,deviceId);
+        var exceptionInfo = (exception != null) ?  ExceptionInfo.FromException(exception,deviceId) : null;
         LogEvent(message, logType, exceptionInfo, properties,classFqn,fileName,lineNumber);
     }
 
@@ -27,7 +27,7 @@ internal static class Logging
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var deviceId = await _storageService.GetDeviceId();
-        var file = exception.CrashLogFile;
+        var file = exception?.CrashLogFile;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",

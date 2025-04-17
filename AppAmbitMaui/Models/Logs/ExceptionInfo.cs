@@ -20,11 +20,11 @@ public class ExceptionInfo
         
         return new ExceptionInfo
         {
-            Type = exception.GetType().FullName,
-            Message = exception.Message,
-            StackTrace = exception.StackTrace,
-            Source = exception.Source,
-            InnerException = exception.InnerException?.ToString(),
+            Type = exception?.GetType()?.FullName,
+            Message = exception?.Message,
+            StackTrace = exception?.StackTrace,
+            Source = exception?.Source,
+            InnerException = exception?.InnerException?.ToString(),
             ClassFullName = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
             FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
