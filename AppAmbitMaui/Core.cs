@@ -30,23 +30,10 @@ public static class Core
                 {
                     Start(appKey);
                 });
-                android.OnResume(activity =>
-                {
-                    if (_initialized)
-                        OnResume();
-                });
-                android.OnPause(activity =>
-                {
-                    OnSleep();
-                });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
+               android.OnDestroy( async activity1 =>
+               {
+                   await End();
+               });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -56,13 +43,9 @@ public static class Core
                     Start(appKey);
                     return true;
                 });
-                ios.WillEnterForeground(application =>
+                ios.WillTerminate(async application =>
                 {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
+                    End();
                 });
             });
 #endif
@@ -90,19 +73,8 @@ public static class Core
         
         _initialized = true;
     }
-
-    private static async Task OnResume()
-    {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-        
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.StartSession();
-        }
-    }
     
-    public static async Task OnSleep()
+    public static async Task End()
     {
         if (!Analytics._isManualSessionEnabled)
         {
