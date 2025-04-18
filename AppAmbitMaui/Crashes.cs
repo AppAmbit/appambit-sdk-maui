@@ -15,7 +15,6 @@ public static class Crashes
     private static IAPIService? _apiService;
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
-    private static readonly SemaphoreSlim _sendBatchLogsLock = new SemaphoreSlim(1, 1);
     internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
@@ -148,33 +147,20 @@ public static class Crashes
     
     public static async Task SendBatchLogs()
     {
-        await _sendBatchLogsLock.WaitAsync();
-        try
+        Debug.WriteLine("SendBatchLogs");
+        var logEntityList = await _storageService.GetOldest100LogsAsync();
+        if (logEntityList?.Count == 0)
         {
-            Debug.WriteLine("SendBatchLogs");
-            var logEntityList = await _storageService.GetOldest100LogsAsync();
-            if (logEntityList == null || logEntityList?.Count == 0)
-            {
-                Debug.WriteLine("No logs to send");
-                return;
-            }
+            Debug.WriteLine("No logs to send");
+            return;
+        }
 
-            Debug.WriteLine("Sending logs");
-            var logBatch = new LogBatch() { Logs = logEntityList };
-            var endpoint = new LogBatchEndpoint(logBatch);
-            var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
-            await _storageService.DeleteLogList(logEntityList);
-            Debug.WriteLine("Logs sent");
-        }
-        catch (Exception e)
-        {
-            Debug.WriteLine($"Exception:{e}");
-            throw;
-        }
-        finally
-        {
-            _sendBatchLogsLock.Release();
-        }
+        Debug.WriteLine("Sending logs");
+        var logBatch = new LogBatch() { Logs = logEntityList };
+        var endpoint = new LogBatchEndpoint(logBatch);
+        var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
+        await _storageService.DeleteLogList(logEntityList);
+        Debug.WriteLine("Logs sent");
     }
     
     private static string GetCrashFilePath()

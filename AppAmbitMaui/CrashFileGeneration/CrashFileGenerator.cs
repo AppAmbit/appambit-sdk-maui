@@ -14,9 +14,6 @@ internal static class CrashFileGenerator
     {
         StringBuilder log = new StringBuilder();
         
-        if(ex == null)
-            return log.ToString();
-        
         // Header
 #if ANDROID
         CrashFileGeneratorAndroid.AddHeader(log,deviceId);

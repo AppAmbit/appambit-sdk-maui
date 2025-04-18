@@ -16,7 +16,6 @@ namespace AppAmbit;
 public static class Core
 {
     private static NetworkAccess _currentNetworkAccess = NetworkAccess.Unknown;
-    private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
@@ -31,8 +30,7 @@ public static class Core
                 android.OnCreate((activity, state) => { Start(appKey); });
                 android.OnResume(activity =>
                 {
-                    if (_initialized)
-                        OnResume();
+                    OnResume();
                 });
                 android.OnPause(activity => { OnSleep(); });
             });
@@ -67,9 +65,6 @@ public static class Core
 
     private static async Task Start(string appKey = "")
     {
-        if (_initialized)
-            return;
-
         await InitializeServices();
         await InitializeConsumer(appKey);
 
@@ -79,8 +74,6 @@ public static class Core
         }
 
         Crashes.LoadCrashFileIfExists();
-
-        _initialized = true;
 
         await Crashes.SendBatchLogs();
     }
@@ -95,10 +88,7 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
-        if (!_initialized)
-            await Start();
-        else
-            await Crashes.SendBatchLogs();
+        await Crashes.SendBatchLogs();
     }
 
     private static async Task OnResume()

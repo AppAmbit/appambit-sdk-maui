@@ -8,13 +8,12 @@ internal static class Logging
 {
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
-    private static long _logCount = 0;
     public static void Initialize(IAPIService? apiService,IStorageService? storageService)
     {
         _apiService = apiService;
         _storageService = storageService;
     }
-
+    
     public static async Task LogEvent(string? message,LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var deviceId = await _storageService.GetDeviceId();
