@@ -16,13 +16,11 @@ namespace AppAmbit;
 public static class Core
 {
     private static NetworkAccess _currentNetworkAccess = NetworkAccess.Unknown;
-    private static readonly SemaphoreSlim _startLock = new SemaphoreSlim(1, 1);
-    private static readonly SemaphoreSlim _conectivityLock = new SemaphoreSlim(1, 1);
     private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -30,19 +28,13 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) =>
-                {
-                    Start(appKey);
-                });
+                android.OnCreate((activity, state) => { Start(appKey); });
                 android.OnResume(activity =>
                 {
                     if (_initialized)
                         OnResume();
                 });
-                android.OnPause(activity =>
-                {
-                    OnSleep();
-                });
+                android.OnPause(activity => { OnSleep(); });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -63,94 +55,65 @@ public static class Core
             });
 #endif
         });
-        
+
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
     private static async Task Start(string appKey = "")
     {
-        await _startLock.WaitAsync();
-        try
+        if (_initialized)
+            return;
+
+        await InitializeServices();
+        await InitializeConsumer(appKey);
+
+        if (!Analytics._isManualSessionEnabled)
         {
-
-
-            if (_initialized)
-                return;
-
-            await InitializeServices();
-            await InitializeConsumer(appKey);
-
-            if (!Analytics._isManualSessionEnabled)
-            {
-                await Analytics.StartSession();
-            }
-
-            Crashes.LoadCrashFileIfExists();
-
-            _initialized = true;
-
-            await Crashes.SendBatchLogs();
-
+            await Analytics.StartSession();
         }
-        catch (Exception e)
-        {
-            Debug.WriteLine(e);
-            throw;
-        }
-        finally
-        {
-            _startLock.Release();
-        }
+
+        Crashes.LoadCrashFileIfExists();
+
+        _initialized = true;
+
+        await Crashes.SendBatchLogs();
     }
 
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
-        await _conectivityLock.WaitAsync();
-        try
-        {
-            Debug.WriteLine("OnConnectivityChanged");
-            Debug.WriteLine($"NetworkAccess:{e.ToString()}");
-            
-            var access = e.NetworkAccess;
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
 
-            if (access != NetworkAccess.Internet)
-                return;
+        var access = e.NetworkAccess;
 
-            if (!_initialized)
-                await Start();
-            else
-                await Crashes.SendBatchLogs();
-        }
-        catch (Exception exception)
-        {
-            Debug.WriteLine(exception);
-            throw;
-        }
-        finally
-        {
-            _conectivityLock.Release();
-        }
+        if (access != NetworkAccess.Internet)
+            return;
+
+        if (!_initialized)
+            await Start();
+        else
+            await Crashes.SendBatchLogs();
     }
 
     private static async Task OnResume()
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             await Analytics.StartSession();
         }
-        
+
         await Crashes.SendBatchLogs();
     }
-    
+
     public static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -198,7 +161,7 @@ public static class Core
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
         apiService.SetToken(remoteToken?.Token);
     }
-    
+
     private static async Task InitializeServices()
     {
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
@@ -206,7 +169,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        Crashes.Initialize(apiService, storageService, deviceId);
+        Analytics.Initialize(apiService, storageService);
     }
 }
