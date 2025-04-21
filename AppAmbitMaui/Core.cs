@@ -15,7 +15,6 @@ namespace AppAmbit;
 
 public static class Core
 {
-    private static NetworkAccess _currentNetworkAccess = NetworkAccess.Unknown;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
@@ -59,13 +58,14 @@ public static class Core
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-
+        
         return builder;
     }
 
-    private static async Task Start(string appKey = "")
+    private static async Task Start(string appKey)
     {
         await InitializeServices();
+        
         await InitializeConsumer(appKey);
 
         if (!Analytics._isManualSessionEnabled)
@@ -90,7 +90,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
     }
-
+    
     private static async Task OnResume()
     {
         var appKey = await storageService?.GetAppId();
@@ -103,7 +103,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
     }
-
+    
     public static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -159,7 +159,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService, storageService, deviceId);
-        Analytics.Initialize(apiService, storageService);
+        Crashes.Initialize(apiService,storageService,deviceId);
+        Analytics.Initialize(apiService,storageService);
     }
 }
