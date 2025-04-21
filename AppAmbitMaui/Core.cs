@@ -18,7 +18,7 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-
+    
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -65,7 +65,7 @@ public static class Core
     private static async Task Start(string appKey)
     {
         await InitializeServices();
-        
+
         await InitializeConsumer(appKey);
 
         if (!Analytics._isManualSessionEnabled)
@@ -74,7 +74,7 @@ public static class Core
         }
 
         Crashes.LoadCrashFileIfExists();
-
+        
         await Crashes.SendBatchLogs();
     }
 
