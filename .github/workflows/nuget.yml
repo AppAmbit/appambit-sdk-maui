@@ -17,6 +17,7 @@ jobs:
       NUPKG_MAJOR: 0.999
     runs-on: windows-latest
     steps:
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -24,18 +25,21 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
+
     - name: Install .NET MAUI
       shell: pwsh
       run: |
         & dotnet nuget locals all --clear
         & dotnet workload install maui --source https://api.nuget.org/v3/index.json
         & dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
+
     - name: Restore dependencies
       run: dotnet restore
 
     - name: Build
       #run: dotnet build --configuration Release --no-restore
-      run: dotnet build --configuration Release ./src 
+      run: dotnet build --configuration Release
+
     - name: Package NuGets
       shell: pwsh
       run: |
