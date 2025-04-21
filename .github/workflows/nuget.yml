@@ -59,6 +59,9 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release --no-build -o out
 
+#    - name: Push to NuGet
+#      run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
 #  publish:
 #    name: Publish
 #    needs: build
@@ -75,4 +78,4 @@ jobs:
 #          dotnet-version: '9.0.x'
 #      - name: Push to NuGet
 #        run: |
-#          run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+#          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
