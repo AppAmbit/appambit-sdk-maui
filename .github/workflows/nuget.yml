@@ -4,9 +4,7 @@ name: Build and Publish NuGet Package
 on:
   pull_request:
   push:
-#      tags:
-#      - 'v*' # Only triggers when you push a tag like v1.0.0
-    branches: [ main ] #[ develop ] 
+    branches: [ main ]
   release:
     types: [published]
 
@@ -37,7 +35,6 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      #run: dotnet build --configuration Release --no-restore
       run: dotnet build --configuration Release
 
     - name: Package NuGets
@@ -62,9 +59,6 @@ jobs:
     - name: Pack
       run: dotnet pack --configuration Release --no-build -o out
 
-#    - name: Push to NuGet
-#      run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
 #  publish:
 #    name: Publish
 #    needs: build
@@ -79,6 +73,6 @@ jobs:
 #        uses: actions/setup-dotnet@v3
 #        with:
 #          dotnet-version: '9.0.x'
-#      - name: Push NuGet
+#      - name: Push to NuGet
 #        run: |
-#          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_API_KEY }}
+#          run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
