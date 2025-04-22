@@ -71,7 +71,7 @@ jobs:
 
       - name: Upload release asset
         id: create_release
-        if: 1 == 0 # change this if you want to publish.
+#        if: 1 == 0 # change this if you want to publish.
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.project_version.outputs.csproj_version }}
@@ -81,8 +81,6 @@ jobs:
             AppAmbit v${{ steps.project_version.outputs.csproj_version }} - Preview Release
             This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
           prerelease: true
-
-
 
 #    - name: Artifacts
 #      uses: actions/upload-artifact@v4
