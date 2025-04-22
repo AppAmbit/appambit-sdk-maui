@@ -58,18 +58,22 @@ jobs:
         run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.get_version.outputs.pkgverci }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
       - name: Upload release asset # (if tag)
+        id: create_release
 #        if: github.event_name == 'release'
-        tag_name: v${{ steps.get_version.outputs.pkgverci }}
+        
         uses: softprops/action-gh-release@v2
+#        uses: comnoco/create-release@v2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: v${{ steps.get_version.outputs.pkgverci }}
+#          release_name: Release v${{ steps.get_version.outputs.pkgverci }}
           files: ./artifacts/*.nupkg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        body: |
+          body: |
             AppAmbit v${{ steps.get_version.outputs.pkgverci }} - Preview Release
             This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
 #        draft: false
-        prerelease: true
+          prerelease: true
 
 
 #    - name: Artifacts
