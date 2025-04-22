@@ -155,12 +155,12 @@ public static class Crashes
             return;
         }
 
-        Debug.WriteLine("Sending logs");
+        Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
         await _storageService.DeleteLogList(logEntityList);
-        Debug.WriteLine("Logs sent");
+        Debug.WriteLine("Logs batch sent");
     }
     
     private static string GetCrashFilePath()
