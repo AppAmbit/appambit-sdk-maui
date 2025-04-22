@@ -48,8 +48,6 @@ jobs:
           $version = $proj.Project.PropertyGroup.Version
           echo "Project version: $version"
           echo "::set-output name=csproj_version::$version"
-#          echo "version=$version" >> $env:GITHUB_OUTPUT
-
 
       - name: Package NuGets and set version
         id: package_set_version
@@ -64,8 +62,6 @@ jobs:
           echo "::set-output name=pkgverci::$VERSION"
           echo "PACKAGE VERSION: $VERSION"
           echo "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
-#          New-Item -ItemType Directory -Force -Path .\artifacts
-#          dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppAmbitMaui/AppAmbitMaui.csproj
 
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -73,23 +69,17 @@ jobs:
       - name: Package NuGet
         run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.project_version.outputs.csproj_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
-      - name: Upload release asset # (if tag)
+      - name: Upload release asset
         id: create_release
-#        if: github.event_name == 'release'
-        
+        if: 1 == 0 # change this if you want to publish.
         uses: softprops/action-gh-release@v2
-#        uses: comnoco/create-release@v2
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.project_version.outputs.csproj_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
-#          release_name: Release v${{ steps.package_set_version.outputs.pkgverci }}
           files: ./artifacts/*.nupkg
           body: |
             AppAmbit v${{ steps.project_version.outputs.csproj_version }} - Preview Release
             This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
-#        draft: false
           prerelease: true
 
 
