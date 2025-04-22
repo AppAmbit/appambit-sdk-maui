@@ -7,8 +7,9 @@ namespace AppAmbit.Models.Logs;
 internal class LogEntity : Log
 {
     [PrimaryKey]
+    [JsonIgnore]
     public Guid Id { get; set; }
     
-    [JsonProperty("timestamp")]
-    public DateTime Timestamp { get; set; }
+    [JsonProperty("created_at")]
+    public DateTime CreatedAt { get; set; }
 }

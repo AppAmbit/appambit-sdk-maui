@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
@@ -14,7 +15,6 @@ namespace AppAmbit;
 
 public static class Core
 {
-    private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
@@ -26,27 +26,12 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) =>
-                {
-                    Start(appKey);
-                });
+                android.OnCreate((activity, state) => { Start(appKey); });
                 android.OnResume(activity =>
-                {
-                    if (_initialized)
-                        OnResume();
-                });
-                android.OnPause(activity =>
-                {
-                    OnSleep();
-                });
-                ios.WillEnterForeground(application =>
                 {
                     OnResume();
                 });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
+                android.OnPause(activity => { OnSleep(); });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -68,6 +53,8 @@ public static class Core
 #endif
         });
 
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.ConnectivityChanged += OnConnectivityChanged;
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -88,18 +75,33 @@ public static class Core
 
         Crashes.LoadCrashFileIfExists();
         
-        _initialized = true;
+        await Crashes.SendBatchLogs();
     }
 
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+            return;
+
+        await Crashes.SendBatchLogs();
+    }
+    
     private static async Task OnResume()
     {
         var appKey = await storageService?.GetAppId();
         await InitializeConsumer(appKey);
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             await Analytics.StartSession();
         }
+
+        await Crashes.SendBatchLogs();
     }
     
     public static async Task OnSleep()
@@ -147,10 +149,9 @@ public static class Core
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-
         apiService.SetToken(remoteToken?.Token);
     }
-    
+
     private static async Task InitializeServices()
     {
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
