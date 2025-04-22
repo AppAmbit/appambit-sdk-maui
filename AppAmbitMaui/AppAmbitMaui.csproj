@@ -26,7 +26,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageId>AppAmbitNet</PackageId>
-        <PackageProjectUrl>https://github.com/Kava-Up-LLC/appambit-sdko</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/Kava-Up-LLC/appambit-sdk</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Kava-Up-LLC/appambit-sdk</RepositoryUrl>
         
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
