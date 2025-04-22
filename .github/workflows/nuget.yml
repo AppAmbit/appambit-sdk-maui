@@ -41,10 +41,12 @@ jobs:
         id: set_version
         shell: pwsh
         run: |
+          $NUPKG_Version= "$env:NUPKG_MAJOR"
           $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
           if ($env:GITHUB_EVENT_NAME -eq "release") {
             $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
           }
+          echo "::set-output name=ngpkgversion::$NUPKG_Version"
           echo "::set-output name=pkgverci::$VERSION"
           echo "PACKAGE VERSION: $VERSION"
           echo "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
@@ -55,7 +57,7 @@ jobs:
         run: mkdir artifacts
 
       - name: Package NuGet
-        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.get_version.outputs.pkgverci }} ./AppAmbitMaui/AppAmbitMaui.csproj 
+        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.get_version.outputs.ngpkgversion }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
       - name: Upload release asset # (if tag)
         id: create_release
@@ -66,7 +68,7 @@ jobs:
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.pkgverci }}
+          tag_name: v${{ steps.get_version.outputs.ngpkgversion }}
 #          release_name: Release v${{ steps.get_version.outputs.pkgverci }}
           files: ./artifacts/*.nupkg
           body: |
