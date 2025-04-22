@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: Package NuGets and set version
-        id: set_version
+        id: package_set_version
         shell: pwsh
         run: |
           $NUPKG_Version= "$env:NUPKG_MAJOR"
@@ -57,7 +57,7 @@ jobs:
         run: mkdir artifacts
 
       - name: Package NuGet
-        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.get_version.outputs.ngpkgversion }} ./AppAmbitMaui/AppAmbitMaui.csproj 
+        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.package_set_version.outputs.ngpkgversion }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
       - name: Upload release asset # (if tag)
         id: create_release
@@ -68,11 +68,11 @@ jobs:
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.get_version.outputs.ngpkgversion }}
-#          release_name: Release v${{ steps.get_version.outputs.pkgverci }}
+          tag_name: v${{ steps.package_set_version.outputs.ngpkgversion }}
+#          release_name: Release v${{ steps.package_set_version.outputs.pkgverci }}
           files: ./artifacts/*.nupkg
           body: |
-            AppAmbit v${{ steps.get_version.outputs.pkgverci }} - Preview Release
+            AppAmbit v${{ steps.package_set_version.outputs.pkgverci }} - Preview Release
             This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
 #        draft: false
           prerelease: true
