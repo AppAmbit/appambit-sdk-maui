@@ -44,7 +44,7 @@ jobs:
         id: project_version
         shell: pwsh
         run: |
-          [xml]$proj = Get-Content ./YourProjectFolder/YourProject.csproj
+          [xml]$proj = Get-Content ./AppAmbitMaui/AppAmbitMaui.csproj
           $version = $proj.Project.PropertyGroup.Version
           echo "Project version: $version"
           echo "::set-output name=csproj_version::$version"
