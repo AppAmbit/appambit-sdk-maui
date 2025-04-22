@@ -16,51 +16,67 @@ jobs:
     runs-on: windows-latest
     steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Install .NET MAUI
-      shell: pwsh
-      run: |
+      - name: Install .NET MAUI
+        shell: pwsh
+        run: |
         & dotnet nuget locals all --clear
         & dotnet workload install maui --source https://api.nuget.org/v3/index.json
         & dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build --configuration Release
+      - name: Build
+        run: dotnet build --configuration Release
 
-    - name: Package NuGets
-      shell: pwsh
-      run: |
-        $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
-        if ($env:GITHUB_EVENT_NAME -eq "release") {
-          $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
-        }
-        echo "::set-output name=pkgverci::$VERSION"
-        echo "PACKAGE VERSION: $VERSION"
-        
-        New-Item -ItemType Directory -Force -Path .\artifacts
-        dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppAmbitMaui/AppAmbitMaui.csproj
-        
+      - name: Package NuGets and set version
+        id: set_version
+        shell: pwsh
+        run: |
+          $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
+          if ($env:GITHUB_EVENT_NAME -eq "release") {
+            $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
+          }
+          echo "::set-output name=pkgverci::$VERSION"
+          echo "PACKAGE VERSION: $VERSION"
+          echo "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
+#          New-Item -ItemType Directory -Force -Path .\artifacts
+#          dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=$VERSION ./AppAmbitMaui/AppAmbitMaui.csproj
+
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Package NuGet
+        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.get_version.outputs.pkgverci }} ./AppAmbitMaui/AppAmbitMaui.csproj 
+
+      - name: Upload release asset # (if tag)
+#        if: github.event_name == 'release'
+        tag_name: v${{ steps.get_version.outputs.pkgverci }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+            AppAmbit v${{ steps.get_version.outputs.pkgverci }} - Preview Release
+            This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
+#        draft: false
+        prerelease: true
+
+
 #    - name: Artifacts
 #      uses: actions/upload-artifact@v4
 #      with:
 #        name: NuGet
 #        path: ./artifacts
-
-    - name: Pack
-      run: dotnet pack --configuration Release --no-build -o out
-
-#    - name: Push to NuGet
-#      run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
 #  publish:
 #    name: Publish
