@@ -1,5 +1,5 @@
 # based on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
-name: Build and Publish NuGet Package
+name: Build and Publish NuGet Package 2
 
 on:
   pull_request:
