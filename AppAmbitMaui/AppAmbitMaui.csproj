@@ -9,7 +9,8 @@
         <SingleProject>true</SingleProject>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <ReadmeFile>readme.md</ReadmeFile>
+        <PackageReadmeFile Condition="Exists('$(ReadmeFile)')">$(ReadmeFile)</PackageReadmeFile>
 <!--        <None Include="docs\readme.md" Pack="true" PackagePath="\"/>-->
 
         <OutputType>Library</OutputType>
