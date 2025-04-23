@@ -78,11 +78,9 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnGenerateBatchEvents(object? sender, EventArgs e)
     {
-        
         await DisplayAlert("Info", "Turn off internet", "Ok");
         foreach (int index in Range( 1, 220 ))
         {
-            //await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "Index", index.ToString() } });
             await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "test1", "test1" } });
         }
         await DisplayAlert("Info", "Logs generated", "Ok");
