@@ -132,19 +132,19 @@ public static class Analytics
     
     public static async Task SendBatchEvents()
     {
-        Debug.WriteLine("SendBatchLogs");
+        Debug.WriteLine("SendBatchEvents");
         var eventEntityList = await _storageService.GetOldest100EventsAsync();
         if (eventEntityList?.Count == 0)
         {
-            Debug.WriteLine("No logs to send");
+            Debug.WriteLine("No events to send");
             return;
         }
 
-        Debug.WriteLine("Sending logs in batch");
+        Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
         Debug.WriteLine($"eventsBatchResponse:{ eventsBatchResponse }");
         await _storageService.DeleteEventList(eventEntityList);
-        Debug.WriteLine("Logs batch sent");
+        Debug.WriteLine("Events batch sent");
     }
 }
