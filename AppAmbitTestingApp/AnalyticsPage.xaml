@@ -30,6 +30,9 @@
                     HeightRequest="50"
                     Padding="30"
                     Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
+            <Button
+                    Text="Generate Batch events" 
+                    Clicked="OnGenerateBatchEvents" />
         </VerticalStackLayout>
     </ContentPage.Content>
 </ContentPage>

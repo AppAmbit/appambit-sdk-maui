@@ -20,4 +20,7 @@ public class EventEntity : Event
     // internal field for storing on Sqlite
     [JsonIgnore]
     public string DataJson { get; set; } = "{}";
+    
+    [JsonIgnore]
+    public DateTime CreatedAt { get; set; }
 }
