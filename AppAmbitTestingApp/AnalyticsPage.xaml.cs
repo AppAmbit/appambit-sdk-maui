@@ -83,7 +83,7 @@ public partial class AnalyticsPage : ContentPage
         {
             await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "test1", "test1" } });
         }
-        await DisplayAlert("Info", "Logs generated", "Ok");
-        await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
+        await DisplayAlert("Info", "Events generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
     }
 }
