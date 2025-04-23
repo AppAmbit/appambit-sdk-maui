@@ -1,14 +1,14 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-# based on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
+# based also on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
 
 name: .NET
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main" ]
 
 permissions:
   contents: write
