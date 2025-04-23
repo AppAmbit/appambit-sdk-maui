@@ -41,6 +41,7 @@
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+        <None Include="readme.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
