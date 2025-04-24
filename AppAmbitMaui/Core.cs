@@ -26,22 +26,30 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) => { Start(appKey); });
+                android.OnCreate((activity, state) => { OnStart(appKey); });
                 android.OnResume(activity => { OnResume();});
                 android.OnPause(activity => { OnSleep(); });
-               android.OnDestroy( async activity1 => { await End();});
+               android.OnDestroy( async activity1 => { await OnEnd();});
             });
 #elif IOS
             events.AddiOS(ios =>
             {
                 ios.FinishedLaunching((application, options) =>
                 {
-                    Start(appKey);
+                    OnStart(appKey);
                     return true;
+                });
+                ios.DidEnterBackground(application =>
+                {
+                    OnSleep();
+                });
+                ios.WillEnterForeground(application =>
+                {
+                    OnResume();
                 });
                 ios.WillTerminate(async application =>
                 {
-                    End();
+                    OnEnd();
                 });
             });
 #endif
@@ -56,7 +64,7 @@ public static class Core
         return builder;
     }
 
-    private static async Task Start(string appKey)
+    private static async Task OnStart(string appKey)
     {
         await InitializeServices();
 
@@ -98,7 +106,15 @@ public static class Core
         await Crashes.SendBatchLogs();
     }
     
-    public static async Task End()
+    public static async Task OnSleep()
+    {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.EndSession();
+        }
+    }
+    
+    public static async Task OnEnd()
     {
         if (!Analytics._isManualSessionEnabled)
         {
