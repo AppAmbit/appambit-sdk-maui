@@ -1,0 +1,73 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# based also on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
+
+name: .NET
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+
+    - name: Get project version
+      id: project_version
+      shell: pwsh
+      run: |
+        [xml]$proj = Get-Content ./AppAmbitMaui/AppAmbitMaui.csproj
+        $version = $proj.Project.PropertyGroup.Version
+        echo "Project version: $version"
+        echo "::set-output name=csproj_version::$version"
+
+    - name: Package NuGets and set version
+      id: package_set_version
+      shell: pwsh
+      run: |
+        $NUPKG_Version= "$env:NUPKG_MAJOR"
+        $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
+        if ($env:GITHUB_EVENT_NAME -eq "release") {
+          $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
+        }
+        echo "::set-output name=ngpkgversion::$NUPKG_Version"
+        echo "::set-output name=pkgverci::$VERSION"
+        echo "PACKAGE VERSION: $VERSION"
+        echo "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
+
+    - name: Create artifacts directory
+      run: mkdir artifacts
+
+    - name: Package NuGet
+      run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.project_version.outputs.csproj_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
+
+    - name: Upload release asset
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.project_version.outputs.csproj_version }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        files: ./artifacts/*.nupkg
+        body: |
+          AppAmbit v${{ steps.project_version.outputs.csproj_version }} - Preview Release
+          This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
+        prerelease: true
