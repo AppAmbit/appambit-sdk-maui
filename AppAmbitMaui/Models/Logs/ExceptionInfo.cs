@@ -8,16 +8,15 @@ public class ExceptionInfo
     public string Source { get; set; }
     public string InnerException { get; set; }
     public string FileNameFromStackTrace { get; set; }
-    
+
     public string ClassFullName { get; set; }
-    
+
     public long LineNumberFromStackTrace { get; set; }
-    
+
     public string CrashLogFile { get; set; }
 
     public static ExceptionInfo FromException(Exception exception, string deviceId = null)
     {
-        
         return new ExceptionInfo
         {
             Type = exception?.GetType()?.FullName,
@@ -28,7 +27,7 @@ public class ExceptionInfo
             ClassFullName = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
             FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
-            CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId)
+            CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception, deviceId)
         };
     }
 }

@@ -23,6 +23,7 @@ internal static class CrashFileGeneratorAndroid
         log.AppendLine($"Device Id: {deviceId}");
         log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
+
     public static void AddThreads(StringBuilder log)
     {
         var threadSet = Java.Lang.Thread.AllStackTraces;
@@ -36,9 +37,11 @@ internal static class CrashFileGeneratorAndroid
             var count = 0;
             foreach (var trace in stackTrace)
             {
-                var countPadded = (""+count++).PadRight(4);
-                log.AppendLine($"{countPadded}    at {trace.ClassName}.{trace.MethodName} ({trace.FileName}:{trace.LineNumber})");
+                var countPadded = ("" + count++).PadRight(4);
+                log.AppendLine(
+                    $"{countPadded}    at {trace.ClassName}.{trace.MethodName} ({trace.FileName}:{trace.LineNumber})");
             }
+
             log.AppendLine();
         }
     }

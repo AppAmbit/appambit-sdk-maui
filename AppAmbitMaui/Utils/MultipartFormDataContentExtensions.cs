@@ -11,26 +11,27 @@ internal static class MultipartFormDataContentExtensions
 {
     private const string _dateTimeFormatISO8601ForFile = "yyyy-MM-ddTHH_mm_ss_fffZ";
     private const string _dateFormatStringApi = "yyyy-MM-dd HH:mm:ss";
-    public static void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData,object obj,  string prefix = "", bool useSquareBrakets = false)
+
+    public static void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData, object obj,
+        string prefix = "", bool useSquareBrakets = false)
     {
-        
-        if (obj is null )
+        if (obj is null)
             return;
-        
+
         if (obj is IDictionary dict)
         {
-            formData.AddDictionaryToMultipartFormDataContent( dict, prefix);
+            formData.AddDictionaryToMultipartFormDataContent(dict, prefix);
             return;
         }
 
         if (obj.IsList())
         {
             var list = obj.ToObjectList();
-            formData.AddListToMultipartFormDataContent( list, prefix);
+            formData.AddListToMultipartFormDataContent(list, prefix);
             return;
         }
 
-        if ( obj is DateTime dateTime)
+        if (obj is DateTime dateTime)
         {
             formData.Add(new StringContent(dateTime.ToString(_dateFormatStringApi)), prefix);
             return;
@@ -38,28 +39,28 @@ internal static class MultipartFormDataContentExtensions
 
         if (IsSimpleType(obj))
         {
-            formData.Add(new StringContent(obj.ToString() ?? "" ), prefix);
+            formData.Add(new StringContent(obj.ToString() ?? ""), prefix);
             return;
         }
-        
+
         var objectProperties = obj.GetType().GetProperties();
         foreach (var property in objectProperties)
         {
             var propName = property.Name;
             var propValue = property.GetValue(obj);
-            
+
             if (propValue == null)
                 continue;
-            
+
             var jsonIgnoreAttr = property.GetCustomAttribute<JsonIgnoreAttribute>();
             if (jsonIgnoreAttr != null)
                 continue;
 
             var jsonPropAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
             propName = jsonPropAttr?.PropertyName ?? property.Name;
-            
 
-            string multipartKey = useSquareBrakets ? $"{prefix}[{propName}]":$"{prefix}{propName}";
+
+            string multipartKey = useSquareBrakets ? $"{prefix}[{propName}]" : $"{prefix}{propName}";
             var type = property.PropertyType;
             var isNullable = Nullable.GetUnderlyingType(type) != null;
             var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
@@ -81,14 +82,15 @@ internal static class MultipartFormDataContentExtensions
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propValue as string ?? "");
                 var fileContent = new ByteArrayContent(encodedBytes);
-                formData.Add(fileContent,prefix + "[file]", Path.GetFileName(filePath));
+                formData.Add(fileContent, prefix + "[file]", Path.GetFileName(filePath));
                 continue;
             }
-            
-            string newPrefix = useSquareBrakets ? $"{prefix}[{propName}]":$"{prefix}{propName}";
-            formData.AddObjectToMultipartFormDataContent(propValue, newPrefix,true);
+
+            string newPrefix = useSquareBrakets ? $"{prefix}[{propName}]" : $"{prefix}{propName}";
+            formData.AddObjectToMultipartFormDataContent(propValue, newPrefix, true);
         }
     }
+
     public static bool IsSimpleType(object obj)
     {
         if (obj == null) return false;
@@ -100,10 +102,11 @@ internal static class MultipartFormDataContentExtensions
                || type == typeof(string)
                || type == typeof(decimal)
                || type == typeof(Guid)
-               ;
+            ;
     }
-    
-    public static void AddDictionaryToMultipartFormDataContent(this MultipartFormDataContent formData, IDictionary dict,  string prefix = "")
+
+    public static void AddDictionaryToMultipartFormDataContent(this MultipartFormDataContent formData, IDictionary dict,
+        string prefix = "")
     {
         if (dict == null)
             return;
@@ -116,18 +119,20 @@ internal static class MultipartFormDataContentExtensions
             formData.AddObjectToMultipartFormDataContent(value, newPrefix, true);
         }
     }
-    public static void AddListToMultipartFormDataContent(this MultipartFormDataContent formData, List<object> list,   string prefix = "")
+
+    public static void AddListToMultipartFormDataContent(this MultipartFormDataContent formData, List<object> list,
+        string prefix = "")
     {
-        if (list is not List<object> )
+        if (list is not List<object>)
             return;
-            
+
         Dictionary<string, object> dict = list
             .Select((item, index) => new KeyValuePair<string, object>(index.ToString(), item))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         formData.AddDictionaryToMultipartFormDataContent(dict, prefix);
     }
-    
+
     [Conditional("DEBUG")]
     public static async void DebugMultipartFormDataContent(this MultipartFormDataContent formData)
     {
@@ -141,7 +146,7 @@ internal static class MultipartFormDataContentExtensions
                     Debug.WriteLine($"{header.Key}: FILE");
                     continue;
                 }
-                
+
                 Debug.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
             }
 

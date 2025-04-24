@@ -15,36 +15,40 @@ public static class Crashes
     private static IAPIService? _apiService;
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
-    internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
+
+    internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
-        
+
         _storageService = storageService;
         _apiService = apiService;
         _deviceId = deviceId;
-        Logging.Initialize(apiService,storageService);
+        Logging.Initialize(apiService, storageService);
     }
-    
-    public static async Task LogError(Exception? exception, Dictionary<string,string> properties = null, string? classFqn = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int lineNumber = 0)
-    {
-        classFqn = classFqn ?? await GetCallerClassAsync(); 
-        await Logging.LogEvent("", LogType.Error,exception, properties,classFqn,fileName,lineNumber);
-    }
-    
-    public static async Task LogError(string message, Dictionary<string,string> properties = null, string? classFqn = null, Exception? exception = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int? lineNumber = null)
+
+    public static async Task LogError(Exception? exception, Dictionary<string, string> properties = null,
+        string? classFqn = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int lineNumber = 0)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent(message, LogType.Error,exception, properties,classFqn,fileName,lineNumber);
+        await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+    }
+
+    public static async Task LogError(string message, Dictionary<string, string> properties = null,
+        string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null,
+        [CallerLineNumber] int? lineNumber = null)
+    {
+        classFqn = classFqn ?? await GetCallerClassAsync();
+        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task GenerateTestCrash()
     {
         throw new NullReferenceException();
     }
-    
+
     internal static async void LoadCrashFileIfExists()
     {
         var crashFile = GetCrashFilePath();
@@ -64,53 +68,55 @@ public static class Crashes
             await LogCrash(exceptionInfo);
         }
     }
-    
+
     public static async Task<bool> DidCrashInLastSession()
     {
         return _didCrashInLastSession;
     }
-    
+
     private static async Task LogCrash(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
-        await Logging.LogEvent(message, LogType.Crash,exception);
+        await Logging.LogEvent(message, LogType.Crash, exception);
     }
-    
+
     private static async Task LogError(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
-        await Logging.LogEvent(message, LogType.Error,exception);
+        await Logging.LogEvent(message, LogType.Error, exception);
     }
-    
+
     private static string Truncate(string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
-    
+
     private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
         var exception = ExceptionInfo.FromException(e?.Exception);
         await LogError(exception);
     }
-    
-    private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+
+    private static async void OnUnhandledException(object sender,
+        UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
 
-        var info = ExceptionInfo.FromException(ex,_deviceId);
+        var info = ExceptionInfo.FromException(ex, _deviceId);
         var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-        
+
         SaveCrashToFile(json);
     }
+
     private static void SaveCrashToFile(string json)
     {
         var crashFile = GetCrashFilePath();
         Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
         File.WriteAllText(crashFile, json);
     }
-    
+
     private static async Task<string?> GetCallerClassAsync()
     {
         var listSystemNames = new List<string>()
@@ -126,12 +132,13 @@ public static class Crashes
         foreach (var frame in stackTrace.GetFrames())
         {
             var method = frame?.GetMethod();
-            var fullName =  method?.DeclaringType?.FullName ?? "";
-            if(!ContainsFromList(fullName,listSystemNames))
+            var fullName = method?.DeclaringType?.FullName ?? "";
+            if (!ContainsFromList(fullName, listSystemNames))
             {
                 classFqn = fullName;
             }
         }
+
         return classFqn;
     }
 
@@ -139,12 +146,13 @@ public static class Crashes
     {
         foreach (var s in list)
         {
-            if(word.Contains(s))
+            if (word.Contains(s))
                 return true;
         }
+
         return false;
     }
-    
+
     public static async Task SendBatchLogs()
     {
         Debug.WriteLine("SendBatchLogs");
@@ -162,22 +170,22 @@ public static class Crashes
         await _storageService.DeleteLogList(logEntityList);
         Debug.WriteLine("Logs batch sent");
     }
-    
+
     private static string GetCrashFilePath()
     {
         return Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
     }
-    
+
     private static bool CrashFileExists(string path)
     {
         return File.Exists(path);
     }
-    
+
     private static void SetCrashFlag(bool didCrash)
     {
         _didCrashInLastSession = didCrash;
     }
-    
+
     private static async Task<ExceptionInfo?> ReadAndDeleteCrashFileAsync(string path)
     {
         try

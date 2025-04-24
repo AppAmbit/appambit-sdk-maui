@@ -5,31 +5,31 @@
              x:Class="AppAmbitTestingApp.AnalyticsPage">
     <ContentPage.Content>
         <VerticalStackLayout Padding="30,0"
-                             Spacing="25" >
+                             Spacing="25">
             <Button Text="Start Session"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnStartSession"/>
+                    Clicked="Button_OnStartSession" />
             <Button Text="End Session"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnEndSession"/>
+                    Clicked="Button_OnEndSession" />
             <Button Text="Send custom analytics event"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnClicked"/>
+                    Clicked="Button_OnClicked" />
             <Button Text="Generate test event"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnClickedTestEvent"/>
+                    Clicked="Button_OnClickedTestEvent" />
             <Button Text="Generate test limits event"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnClickedTestLimitsEvent"/>
+                    Clicked="Button_OnClickedTestLimitsEvent" />
             <Button Text="Generate test Max properties"
                     HeightRequest="50"
                     Padding="30"
-                    Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
+                    Clicked="Button_OnClickedTestMaxPropertiesEvent" />
         </VerticalStackLayout>
     </ContentPage.Content>
 </ContentPage>

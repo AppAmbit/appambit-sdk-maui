@@ -22,7 +22,7 @@ public static class Analytics
         _apiService = apiService;
         _storageService = storageService;
     }
-    
+
     public static void EnableManualSession()
     {
         _isManualSessionEnabled = true;
@@ -50,6 +50,7 @@ public static class Analytics
             Debug.WriteLine("Session didn't started");
             return;
         }
+
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
         _isSessionActive = false;
@@ -91,13 +92,13 @@ public static class Analytics
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        
+
         data = data
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
-            g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
-            g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
+                g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
+                g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
         if (hasInternet)

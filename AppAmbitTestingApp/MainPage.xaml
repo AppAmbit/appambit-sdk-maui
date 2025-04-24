@@ -1,4 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:appAmbitTestingApp="clr-namespace:AppAmbitTestingApp"
@@ -12,50 +13,50 @@
                 HeightRequest="185"
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a race car number eight" />
-                
+
             <Button
-                Text="Did the app crash during your last session?" 
+                Text="Did the app crash during your last session?"
                 Clicked="OnHasCrashedTheLastSession" />
 
             <Button
-                Text="Generate Logs for Batch upload" 
+                Text="Generate Logs for Batch upload"
                 Clicked="OnGenerateLogsForBatch" />
 
             <Entry Placeholder="User id"
-                   Text="{Binding UserId}"/>
-            
+                   Text="{Binding UserId}" />
+
             <Button
-                Text="Change user id" 
+                Text="Change user id"
                 Clicked="OnChangeUserId" />
-            
+
             <Entry Placeholder="User email"
-                   Text="{Binding UserEmail}"/>
-            
+                   Text="{Binding UserEmail}" />
+
             <Button
-                Text="Change user email" 
+                Text="Change user email"
                 Clicked="OnChangeUserEmail" />
-            
+
             <Entry Placeholder="Type log message"
-                    Text="{Binding LogMessage}"
-                    TextChanged="MessageInputView_OnTextChanged"/>
-            
+                   Text="{Binding LogMessage}"
+                   TextChanged="MessageInputView_OnTextChanged" />
+
             <Button
-                Text="Test adding error log" 
+                Text="Test adding error log"
                 Clicked="OnTestErrorLogClicked" />
             <Button
-                Text="Send Test LogError " 
+                Text="Send Test LogError "
                 Clicked="OnSendTestLog" />
             <Button
-                Text="Send Test Log Exception " 
+                Text="Send Test Log Exception "
                 Clicked="OnSendTestException" />
             <Button
-                Text="Send Test LogError with classFQN " 
+                Text="Send Test LogError with classFQN "
                 Clicked="OnSendTestLogWithClassFQN" />
             <Button
-                Text="Test Crash ( App crashes )" 
+                Text="Test Crash ( App crashes )"
                 Clicked="OnCounterClicked" />
             <Button
-                Text="Generate test crash" 
+                Text="Generate test crash"
                 Clicked="OnGenerateTestCrash" />
         </VerticalStackLayout>
     </ScrollView>

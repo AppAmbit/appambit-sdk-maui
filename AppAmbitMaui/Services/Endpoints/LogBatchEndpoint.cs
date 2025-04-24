@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AppAmbit.Services.Endpoints;
 
-internal class LogBatchEndpoint: BaseEndpoint, IEndpoint
+internal class LogBatchEndpoint : BaseEndpoint, IEndpoint
 {
     public LogBatchEndpoint(LogBatch logBatch)
     {

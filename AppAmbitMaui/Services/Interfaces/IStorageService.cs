@@ -14,23 +14,23 @@ internal interface IStorageService
     Task LogAnalyticsEventAsync(EventEntity analyticsLog);
 
     Task<List<LogEntity>> GetAllLogsAsync();
-    
+
     Task<List<EventEntity>> GetAllAnalyticsAsync();
-    
+
     Task DeleteAllLogs();
-    
+
     #endregion
 
     #region Sensetive data
-    
+
     Task SetDeviceId(string? token);
 
     Task<string?> GetDeviceId();
-    
+
     Task SetUserId(string? token);
 
     Task<string?> GetUserId();
-    
+
     Task SetUserEmail(string? token);
 
     Task<string?> GetUserEmail();
@@ -38,9 +38,9 @@ internal interface IStorageService
     Task SetAppId(string? appId);
 
     Task<string?> GetAppId();
-    
+
     Task SetSessionId(string sessionId);
-    
+
     Task<string?> GetSessionId();
 
     Task<List<LogEntity>> GetOldest100LogsAsync();

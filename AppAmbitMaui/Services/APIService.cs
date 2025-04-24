@@ -14,32 +14,34 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
+
     public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
     {
-        var httpClient = new HttpClient(){
+        var httpClient = new HttpClient()
+        {
             Timeout = TimeSpan.FromMinutes(2),
         };
         httpClient.DefaultRequestHeaders
             .Accept
             .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
+
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
         Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
         var responseString = await responseMessage.Content.ReadAsStringAsync();
         Debug.WriteLine($"responseString:{responseString}");
         return TryDeserializeJson<T>(responseString);
     }
-    
+
     public string? GetToken()
     {
         return _token;
     }
-    
-    public void SetToken( string? token)
+
+    public void SetToken(string? token)
     {
         _token = token;
     }
-    
+
     private T TryDeserializeJson<T>(string response)
     {
         try
@@ -58,11 +60,11 @@ internal class APIService : IAPIService
     {
         client.Timeout = TimeSpan.FromSeconds(20);
         await AddAuthorizationHeaderIfNeeded(client);
-        
+
         var fullUrl = endpoint.BaseUrl + endpoint.Url;
         return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
     }
-    
+
     private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
     {
         var token = GetToken();
@@ -78,14 +80,13 @@ internal class APIService : IAPIService
         {
             return null;
         }
-        
+
         HttpContent content;
         if (payload is Log log)
         {
             PrintLogWithoutFile(log);
             var multipartFormDataContent = SerializeToMultipartFormDataContent(log);
             content = multipartFormDataContent;
-            
         }
         else if (payload is LogBatch logBatch)
         {
@@ -96,6 +97,7 @@ internal class APIService : IAPIService
         {
             content = SerializeToJSONStringContent(payload);
         }
+
         return content;
     }
 
@@ -109,16 +111,16 @@ internal class APIService : IAPIService
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        var options = new JsonSerializerSettings() 
+        var options = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
         };
-        var data = JsonConvert.SerializeObject(payload,options);
+        var data = JsonConvert.SerializeObject(payload, options);
         Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
     }
-    
+
     private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
     {
         Debug.WriteLine("SerializeToMultipartFormDataContent");
@@ -126,7 +128,7 @@ internal class APIService : IAPIService
         formData.AddObjectToMultipartFormDataContent(payload);
         return formData;
     }
-    
+
     private string SerializeStringPayload(object payload)
     {
         if (payload == null)
@@ -156,7 +158,8 @@ internal class APIService : IAPIService
         return url + "?" + serializedParameters;
     }
 
-    private async Task<HttpResponseMessage> GetHttpResponseMessage(IEndpoint endpoint, HttpClient client, string url, object payload)
+    private async Task<HttpResponseMessage> GetHttpResponseMessage(IEndpoint endpoint, HttpClient client, string url,
+        object payload)
     {
         HttpResponseMessage result;
         try
@@ -168,7 +171,7 @@ internal class APIService : IAPIService
                     break;
                 case HttpMethodEnum.Post:
                     var payloadJson = await SerializePayload(payload, endpoint);
-                    result = await client.PostAsync(url,payloadJson );
+                    result = await client.PostAsync(url, payloadJson);
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)
@@ -191,8 +194,7 @@ internal class APIService : IAPIService
         {
             throw new Exception();
         }
+
         return result;
     }
-    
-
 }

@@ -8,40 +8,34 @@ namespace AppAmbit.Models.Logs;
 
 internal class Log
 {
-    [JsonProperty("app_version")]
-    public string? AppVersion { get; set; }
-    
-    [JsonProperty("classFQN")]
-    public string? ClassFQN { get; set; }
-    
-    [JsonProperty("file_name")]
-    public string? FileName { get; set; }
+    [JsonProperty("app_version")] public string? AppVersion { get; set; }
 
-    [JsonProperty("line_number")] 
-    public long LineNumber { get; set; }
-    
-    [JsonProperty("message")]
-    public string? Message { get; set; } = String.Empty;
+    [JsonProperty("classFQN")] public string? ClassFQN { get; set; }
 
-    [JsonProperty("stack_trace")] 
-    public string? StackTrace { get; set; } = AppConstants.NoStackTraceAvailable;
+    [JsonProperty("file_name")] public string? FileName { get; set; }
+
+    [JsonProperty("line_number")] public long LineNumber { get; set; }
+
+    [JsonProperty("message")] public string? Message { get; set; } = String.Empty;
+
+    [JsonProperty("stack_trace")] public string? StackTrace { get; set; } = AppConstants.NoStackTraceAvailable;
 
     [Ignore] // SQLite ignore this field, it does not support Dictionary Types
     [JsonProperty("context")]
-    public Dictionary<string,string> Context 
-    { 
-        get => string.IsNullOrEmpty(ContextJson) ? new Dictionary<string,string>() : JsonConvert.DeserializeObject<Dictionary<string,string>>(ContextJson);
+    public Dictionary<string, string> Context
+    {
+        get => string.IsNullOrEmpty(ContextJson)
+            ? new Dictionary<string, string>()
+            : JsonConvert.DeserializeObject<Dictionary<string, string>>(ContextJson);
         set => ContextJson = JsonConvert.SerializeObject(value);
     }
 
     // internal field for storing on Sqlite
-    [JsonIgnore]
-    public string ContextJson { get; set; } = "{}";
-    
-    [JsonProperty("type")]
-    public LogType? Type { get; set; }
-    
-    [JsonProperty("file")] 
+    [JsonIgnore] public string ContextJson { get; set; } = "{}";
+
+    [JsonProperty("type")] public LogType? Type { get; set; }
+
+    [JsonProperty("file")]
     [MultipartFormDataFile]
     public string? File { get; set; }
 }
@@ -49,9 +43,7 @@ internal class Log
 [JsonConverter(typeof(StringEnumConverter))]
 public enum LogType
 {
-    [EnumMember(Value = "error")]
-    Error,
-    
-    [EnumMember(Value = "crash")]
-    Crash
+    [EnumMember(Value = "error")] Error,
+
+    [EnumMember(Value = "crash")] Crash
 }

@@ -18,7 +18,7 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -27,10 +27,7 @@ public static class Core
             events.AddAndroid(android =>
             {
                 android.OnCreate((activity, state) => { Start(appKey); });
-                android.OnResume(activity =>
-                {
-                    OnResume();
-                });
+                android.OnResume(activity => { OnResume(); });
                 android.OnPause(activity => { OnSleep(); });
             });
 #elif IOS
@@ -58,7 +55,7 @@ public static class Core
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
@@ -74,7 +71,7 @@ public static class Core
         }
 
         Crashes.LoadCrashFileIfExists();
-        
+
         await Crashes.SendBatchLogs();
     }
 
@@ -90,7 +87,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
     }
-    
+
     private static async Task OnResume()
     {
         var appKey = await storageService?.GetAppId();
@@ -103,7 +100,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
     }
-    
+
     public static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -159,7 +156,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        Crashes.Initialize(apiService, storageService, deviceId);
+        Analytics.Initialize(apiService, storageService);
     }
 }

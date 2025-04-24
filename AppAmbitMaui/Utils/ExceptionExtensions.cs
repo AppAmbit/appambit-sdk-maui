@@ -11,6 +11,7 @@ internal static class ExceptionExtensions
         {
             return AppConstants.UnknownFileName;
         }
+
         var stackFrame = new StackTrace(ex, true).GetFrames().Last();
         return stackFrame?.GetFileName() ?? AppConstants.UnknownFileName;
     }
@@ -22,6 +23,7 @@ internal static class ExceptionExtensions
         {
             return 0;
         }
+
         var stackFrame = new StackTrace(ex, true).GetFrames().Last();
         return stackFrame?.GetFileLineNumber() > 0 ? stackFrame.GetFileLineNumber() : 0;
     }
