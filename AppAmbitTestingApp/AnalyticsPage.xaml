@@ -10,7 +10,7 @@
                     HeightRequest="50"
                     Padding="30"
                     Clicked="Button_OnStartSession"/>
-            <Button Text="OnEnd Session"
+            <Button Text="End Session"
                     HeightRequest="50"
                     Padding="30"
                     Clicked="Button_OnEndSession"/>
