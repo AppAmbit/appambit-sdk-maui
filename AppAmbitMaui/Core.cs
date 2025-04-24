@@ -27,9 +27,9 @@ public static class Core
             events.AddAndroid(android =>
             {
                 android.OnCreate((activity, state) => { OnStart(appKey); });
-                android.OnResume(activity => { OnResume();});
                 android.OnPause(activity => { OnSleep(); });
-               android.OnDestroy( async activity1 => { await OnEnd();});
+                android.OnResume(activity => { OnResume(); });
+               android.OnDestroy( async activity1 => { await OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -39,18 +39,9 @@ public static class Core
                     OnStart(appKey);
                     return true;
                 });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.WillTerminate(async application =>
-                {
-                    OnEnd();
-                });
+                ios.DidEnterBackground(application => { OnSleep(); });
+                ios.WillEnterForeground(application => { OnResume(); });
+                ios.WillTerminate(async application => { OnEnd(); });
             });
 #endif
         });
