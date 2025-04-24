@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
@@ -11,6 +12,7 @@ namespace AppAmbit;
 public static class Crashes
 {
     private static IStorageService? _storageService;
+    private static IAPIService? _apiService;
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
     internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
@@ -19,7 +21,9 @@ public static class Crashes
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
         TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+        
         _storageService = storageService;
+        _apiService = apiService;
         _deviceId = deviceId;
         Logging.Initialize(apiService,storageService);
     }
@@ -41,7 +45,6 @@ public static class Crashes
         throw new NullReferenceException();
     }
     
-    
     internal static async void LoadCrashFileIfExists()
     {
         var crashFile = GetCrashFilePath();
@@ -61,7 +64,6 @@ public static class Crashes
             await LogCrash(exceptionInfo);
         }
     }
-    
     
     public static async Task<bool> DidCrashInLastSession()
     {
@@ -141,6 +143,24 @@ public static class Crashes
                 return true;
         }
         return false;
+    }
+    
+    public static async Task SendBatchLogs()
+    {
+        Debug.WriteLine("SendBatchLogs");
+        var logEntityList = await _storageService.GetOldest100LogsAsync();
+        if (logEntityList?.Count == 0)
+        {
+            Debug.WriteLine("No logs to send");
+            return;
+        }
+
+        Debug.WriteLine("Sending logs in batch");
+        var logBatch = new LogBatch() { Logs = logEntityList };
+        var endpoint = new LogBatchEndpoint(logBatch);
+        var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
+        await _storageService.DeleteLogList(logEntityList);
+        Debug.WriteLine("Logs batch sent");
     }
     
     private static string GetCrashFilePath()

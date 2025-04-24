@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace AppAmbit;
 
-public static class ExceptionExtensions
+internal static class ExceptionExtensions
 {
     public static string GetFileNameFromStackTrace(this Exception ex)
     {

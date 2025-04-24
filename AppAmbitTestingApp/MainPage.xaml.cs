@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel;
 using AppAmbit;
 using AppAmbit.Models.Logs;
+using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
 
 public partial class MainPage : ContentPage
 {
-
     private string _logMessage = "Test Log Message";
 
     public string LogMessage
@@ -57,6 +57,17 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
+    }
+    
+    private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
+    {
+        await DisplayAlert("Info", "Turn off internet", "Ok");
+        foreach (int index in Range( 1, 220 ))
+        {
+            await Crashes.LogError("Test Batch LogError");
+        }
+        await DisplayAlert("Info", "Logs generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
     }
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)

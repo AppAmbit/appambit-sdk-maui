@@ -13,11 +13,11 @@ internal static class Logging
         _apiService = apiService;
         _storageService = storageService;
     }
-
+    
     public static async Task LogEvent(string? message,LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var deviceId = await _storageService.GetDeviceId();
-        var exceptionInfo = ExceptionInfo.FromException(exception,deviceId);
+        var exceptionInfo = (exception != null) ?  ExceptionInfo.FromException(exception,deviceId) : null;
         LogEvent(message, logType, exceptionInfo, properties,classFqn,fileName,lineNumber);
     }
 
@@ -26,7 +26,7 @@ internal static class Logging
         var stackTrace = exception?.StackTrace;
         stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var deviceId = await _storageService.GetDeviceId();
-        var file = exception.CrashLogFile;
+        var file = exception?.CrashLogFile;
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
@@ -37,7 +37,7 @@ internal static class Logging
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string,string>(),
             Type = logType,
-            file = (exception != null)? file:null,
+            File = (logType == LogType.Crash && exception != null)? file:null,
         };
         await SendOrSaveLogEventAsync(log);
     }
@@ -89,7 +89,7 @@ internal static class Logging
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        logEntity.Timestamp = DateTime.Now.ToUniversalTime();
+        logEntity.CreatedAt = DateTime.Now.ToUniversalTime(); 
         
         await _storageService?.LogEventAsync(logEntity);
     }
