@@ -9,26 +9,24 @@ internal static class FileUtils
     {
         try
         {
-            Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
             var filePath = GetFilePath(GetFileName(typeof(T)));
-            var fileText = await File.ReadAllTextAsync(filePath);
-            File.Delete(filePath);
-            return JsonConvert.DeserializeObject<T>(fileText);
-        }
-        catch(FileNotFoundException ex)
-        {
-            Debug.WriteLine($"Expected exception file not found");
+            Debug.WriteLine($"filePath {typeof(T).Name}: {filePath}");
+            if (File.Exists(filePath))
+            {
+                var fileText = await File.ReadAllTextAsync(filePath);
+                File.Delete(filePath);
+                return JsonConvert.DeserializeObject<T>(fileText);
+            }
             return null as T;
         }
-        catch(Exception ex)
+        catch (Exception e)
         {
-            Debug.WriteLine($"Exception: {ex.Message}");
+            Debug.WriteLine($"File Exception: {e.Message}");
             return null as T;
         }
     }
     internal static string GetFilePath(string fileName)
     {
-        Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
         var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
         return path;
     }

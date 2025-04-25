@@ -16,6 +16,7 @@ public static class Analytics
     internal static bool _isManualSessionEnabled = false;
     private static string? _sessionId = null;
     private static bool _isSessionActive = false;
+    private static EndSession? _currentEndSession = null;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -94,13 +95,17 @@ public static class Analytics
     
     public static async void SendEndSessionIfExists()
     {
-        var file = GetFilePath(GetFileName(typeof(EndSession)));
-        Debug.WriteLine($"file:{file}");
-        var endSession = await GetSavedSingleObject<EndSession>();
-        if(endSession == null)
-            return;
-        
-        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
+        if(_currentEndSession== null)
+        {
+            var file = GetFilePath(GetFileName(typeof(EndSession)));
+            Debug.WriteLine($"file:{file}");
+            var endSession = await GetSavedSingleObject<EndSession>();
+            if(endSession == null)
+                return;
+            _currentEndSession = endSession;
+        }
+        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(_currentEndSession));
+        _currentEndSession = null;
         _isSessionActive = false;
     }
     

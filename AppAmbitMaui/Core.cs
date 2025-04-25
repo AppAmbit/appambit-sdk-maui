@@ -65,12 +65,6 @@ public static class Core
 
         await InitializeConsumer(appKey);
 
-        if (!Analytics._isManualSessionEnabled)
-        {
-            Analytics.SendEndSessionIfExists();
-            await Analytics.StartSession();
-        }
-
         Crashes.LoadCrashFileIfExists();
         
         await Crashes.SendBatchLogs();
@@ -86,11 +80,25 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
+        if (!TokenIsValid())
+            await InitializeConsumer();
+
         await Crashes.SendBatchLogs();
     }
-    
+
+    private static bool TokenIsValid()
+    {
+        var token = apiService?.GetToken();
+        if( !string.IsNullOrEmpty(token) )
+            return true;
+        return false;
+    }
+
     private static async Task OnResume()
     {
+        if (!TokenIsValid())
+            await InitializeConsumer();
+        
         if (!Analytics._isManualSessionEnabled)
         {
             await Analytics.RemoveSavedEndSession();
@@ -117,13 +125,14 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        var appId = await storageService.GetAppId();
+        var _appKey = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();
         var userId = await storageService.GetUserId();
         var userEmail = await storageService.GetUserEmail();
 
-        if (appId == null)
+        if (!string.IsNullOrEmpty(appKey))
         {
+            _appKey = appKey;
             await storageService.SetAppId(appKey);
         }
 
@@ -141,7 +150,7 @@ public static class Core
 
         var consumer = new Consumer
         {
-            AppKey = appKey,
+            AppKey = _appKey,
             DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
             UserId = userId,
@@ -152,7 +161,16 @@ public static class Core
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
+        if (remoteToken == null)
+            return;
+        
         apiService.SetToken(remoteToken?.Token);
+        
+        if (!Analytics._isManualSessionEnabled)
+        {
+            Analytics.SendEndSessionIfExists();
+            await Analytics.StartSession();
+        }
     }
 
     private static async Task InitializeServices()

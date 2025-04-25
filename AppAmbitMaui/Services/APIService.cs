@@ -14,8 +14,10 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
-    public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
+    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T: notnull
     {
+        try
+        {
         var httpClient = new HttpClient(){
             Timeout = TimeSpan.FromMinutes(2),
         };
@@ -28,6 +30,12 @@ internal class APIService : IAPIService
         var responseString = await responseMessage.Content.ReadAsStringAsync();
         Debug.WriteLine($"responseString:{responseString}");
         return TryDeserializeJson<T>(responseString);
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Exception:{e.Message}");
+            return default(T);
+        }
     }
     
     public string? GetToken()
