@@ -182,12 +182,6 @@ public static class Analytics
         }
     }
     
-    private static void SaveToSingleFile(string json)
-    {
-        var crashFile = GetFilePath("EndSession.json");
-        File.WriteAllText(crashFile, json);
-    }
-    
     private static string GetFilePath(string fileName)
     {
         Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
