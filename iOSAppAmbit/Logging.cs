@@ -19,7 +19,7 @@ public static class Logging
             Message = message,
             Timestamp = DateTime.Now,
             Title = title,
-            Type = logType
+            Type = logType 
         };
         
         await logService?.LogEventAsync(log);
