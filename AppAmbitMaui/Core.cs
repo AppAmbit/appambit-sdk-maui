@@ -76,6 +76,7 @@ public static class Core
         Crashes.LoadCrashFileIfExists();
         
         await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
     }
 
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
@@ -89,6 +90,7 @@ public static class Core
             return;
 
         await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
     }
     
     private static async Task OnResume()
@@ -102,6 +104,7 @@ public static class Core
         }
 
         await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
     }
     
     public static async Task OnSleep()
@@ -114,12 +117,12 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        var appId = await storageService.GetAppId();
+        var appId = string.IsNullOrEmpty(appKey) ? await storageService.GetAppId():appKey;
         var deviceId = await storageService.GetDeviceId();
         var userId = await storageService.GetUserId();
         var userEmail = await storageService.GetUserEmail();
 
-        if (appId == null)
+        if (appId != null)
         {
             await storageService.SetAppId(appKey);
         }

@@ -6,6 +6,7 @@ namespace AppAmbit.Models.Analytics;
 
 public class EventEntity : Event
 {
+    [JsonIgnore]
     [PrimaryKey]
     public Guid Id { get; set; }
 
@@ -20,4 +21,7 @@ public class EventEntity : Event
     // internal field for storing on Sqlite
     [JsonIgnore]
     public string DataJson { get; set; } = "{}";
+    
+    [JsonIgnore]
+    public DateTime CreatedAt { get; set; }
 }

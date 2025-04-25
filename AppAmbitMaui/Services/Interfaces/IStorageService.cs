@@ -47,5 +47,9 @@ internal interface IStorageService
 
     Task DeleteLogList(List<LogEntity> logs);
 
+    Task<List<EventEntity>> GetOldest100EventsAsync();
+
+    Task DeleteEventList(List<EventEntity> logs);
+
     #endregion"
 }

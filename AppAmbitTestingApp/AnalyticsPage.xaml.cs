@@ -1,4 +1,5 @@
 using AppAmbit;
+using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
 
@@ -73,5 +74,16 @@ public partial class AnalyticsPage : ContentPage
             { "25", "25"},//25
         };
         await Analytics.TrackEvent("TestMaxProperties",properties );
+    }
+
+    private async void OnGenerateBatchEvents(object? sender, EventArgs e)
+    {
+        await DisplayAlert("Info", "Turn off internet", "Ok");
+        foreach (int index in Range( 1, 220 ))
+        {
+            await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "test1", "test1" } });
+        }
+        await DisplayAlert("Info", "Events generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
     }
 }
