@@ -7,6 +7,7 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
 using static AppAmbit.AppConstants;
+using static AppAmbit.FileUtils;
 
 namespace AppAmbit;
 
@@ -153,45 +154,9 @@ public static class Analytics
         
         SaveToFile<EndSession>(json);
     }
-    
-    private static void SaveToFile<T>(string json) where T : class
-    {
-        var filePath = GetFilePath(GetFileName(typeof(T)));
-        File.WriteAllText(filePath, json);
-    }
 
     internal static async Task RemoveSavedEndSession()
     {
         _ = await GetSavedSingleObject<EndSession>();
-    }
-    
-    private static async Task<T?> GetSavedSingleObject<T>() where T : class
-    {
-        try
-        {
-            Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
-            var filePath = GetFilePath(GetFileName(typeof(T)));
-            var fileText = await File.ReadAllTextAsync(filePath);
-            File.Delete(filePath);
-            return JsonConvert.DeserializeObject<T>(fileText);
-        }
-        catch(Exception ex)
-        {
-            Debug.WriteLine($"Exception: {ex.Message}");
-            return null as T;
-        }
-    }
-    
-    private static string GetFilePath(string fileName)
-    {
-        Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
-        var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
-        return path;
-    }
-    
-    private static string GetFileName(Type type)
-    {
-        var fileName = $"{type.Name}.json";
-        return fileName;
     }
 }
