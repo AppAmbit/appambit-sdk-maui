@@ -92,7 +92,6 @@ public static class Analytics
         await SendOrSaveEvent(eventTitle, data);
     }
     
-
     public static async void SendEndSessionIfExists()
     {
         var file = GetFilePath(GetFileName(typeof(EndSession)));
