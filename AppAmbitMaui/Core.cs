@@ -75,7 +75,7 @@ public static class Core
         
         await Crashes.SendBatchLogs();
     }
-    
+
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
