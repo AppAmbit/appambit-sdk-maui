@@ -29,7 +29,9 @@ public static class Core
                 android.OnCreate((activity, state) => { OnStart(appKey); });
                 android.OnPause(activity => { OnSleep(); });
                 android.OnResume(activity => { OnResume(); });
-               android.OnDestroy( async activity1 => { await OnEnd(); });
+                android.OnStop(activity => { OnSleep(); });
+                android.OnRestart(activity => { OnResume(); });
+                android.OnDestroy(async activity1 => { await OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -41,13 +43,15 @@ public static class Core
                 });
                 ios.DidEnterBackground(application => { OnSleep(); });
                 ios.WillEnterForeground(application => { OnResume(); });
-                ios.WillTerminate(async application => { OnEnd(); });
+                ios.WillTerminate(async application => { await  OnEnd(); });
             });
 #endif
         });
 
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
+        Crashes.OnCrashException -= exception => { OnEnd(); };
+        Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -63,6 +67,7 @@ public static class Core
 
         if (!Analytics._isManualSessionEnabled)
         {
+            Analytics.SendEndSessionIfExists();
             await Analytics.StartSession();
         }
 
@@ -70,46 +75,30 @@ public static class Core
         
         await Crashes.SendBatchLogs();
     }
-
-    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    
+    private static async Task OnSleep()
     {
-        Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
-
-        var access = e.NetworkAccess;
-
-        if (access != NetworkAccess.Internet)
-            return;
-
-        await Crashes.SendBatchLogs();
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.SaveEndSession();
+        }
     }
     
     private static async Task OnResume()
     {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.StartSession();
+            await Analytics.RemoveSavedEndSession();
         }
-
+        
         await Crashes.SendBatchLogs();
     }
     
-    public static async Task OnSleep()
+    private static async Task OnEnd()
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.EndSession();
-        }
-    }
-    
-    public static async Task OnEnd()
-    {
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.EndSession();
+            await Analytics.SaveEndSession();
         }
     }
 
@@ -162,5 +151,18 @@ public static class Core
         var deviceId = await storageService.GetDeviceId();
         Crashes.Initialize(apiService,storageService,deviceId);
         Analytics.Initialize(apiService,storageService);
+    }
+    
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+            return;
+
+        await Crashes.SendBatchLogs();
     }
 }

@@ -89,7 +89,7 @@ internal static class Logging
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        logEntity.CreatedAt = DateTime.Now.ToUniversalTime(); 
+        logEntity.CreatedAt = DateTime.UtcNow; 
         
         await _storageService?.LogEventAsync(logEntity);
     }

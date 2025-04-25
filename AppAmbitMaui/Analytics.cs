@@ -13,7 +13,9 @@ namespace AppAmbit;
 public static class Analytics
 {
     internal static bool _isManualSessionEnabled = false;
+    private static string? _sessionId = null;
     private static bool _isSessionActive = false;
+    
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -38,6 +40,7 @@ public static class Analytics
         }
 
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        _sessionId = response.SessionId;
         _storageService?.SetSessionId(response.SessionId);
         _isSessionActive = true;
     }
@@ -87,7 +90,20 @@ public static class Analytics
     {
         await SendOrSaveEvent(eventTitle, data);
     }
+    
 
+    public static async void SendEndSessionIfExists()
+    {
+        var file = GetFilePath(GetFileName(typeof(EndSession)));
+        Debug.WriteLine($"file:{file}");
+        var endSession = await GetSavedSingleObject<EndSession>();
+        if(endSession == null)
+            return;
+        
+        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
+        _isSessionActive = false;
+    }
+    
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
@@ -127,5 +143,61 @@ public static class Analytics
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+
+    public static async Task SaveEndSession()
+    {
+        var sessionId = _sessionId ?? await _storageService?.GetSessionId();
+        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateTime.UtcNow };
+        var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
+        
+        SaveToFile<EndSession>(json);
+    }
+    
+    private static void SaveToFile<T>(string json) where T : class
+    {
+        var filePath = GetFilePath(GetFileName(typeof(T)));
+        File.WriteAllText(filePath, json);
+    }
+
+    internal static async Task RemoveSavedEndSession()
+    {
+        _ = await GetSavedSingleObject<EndSession>();
+    }
+    
+    private static async Task<T?> GetSavedSingleObject<T>() where T : class
+    {
+        try
+        {
+            Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
+            var filePath = GetFilePath(GetFileName(typeof(T)));
+            var fileText = await File.ReadAllTextAsync(filePath);
+            File.Delete(filePath);
+            return JsonConvert.DeserializeObject<T>(fileText);
+        }
+        catch(Exception ex)
+        {
+            Debug.WriteLine($"Exception: {ex.Message}");
+            return null as T;
+        }
+    }
+    
+    private static void SaveToSingleFile(string json)
+    {
+        var crashFile = GetFilePath("EndSession.json");
+        File.WriteAllText(crashFile, json);
+    }
+    
+    private static string GetFilePath(string fileName)
+    {
+        Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
+        var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
+        return path;
+    }
+    
+    private static string GetFileName(Type type)
+    {
+        var fileName = $"{type.Name}.json";
+        return fileName;
     }
 }

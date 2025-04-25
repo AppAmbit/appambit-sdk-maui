@@ -11,7 +11,7 @@ internal class StartSessionEndpoint : BaseEndpoint
         Method = HttpMethodEnum.Post;
         Payload = new
         {
-            timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         };
     }
 }
