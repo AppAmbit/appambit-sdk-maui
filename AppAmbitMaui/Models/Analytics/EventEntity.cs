@@ -6,6 +6,7 @@ namespace AppAmbit.Models.Analytics;
 
 public class EventEntity : Event
 {
+    [JsonIgnore]
     [PrimaryKey]
     public Guid Id { get; set; }
 
