@@ -76,6 +76,19 @@ public static class Core
         await Crashes.SendBatchLogs();
     }
     
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+            return;
+
+        await Crashes.SendBatchLogs();
+    }
+    
     private static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -151,18 +164,5 @@ public static class Core
         var deviceId = await storageService.GetDeviceId();
         Crashes.Initialize(apiService,storageService,deviceId);
         Analytics.Initialize(apiService,storageService);
-    }
-    
-    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
-    {
-        Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
-
-        var access = e.NetworkAccess;
-
-        if (access != NetworkAccess.Internet)
-            return;
-
-        await Crashes.SendBatchLogs();
     }
 }
