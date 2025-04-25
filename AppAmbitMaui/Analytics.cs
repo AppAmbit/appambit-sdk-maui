@@ -16,7 +16,6 @@ public static class Analytics
     internal static bool _isManualSessionEnabled = false;
     private static string? _sessionId = null;
     private static bool _isSessionActive = false;
-    
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -56,6 +55,7 @@ public static class Analytics
         }
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
+        _sessionId = null;
         _isSessionActive = false;
     }
 
