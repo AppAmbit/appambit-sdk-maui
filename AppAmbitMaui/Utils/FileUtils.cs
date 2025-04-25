@@ -15,6 +15,11 @@ internal static class FileUtils
             File.Delete(filePath);
             return JsonConvert.DeserializeObject<T>(fileText);
         }
+        catch(FileNotFoundException ex)
+        {
+            Debug.WriteLine($"Expected exception file not found");
+            return null as T;
+        }
         catch(Exception ex)
         {
             Debug.WriteLine($"Exception: {ex.Message}");
