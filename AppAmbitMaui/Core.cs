@@ -89,14 +89,6 @@ public static class Core
         await Crashes.SendBatchLogs();
     }
     
-    private static async Task OnSleep()
-    {
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.SaveEndSession();
-        }
-    }
-    
     private static async Task OnResume()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -105,6 +97,14 @@ public static class Core
         }
         
         await Crashes.SendBatchLogs();
+    }
+    
+    private static async Task OnSleep()
+    {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.SaveEndSession();
+        }
     }
     
     private static async Task OnEnd()
