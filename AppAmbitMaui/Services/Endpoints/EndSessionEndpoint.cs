@@ -1,7 +1,7 @@
 using AppAmbit.Models.Analytics;
-using AppAmbit.Models.App;
 using AppAmbit.Services.Endpoints.Base;
 using AppAmbit.Services.Interfaces;
+using Shared.Utils;
 
 namespace AppAmbit.Services.Endpoints;
 
@@ -14,7 +14,7 @@ internal class EndSessionEndpoint : BaseEndpoint
         Payload = new EndSession()
         {
             Id = sessionId,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateUtils.GetUtcNow
         };
     }
     

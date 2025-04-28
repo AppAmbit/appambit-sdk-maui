@@ -1,5 +1,6 @@
 using AppAmbit.Services.Endpoints.Base;
 using AppAmbit.Services.Interfaces;
+using Shared.Utils;
 
 namespace AppAmbit.Services.Endpoints;
 
@@ -11,7 +12,7 @@ internal class StartSessionEndpoint : BaseEndpoint
         Method = HttpMethodEnum.Post;
         Payload = new
         {
-            timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            timestamp = DateUtils.GetUtcNowFormatted
         };
     }
 }

@@ -1,15 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
-using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AppAmbit;
 

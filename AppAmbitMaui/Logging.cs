@@ -1,6 +1,7 @@
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -89,7 +90,7 @@ internal static class Logging
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        logEntity.CreatedAt = DateTime.UtcNow; 
+        logEntity.CreatedAt = DateUtils.GetUtcNow; 
         
         await _storageService?.LogEventAsync(logEntity);
     }

@@ -5,6 +5,7 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Shared.Utils;
 using Newtonsoft.Json;
 using static AppAmbit.AppConstants;
 using static AppAmbit.FileUtils;
@@ -153,7 +154,7 @@ public static class Analytics
     public static async Task SaveEndSession()
     {
         var sessionId = _sessionId ?? await _storageService?.GetSessionId();
-        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateTime.UtcNow };
+        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateUtils.GetUtcNow };
         var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
         
         SaveToFile<EndSession>(json);

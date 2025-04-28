@@ -1,5 +1,4 @@
 using iOSAppAmbit.Services.Base;
-using Shared;
 using Shared.Models.Analytics;
 using Shared.Models.App;
 using Shared.Models.Logs;

@@ -3,9 +3,6 @@ using Exception = System.Exception;
 using Process = System.Diagnostics.Process;
 using StringBuilder = System.Text.StringBuilder;
 
-
-using System.Runtime.InteropServices;
-
 namespace AppAmbit;
 
 internal static class CrashFileGenerator
