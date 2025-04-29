@@ -21,7 +21,7 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) => { OnStart(appKey); });
+                android.OnCreate((activity, state) => { OnStart(); });
                 android.OnPause(activity => { OnSleep(); });
                 android.OnResume(activity => { OnResume(); });
                 android.OnStop(activity => { OnSleep(); });
@@ -54,11 +54,11 @@ public static class Core
         return builder;
     }
 
-    private static async Task OnStart(string appKey)
+    private static async Task OnStart()
     {
         await InitializeServices();
 
-        await InitializeConsumer(appKey);
+        await InitializeConsumer();
 
         Crashes.LoadCrashFileIfExists();
         
@@ -121,7 +121,7 @@ public static class Core
         }
     }
 
-    private static async Task InitializeConsumer(string appKey = "")
+    private static async Task InitializeConsumer()
     {
         var appKey = await storageService.GetAppId();
         var deviceId = await storageService.GetDeviceId();
