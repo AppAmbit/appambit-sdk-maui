@@ -89,7 +89,7 @@ public static class Analytics
         });
     }
 
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
         await SendOrSaveEvent(eventTitle, data);
     }
@@ -114,7 +114,7 @@ public static class Analytics
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         
-        data = data
+        data = data?
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
@@ -138,7 +138,8 @@ public static class Analytics
             {
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
-                Data = data
+                Data = data,
+                CreatedAt = DateTime.Now,
             };
 
             await storageService?.LogAnalyticsEventAsync(eventEntity);
@@ -149,6 +150,24 @@ public static class Analytics
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+    
+    public static async Task SendBatchEvents()
+    {
+        Debug.WriteLine("SendBatchEvents");
+        var eventEntityList = await _storageService.GetOldest100EventsAsync();
+        if (eventEntityList?.Count == 0)
+        {
+            Debug.WriteLine("No events to send");
+            return;
+        }
+
+        Debug.WriteLine("Sending events in batch");
+        var endpoint = new EventBatchEndpoint(eventEntityList);
+        var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
+        Debug.WriteLine($"eventsBatchResponse:{ eventsBatchResponse }");
+        await _storageService.DeleteEventList(eventEntityList);
+        Debug.WriteLine("Events batch sent");
     }
 
     public static async Task SaveEndSession()

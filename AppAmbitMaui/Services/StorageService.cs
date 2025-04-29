@@ -146,4 +146,24 @@ internal class StorageService : IStorageService
     {
         await _database.DeleteAllAsync<Log>();
     }
+    
+    public async Task<List<EventEntity>> GetOldest100EventsAsync()
+    {
+        return await _database.Table<EventEntity>()
+            .OrderBy(log => log.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task DeleteEventList(List<EventEntity> logs)
+    {
+        var ids = logs.Select(log => log.Id).ToList();
+        await _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM EventEntity WHERE Id = ?", id);
+            }
+        });
+    }
 }
