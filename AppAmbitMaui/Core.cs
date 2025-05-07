@@ -58,7 +58,7 @@ public static class Core
     {
         await InitializeServices();
 
-        await InitializeConsumer();
+        await InitializeConsumer(appKey);
 
         Crashes.LoadCrashFileIfExists();
         
@@ -121,17 +121,22 @@ public static class Core
         }
     }
 
-    private static async Task InitializeConsumer()
+    private static async Task InitializeConsumer(string appKey = "")
     {
-        var appKey = await storageService.GetAppId();
+        string appId = "";     
         var deviceId = await storageService.GetDeviceId();
         var userId = await storageService.GetUserId();
         var userEmail = await storageService.GetUserEmail();
 
         if (!string.IsNullOrEmpty(appKey))
         {
-            appKey = appKey;
+            appId = appKey;
             await storageService.SetAppId(appKey);
+        }
+
+        if (string.IsNullOrEmpty(appKey))
+        {
+            appId = await storageService.GetAppId() ?? "";
         }
 
         if (deviceId == null)
@@ -148,7 +153,7 @@ public static class Core
 
         var consumer = new Consumer
         {
-            AppKey = appKey,
+            AppKey = appId,
             DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
             UserId = userId,
