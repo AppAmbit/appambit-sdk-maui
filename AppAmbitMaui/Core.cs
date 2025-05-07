@@ -76,8 +76,12 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
+        await InitializeServices();
+
         if (!TokenIsValid())
             await InitializeConsumer();
+
+        Crashes.LoadCrashFileIfExists();
 
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
