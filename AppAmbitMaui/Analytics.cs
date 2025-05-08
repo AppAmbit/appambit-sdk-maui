@@ -5,15 +5,19 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using Shared.Utils;
 using Newtonsoft.Json;
 using static AppAmbit.AppConstants;
+using static AppAmbit.FileUtils;
 
 namespace AppAmbit;
 
 public static class Analytics
 {
     internal static bool _isManualSessionEnabled = false;
+    private static string? _sessionId = null;
     private static bool _isSessionActive = false;
+    private static EndSession? _currentEndSession = null;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -38,6 +42,7 @@ public static class Analytics
         }
 
         var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        _sessionId = response.SessionId;
         _storageService?.SetSessionId(response.SessionId);
         _isSessionActive = true;
     }
@@ -52,6 +57,7 @@ public static class Analytics
         }
         var sessionId = await _storageService?.GetSessionId();
         await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
+        _sessionId = null;
         _isSessionActive = false;
     }
 
@@ -87,8 +93,24 @@ public static class Analytics
     {
         await SendOrSaveEvent(eventTitle, data);
     }
-
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
+    
+    public static async void SendEndSessionIfExists()
+    {
+        if(_currentEndSession== null)
+        {
+            var file = GetFilePath(GetFileName(typeof(EndSession)));
+            Debug.WriteLine($"file:{file}");
+            var endSession = await GetSavedSingleObject<EndSession>();
+            if(endSession == null)
+                return;
+            _currentEndSession = endSession;
+        }
+        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(_currentEndSession));
+        _currentEndSession = null;
+        _isSessionActive = false;
+    }
+    
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
         
@@ -146,5 +168,19 @@ public static class Analytics
         Debug.WriteLine($"eventsBatchResponse:{ eventsBatchResponse }");
         await _storageService.DeleteEventList(eventEntityList);
         Debug.WriteLine("Events batch sent");
+    }
+
+    public static async Task SaveEndSession()
+    {
+        var sessionId = _sessionId ?? await _storageService?.GetSessionId();
+        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateUtils.GetUtcNow };
+        var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
+        
+        SaveToFile<EndSession>(json);
+    }
+
+    internal static async Task RemoveSavedEndSession()
+    {
+        _ = await GetSavedSingleObject<EndSession>();
     }
 }

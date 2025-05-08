@@ -11,6 +11,7 @@ namespace AppAmbit;
 
 public static class Crashes
 {
+    public static event Action<object> OnCrashException;
     private static IStorageService? _storageService;
     private static IAPIService? _apiService;
     private static string _deviceId;
@@ -103,6 +104,8 @@ public static class Crashes
         var json = JsonConvert.SerializeObject(info, Formatting.Indented);
         
         SaveCrashToFile(json);
+        
+        OnCrashException?.Invoke(ex);
     }
     private static void SaveCrashToFile(string json)
     {

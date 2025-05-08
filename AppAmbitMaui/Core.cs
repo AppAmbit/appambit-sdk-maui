@@ -1,15 +1,10 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
-using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AppAmbit;
 
@@ -26,35 +21,32 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) => { Start(appKey); });
-                android.OnResume(activity =>
-                {
-                    OnResume();
-                });
+                android.OnCreate((activity, state) => { OnStart(appKey); });
                 android.OnPause(activity => { OnSleep(); });
+                android.OnResume(activity => { OnResume(); });
+                android.OnStop(activity => { OnSleep(); });
+                android.OnRestart(activity => { OnResume(); });
+                android.OnDestroy(async activity1 => { await OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
             {
                 ios.FinishedLaunching((application, options) =>
                 {
-                    Start(appKey);
+                    OnStart(appKey);
                     return true;
                 });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
+                ios.DidEnterBackground(application => { OnSleep(); });
+                ios.WillEnterForeground(application => { OnResume(); });
+                ios.WillTerminate(async application => { await  OnEnd(); });
             });
 #endif
         });
 
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
+        Crashes.OnCrashException -= exception => { OnEnd(); };
+        Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
@@ -62,16 +54,11 @@ public static class Core
         return builder;
     }
 
-    private static async Task Start(string appKey)
+    private static async Task OnStart(string appKey)
     {
         await InitializeServices();
 
         await InitializeConsumer(appKey);
-
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.StartSession();
-        }
 
         Crashes.LoadCrashFileIfExists();
         
@@ -89,42 +76,67 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
+        if (!TokenIsValid())
+            await InitializeConsumer();
+
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
     }
-    
+
+    private static bool TokenIsValid()
+    {
+        var token = apiService?.GetToken();
+        if( !string.IsNullOrEmpty(token) )
+            return true;
+        return false;
+    }
+
     private static async Task OnResume()
     {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-
+        if (!TokenIsValid())
+            await InitializeConsumer();
+        
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.StartSession();
+            await Analytics.RemoveSavedEndSession();
         }
-
+        
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
     }
     
-    public static async Task OnSleep()
+    private static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.EndSession();
+            await Analytics.SaveEndSession();
+        }
+    }
+    
+    private static async Task OnEnd()
+    {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await Analytics.SaveEndSession();
         }
     }
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        var appId = string.IsNullOrEmpty(appKey) ? await storageService.GetAppId():appKey;
+        string appId = "";     
         var deviceId = await storageService.GetDeviceId();
         var userId = await storageService.GetUserId();
         var userEmail = await storageService.GetUserEmail();
 
-        if (appId != null)
+        if (!string.IsNullOrEmpty(appKey))
         {
+            appId = appKey;
             await storageService.SetAppId(appKey);
+        }
+
+        if (string.IsNullOrEmpty(appKey))
+        {
+            appId = await storageService.GetAppId() ?? "";
         }
 
         if (deviceId == null)
@@ -141,7 +153,7 @@ public static class Core
 
         var consumer = new Consumer
         {
-            AppKey = appKey,
+            AppKey = appId,
             DeviceId = deviceId,
             DeviceModel = appInfoService.DeviceModel,
             UserId = userId,
@@ -152,7 +164,16 @@ public static class Core
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
+        if (remoteToken == null)
+            return;
+        
         apiService.SetToken(remoteToken?.Token);
+        
+        if (!Analytics._isManualSessionEnabled)
+        {
+            Analytics.SendEndSessionIfExists();
+            await Analytics.StartSession();
+        }
     }
 
     private static async Task InitializeServices()
