@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using AppAmbit.Models.Analytics;
-using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -26,7 +24,7 @@ public static class Analytics
         _apiService = apiService;
         _storageService = storageService;
     }
-    
+
     public static void EnableManualSession()
     {
         _isManualSessionEnabled = true;
@@ -83,25 +81,31 @@ public static class Analytics
 
     public static async Task GenerateTestEvent()
     {
-        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+        if (ShouldSendEvent())
         {
-            { "Event", "Custom event" }
-        });
+            await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+            {
+                { "Event", "Custom event" }
+            });
+        }
     }
 
     public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        await SendOrSaveEvent(eventTitle, data);
+        if (ShouldSendEvent())
+        {
+            await SendOrSaveEvent(eventTitle, data);
+        }
     }
-    
+
     public static async void SendEndSessionIfExists()
     {
-        if(_currentEndSession== null)
+        if (_currentEndSession == null)
         {
             var file = GetFilePath(GetFileName(typeof(EndSession)));
             Debug.WriteLine($"file:{file}");
             var endSession = await GetSavedSingleObject<EndSession>();
-            if(endSession == null)
+            if (endSession == null)
                 return;
             _currentEndSession = endSession;
         }
@@ -109,11 +113,11 @@ public static class Analytics
         _currentEndSession = null;
         _isSessionActive = false;
     }
-    
+
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        
+
         data = data?
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
@@ -151,7 +155,7 @@ public static class Analytics
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
-    
+
     public static async Task SendBatchEvents()
     {
         Debug.WriteLine("SendBatchEvents");
@@ -165,7 +169,7 @@ public static class Analytics
         Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
-        Debug.WriteLine($"eventsBatchResponse:{ eventsBatchResponse }");
+        Debug.WriteLine($"eventsBatchResponse:{eventsBatchResponse}");
         await _storageService.DeleteEventList(eventEntityList);
         Debug.WriteLine("Events batch sent");
     }
@@ -173,14 +177,22 @@ public static class Analytics
     public static async Task SaveEndSession()
     {
         var sessionId = _sessionId ?? await _storageService?.GetSessionId();
-        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateUtils.GetUtcNow };
+        var endSession = new EndSession() { Id = sessionId, Timestamp = DateUtils.GetUtcNow };
         var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
-        
+
         SaveToFile<EndSession>(json);
     }
 
     internal static async Task RemoveSavedEndSession()
     {
         _ = await GetSavedSingleObject<EndSession>();
+    }
+
+    internal static bool ShouldSendEvent()
+    {
+        if (!_isManualSessionEnabled)
+            return true;
+
+        return _isSessionActive;
     }
 }

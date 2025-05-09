@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
@@ -31,14 +30,20 @@ public static class Crashes
     
     public static async Task LogError(Exception? exception, Dictionary<string,string> properties = null, string? classFqn = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int lineNumber = 0)
     {
-        classFqn = classFqn ?? await GetCallerClassAsync(); 
-        await Logging.LogEvent("", LogType.Error,exception, properties,classFqn,fileName,lineNumber);
+        if (Analytics.ShouldSendEvent())
+        {
+            classFqn = classFqn ?? await GetCallerClassAsync(); 
+            await Logging.LogEvent("", LogType.Error,exception, properties,classFqn,fileName,lineNumber);
+        }
     }
     
     public static async Task LogError(string message, Dictionary<string,string> properties = null, string? classFqn = null, Exception? exception = null,[CallerFilePath] string? fileName = null,[CallerLineNumber] int? lineNumber = null)
     {
-        classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent(message, LogType.Error,exception, properties,classFqn,fileName,lineNumber);
+        if (Analytics.ShouldSendEvent())
+        {
+            classFqn = classFqn ?? await GetCallerClassAsync();
+            await Logging.LogEvent(message, LogType.Error,exception, properties,classFqn,fileName,lineNumber);
+        }
     }
 
     public static async Task GenerateTestCrash()
