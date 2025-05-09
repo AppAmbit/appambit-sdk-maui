@@ -81,7 +81,7 @@ public static class Analytics
 
     public static async Task GenerateTestEvent()
     {
-        if (ShouldSendEvent())
+        if (ShouldSendEvent)
         {
             await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
             {
@@ -92,7 +92,7 @@ public static class Analytics
 
     public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        if (ShouldSendEvent())
+        if (ShouldSendEvent)
         {
             await SendOrSaveEvent(eventTitle, data);
         }
@@ -188,11 +188,14 @@ public static class Analytics
         _ = await GetSavedSingleObject<EndSession>();
     }
 
-    internal static bool ShouldSendEvent()
+    internal static bool ShouldSendEvent
     {
-        if (!_isManualSessionEnabled)
-            return true;
+        get
+        {
+            if (!_isManualSessionEnabled)
+                return true;
 
-        return _isSessionActive;
+            return _isSessionActive;
+        }
     }
 }
