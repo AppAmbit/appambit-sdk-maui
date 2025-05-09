@@ -81,21 +81,15 @@ public static class Analytics
 
     public static async Task GenerateTestEvent()
     {
-        if (ShouldSendEvent)
+        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
         {
-            await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
-            {
-                { "Event", "Custom event" }
-            });
-        }
+            { "Event", "Custom event" }
+        });
     }
 
     public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        if (ShouldSendEvent)
-        {
-            await SendOrSaveEvent(eventTitle, data);
-        }
+        await SendOrSaveEvent(eventTitle, data);
     }
 
     public static async void SendEndSessionIfExists()
@@ -116,6 +110,10 @@ public static class Analytics
 
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
+        if (!ShouldSendEvent)
+        {
+            return;
+        }
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
 
         data = data?

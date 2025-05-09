@@ -30,20 +30,14 @@ public static class Crashes
 
     public static async Task LogError(Exception? exception, Dictionary<string, string> properties = null, string? classFqn = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int lineNumber = 0)
     {
-        if (Analytics.ShouldSendEvent)
-        {
-            classFqn = classFqn ?? await GetCallerClassAsync();
-            await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
-        }
+        classFqn = classFqn ?? await GetCallerClassAsync();
+        await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task LogError(string message, Dictionary<string, string> properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null)
     {
-        if (Analytics.ShouldSendEvent)
-        {
-            classFqn = classFqn ?? await GetCallerClassAsync();
-            await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
-        }
+        classFqn = classFqn ?? await GetCallerClassAsync();
+        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task GenerateTestCrash()
@@ -78,20 +72,14 @@ public static class Crashes
 
     private static async Task LogCrash(ExceptionInfo? exception = null)
     {
-        if (Analytics.ShouldSendEvent)
-        {
-            var message = exception?.Message;
-            await Logging.LogEvent(message, LogType.Crash, exception);
-        }
+        var message = exception?.Message;
+        await Logging.LogEvent(message, LogType.Crash, exception);
     }
 
     private static async Task LogError(ExceptionInfo? exception = null)
     {
-        if (Analytics.ShouldSendEvent)
-        {
-            var message = exception?.Message;
-            await Logging.LogEvent(message, LogType.Error, exception);
-        }
+        var message = exception?.Message;
+        await Logging.LogEvent(message, LogType.Error, exception);
     }
 
     private static string Truncate(string value, int maxLength)
