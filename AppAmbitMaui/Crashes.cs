@@ -16,6 +16,7 @@ public static class Crashes
     private static IAPIService? _apiService;
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
+    private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1,1);
     internal static void Initialize(IAPIService? apiService,IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
@@ -48,21 +49,29 @@ public static class Crashes
     
     internal static async void LoadCrashFileIfExists()
     {
-        var crashFile = GetCrashFilePath();
-
-        if (!CrashFileExists(crashFile))
+        await _ensureFileLocked.WaitAsync();
+        try
         {
-            SetCrashFlag(false);
-            return;
+            var crashFile = GetCrashFilePath();
+
+            if (!CrashFileExists(crashFile))
+            {
+                SetCrashFlag(false);
+                return;
+            }
+
+            SetCrashFlag(true);
+
+            var exceptionInfo = await ReadAndDeleteCrashFileAsync(crashFile);
+
+            if (exceptionInfo is not null)
+            {
+                await LogCrash(exceptionInfo);
+            }
         }
-
-        SetCrashFlag(true);
-
-        var exceptionInfo = await ReadAndDeleteCrashFileAsync(crashFile);
-
-        if (exceptionInfo is not null)
+        finally
         {
-            await LogCrash(exceptionInfo);
+            _ensureFileLocked.Release();
         }
     }
     
