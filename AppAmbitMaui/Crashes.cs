@@ -49,6 +49,8 @@ public static class Crashes
     
     internal static async void LoadCrashFileIfExists()
     {
+        // This semaphore ensures mutual exclusion
+        // between onStart and onConnectivityChanged
         await _ensureFileLocked.WaitAsync();
         try
         {
