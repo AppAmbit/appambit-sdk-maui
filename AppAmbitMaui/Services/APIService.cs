@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+using AppAmbit.Models.App;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -14,28 +16,81 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
+    private bool _tokenWasRefreshed = false;
+    private SemaphoreSlim _semaphoreRequests = new SemaphoreSlim(1, 1);
     public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T: notnull
     {
+        await _semaphoreRequests.WaitAsync();
         try
         {
-        var httpClient = new HttpClient(){
-            Timeout = TimeSpan.FromMinutes(2),
-        };
-        httpClient.DefaultRequestHeaders
-            .Accept
-            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
-        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
-        Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-        var responseString = await responseMessage.Content.ReadAsStringAsync();
-        Debug.WriteLine($"responseString:{responseString}");
-        return TryDeserializeJson<T>(responseString);
+            using var httpClient = CreateHttpClient();
+            var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+
+            if (TokenIsExpired((int)responseMessage.StatusCode) && !_tokenWasRefreshed)
+            {
+                Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+                var refreshed = await RefreshToken(endpoint.Payload);
+                if (refreshed)
+                {
+                    using var retryClient = CreateHttpClient();
+                    responseMessage = await HttpResponseMessage(endpoint, retryClient);
+                }
+            }
+
+            _tokenWasRefreshed = false;
+            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+            var responseString = await responseMessage.Content.ReadAsStringAsync();
+            Debug.WriteLine($"responseString:{responseString}");
+            return TryDeserializeJson<T>(responseString);
         }
         catch (Exception e)
         {
             Debug.WriteLine($"Exception:{e.Message}");
-            return default(T);
+            return default;
         }
+        finally
+        {
+            _semaphoreRequests.Release();
+        }
+    }
+
+    private HttpClient CreateHttpClient()
+    {
+        var client = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
+
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var token = GetToken();
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return client;
+    }
+
+    private async Task<bool> RefreshToken(object payload)
+    {
+        try
+        {
+            _tokenWasRefreshed = true;
+            await Core.InitializeConsumer();
+            Debug.Write("Refreshed token: " + GetToken());
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Error refreshing token: {e.Message}");
+            return false;
+        }
+    }
+
+    private bool TokenIsExpired(int status)
+    {
+        return ((int)HttpStatusCode.Unauthorized) == status;
     }
     
     public string? GetToken()
@@ -64,9 +119,12 @@ internal class APIService : IAPIService
 
     private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
     {
-        client.Timeout = TimeSpan.FromSeconds(20);
-        await AddAuthorizationHeaderIfNeeded(client);
-        
+        using var httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
+        await AddAuthorizationHeaderIfNeeded(httpClient);
+
         var fullUrl = endpoint.BaseUrl + endpoint.Url;
         return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
     }

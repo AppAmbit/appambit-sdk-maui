@@ -51,7 +51,22 @@ public partial class MainPage : ContentPage
             }
         }
     }
+
+    private string _token = "662|eSaTdJ2qCHpo5lkyBMkTBopyuYqFCyKzbqH5Zwex2db9da1b";
     
+    public string Token
+    {
+        get => _token;
+        set
+        {
+            if (_token != value)
+            {
+                _token = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public MainPage()
     {
         InitializeComponent();
@@ -92,6 +107,12 @@ public partial class MainPage : ContentPage
     {
         Analytics.SetUserEmail(UserEmail);
         await DisplayAlert("Info", "LogError Sent", "Ok");
+    }
+
+    private async void OnChangeToken(object? sender, EventArgs e)
+    {
+        TokenManager.SetToken(Token);
+        await DisplayAlert("Info", $"Token cambiado: {Token}", "Ok");
     }
 
     private async void OnSendTestLog(object sender, EventArgs e)

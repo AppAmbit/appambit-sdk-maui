@@ -13,6 +13,7 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
+    private static bool _testing = true;
     
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
@@ -122,8 +123,9 @@ public static class Core
             await Analytics.SaveEndSession();
         }
     }
-
-    private static async Task InitializeConsumer(string appKey = "")
+    // The access modifier is internal because this method
+    // is used to refresh the token when it has expired.
+    internal static async Task InitializeConsumer(string appKey = "")
     {
         string appId = "";     
         var deviceId = await storageService.GetDeviceId();
@@ -164,13 +166,21 @@ public static class Core
             Country = appInfoService.Country,
             Language = appInfoService.Language,
         };
+
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
         if (remoteToken == null)
             return;
         
+        // This is just for a test
+        if (_testing)
+        {
+            remoteToken.Token = "662|eSaTdJ2qCHpo5lkyBMkTBopyuYqFCyKzbqH5Zwex2db9da1b";
+            _testing = false;
+        }
+
         apiService.SetToken(remoteToken?.Token);
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             Analytics.SendEndSessionIfExists();

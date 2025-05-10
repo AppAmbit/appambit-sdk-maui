@@ -34,7 +34,14 @@
             <Button
                 Text="Change user email" 
                 Clicked="OnChangeUserEmail" />
-            
+
+            <Entry Placeholder="Set Token"
+                   Text="{Binding Token}" />
+
+            <Button
+                Text="Change token"
+                Clicked="OnChangeToken" />
+
             <Entry Placeholder="Type log message"
                     Text="{Binding LogMessage}"
                     TextChanged="MessageInputView_OnTextChanged"/>
