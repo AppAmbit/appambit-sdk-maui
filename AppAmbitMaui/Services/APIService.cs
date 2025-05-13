@@ -1,13 +1,11 @@
-using System.Collections;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Runtime.Serialization;
-using System.Text;
 using AppAmbit.Models.Logs;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Text;
 
 namespace AppAmbit.Services;
 
@@ -18,23 +16,54 @@ internal class APIService : IAPIService
     {
         try
         {
-        var httpClient = new HttpClient(){
-            Timeout = TimeSpan.FromMinutes(2),
-        };
-        httpClient.DefaultRequestHeaders
-            .Accept
-            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
-        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
-        Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-        var responseString = await responseMessage.Content.ReadAsStringAsync();
-        Debug.WriteLine($"responseString:{responseString}");
-        return TryDeserializeJson<T>(responseString);
+            var httpClient = new HttpClient()
+            {
+                Timeout = TimeSpan.FromMinutes(2),
+            };
+            httpClient.DefaultRequestHeaders
+                .Accept
+                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+
+            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+
+            await CheckStatusCodeFrom(responseMessage.StatusCode);
+
+            var responseString = await responseMessage.Content.ReadAsStringAsync();
+            Debug.WriteLine($"responseString:{responseString}");
+            return TryDeserializeJson<T>(responseString);
         }
         catch (Exception e)
         {
             Debug.WriteLine($"Exception:{e.Message}");
             return default(T);
+        }
+    }
+
+    private async Task CheckStatusCodeFrom(HttpStatusCode code)
+    {
+        if (code == HttpStatusCode.Unauthorized)
+        {
+            await RefreshToken();
+        }
+    }
+
+    private async Task RefreshToken()
+    {
+        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        if (!hasInternet())
+        {
+            return;
+        }
+        int retryCount = 0;
+        while (retryCount < 3)
+        {
+            var token = await ConsumerService.CreateToken();
+
+            if (token)
+                break;
+            retryCount++;
         }
     }
     

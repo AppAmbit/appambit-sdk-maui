@@ -169,6 +169,14 @@ public static class Crashes
             return;
         }
 
+        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = _apiService?.GetToken();
+
+        if(!hasInternet() && string.IsNullOrEmpty(token))
+        {
+            return;
+        }
+
         Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);

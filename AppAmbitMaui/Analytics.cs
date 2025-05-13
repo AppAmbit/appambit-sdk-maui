@@ -109,10 +109,11 @@ public static class Analytics
         _currentEndSession = null;
         _isSessionActive = false;
     }
-    
+
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = _apiService.GetToken();
         
         data = data?
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
@@ -122,7 +123,7 @@ public static class Analytics
             g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
-        if (hasInternet)
+        if (hasInternet && !string.IsNullOrEmpty(token))
         {
             var _event = new Event()
             {
@@ -154,6 +155,9 @@ public static class Analytics
     
     public static async Task SendBatchEvents()
     {
+        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+        var token = _apiService?.GetToken();
+
         Debug.WriteLine("SendBatchEvents");
         var eventEntityList = await _storageService.GetOldest100EventsAsync();
         if (eventEntityList?.Count == 0)
@@ -162,6 +166,10 @@ public static class Analytics
             return;
         }
 
+        if (!hasInternet() && string.IsNullOrEmpty(token))
+        {
+            return;
+        }
         Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);

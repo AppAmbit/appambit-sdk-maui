@@ -13,7 +13,7 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
+    private static bool _tokenExpires = true;
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -58,7 +58,7 @@ public static class Core
     {
         await InitializeServices();
 
-        await InitializeConsumer(appKey);
+        await InitializeConsumer();
 
         Crashes.LoadCrashFileIfExists();
         
@@ -125,51 +125,10 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        string appId = "";     
-        var deviceId = await storageService.GetDeviceId();
-        var userId = await storageService.GetUserId();
-        var userEmail = await storageService.GetUserEmail();
+        var isToken = await ConsumerService.CreateToken(appKey);
 
-        if (!string.IsNullOrEmpty(appKey))
-        {
-            appId = appKey;
-            await storageService.SetAppId(appKey);
-        }
-
-        if (string.IsNullOrEmpty(appKey))
-        {
-            appId = await storageService.GetAppId() ?? "";
-        }
-
-        if (deviceId == null)
-        {
-            deviceId = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(deviceId);
-        }
-
-        if (userId == null)
-        {
-            userId = Guid.NewGuid().ToString();
-            await storageService.SetUserId(userId);
-        }
-
-        var consumer = new Consumer
-        {
-            AppKey = appId,
-            DeviceId = deviceId,
-            DeviceModel = appInfoService.DeviceModel,
-            UserId = userId,
-            UserEmail = userEmail,
-            OS = appInfoService.OS,
-            Country = appInfoService.Country,
-            Language = appInfoService.Language,
-        };
-        var registerEndpoint = new RegisterEndpoint(consumer);
-        var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-        if (remoteToken == null)
+        if (!isToken)
             return;
-        
-        apiService.SetToken(remoteToken?.Token);
         
         if (!Analytics._isManualSessionEnabled)
         {
@@ -185,7 +144,8 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        Crashes.Initialize(apiService, storageService, deviceId);
+        Analytics.Initialize(apiService, storageService);
+        ConsumerService.Initialize(apiService, storageService, appInfoService);
     }
 }
