@@ -16,7 +16,7 @@ public static class Crashes
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
     private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1,1);
-    
+
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
     {
         AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
@@ -111,7 +111,7 @@ public static class Crashes
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
 
-        if (Analytics.ShouldSendEvent)
+        if (SessionManager.IsSessionActive)
         {
             var info = ExceptionInfo.FromException(ex, _deviceId);
             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
@@ -171,6 +171,8 @@ public static class Crashes
             Debug.WriteLine("No logs to send");
             return;
         }
+
+        Debug.WriteLine($"SendBatchLogs: {logEntityList?.Count}");
 
         Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };

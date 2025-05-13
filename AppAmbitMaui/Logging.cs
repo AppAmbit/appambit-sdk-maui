@@ -17,36 +17,36 @@ internal static class Logging
 
     public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
-        if (Analytics.ShouldSendEvent)
-        {
-            var deviceId = await _storageService.GetDeviceId();
-            var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
-            LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
-        }
+        if (!SessionManager.IsSessionActive)
+            return;
+
+        var deviceId = await _storageService.GetDeviceId();
+        var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
+        LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task LogEvent(string? message, LogType logType, ExceptionInfo exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
-        if (Analytics.ShouldSendEvent)
+        if (!SessionManager.IsSessionActive)
+            return;
+
+        var stackTrace = exception?.StackTrace;
+        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
+        var deviceId = await _storageService.GetDeviceId();
+        var file = exception?.CrashLogFile;
+        var log = new Log
         {
-            var stackTrace = exception?.StackTrace;
-            stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
-            var deviceId = await _storageService.GetDeviceId();
-            var file = exception?.CrashLogFile;
-            var log = new Log
-            {
-                AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-                ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
-                FileName = exception?.FileNameFromStackTrace ?? fileName ?? AppConstants.UnknownFileName,
-                LineNumber = exception?.LineNumberFromStackTrace ?? lineNumber ?? 0,
-                Message = exception?.Message ?? (String.IsNullOrEmpty(message) ? "" : message),
-                StackTrace = stackTrace,
-                Context = properties ?? new Dictionary<string, string>(),
-                Type = logType,
-                File = (logType == LogType.Crash && exception != null) ? file : null,
-            };
-            await SendOrSaveLogEventAsync(log);
-        }
+            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+            ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
+            FileName = exception?.FileNameFromStackTrace ?? fileName ?? AppConstants.UnknownFileName,
+            LineNumber = exception?.LineNumberFromStackTrace ?? lineNumber ?? 0,
+            Message = exception?.Message ?? (String.IsNullOrEmpty(message) ? "" : message),
+            StackTrace = stackTrace,
+            Context = properties ?? new Dictionary<string, string>(),
+            Type = logType,
+            File = (logType == LogType.Crash && exception != null) ? file : null,
+        };
+        await SendOrSaveLogEventAsync(log);
     }
 
     private static async Task SendOrSaveLogEventAsync(Log log)
