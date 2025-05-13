@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using AppAmbit.Models.Analytics;
-using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -15,9 +13,6 @@ namespace AppAmbit;
 public static class Analytics
 {
     internal static bool _isManualSessionEnabled = false;
-    private static string? _sessionId = null;
-    private static bool _isSessionActive = false;
-    private static EndSession? _currentEndSession = null;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -26,7 +21,7 @@ public static class Analytics
         _apiService = apiService;
         _storageService = storageService;
     }
-    
+
     public static void EnableManualSession()
     {
         _isManualSessionEnabled = true;
@@ -35,30 +30,12 @@ public static class Analytics
 
     public static async Task StartSession()
     {
-        Debug.WriteLine("StartSession called");
-        if (_isSessionActive)
-        {
-            return;
-        }
-
-        var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        _sessionId = response.SessionId;
-        _storageService?.SetSessionId(response.SessionId);
-        _isSessionActive = true;
+        await SessionManager.StartSession();
     }
 
     public static async Task EndSession()
     {
-        Debug.WriteLine("EndSession called");
-        if (!_isSessionActive)
-        {
-            Debug.WriteLine("Session didn't started");
-            return;
-        }
-        var sessionId = await _storageService?.GetSessionId();
-        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
-        _sessionId = null;
-        _isSessionActive = false;
+        await SessionManager.EndSession();
     }
 
     public static async void SetUserId(string userId)
@@ -93,27 +70,12 @@ public static class Analytics
     {
         await SendOrSaveEvent(eventTitle, data);
     }
-    
-    public static async void SendEndSessionIfExists()
-    {
-        if(_currentEndSession== null)
-        {
-            var file = GetFilePath(GetFileName(typeof(EndSession)));
-            Debug.WriteLine($"file:{file}");
-            var endSession = await GetSavedSingleObject<EndSession>();
-            if(endSession == null)
-                return;
-            _currentEndSession = endSession;
-        }
-        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(_currentEndSession));
-        _currentEndSession = null;
-        _isSessionActive = false;
-    }
 
+    
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
     {
         var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = _apiService.GetToken();
+         var token = _apiService.GetToken();
         
         data = data?
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
@@ -152,7 +114,7 @@ public static class Analytics
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
-    
+
     public static async Task SendBatchEvents()
     {
         bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
@@ -173,22 +135,11 @@ public static class Analytics
         Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
-        Debug.WriteLine($"eventsBatchResponse:{ eventsBatchResponse }");
+        Debug.WriteLine($"eventsBatchResponse:{eventsBatchResponse}");
         await _storageService.DeleteEventList(eventEntityList);
         Debug.WriteLine("Events batch sent");
     }
 
-    public static async Task SaveEndSession()
-    {
-        var sessionId = _sessionId ?? await _storageService?.GetSessionId();
-        var endSession = new EndSession(){ Id= sessionId , Timestamp = DateUtils.GetUtcNow };
-        var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
-        
-        SaveToFile<EndSession>(json);
-    }
 
-    internal static async Task RemoveSavedEndSession()
-    {
-        _ = await GetSavedSingleObject<EndSession>();
-    }
+ 
 }

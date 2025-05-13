@@ -95,12 +95,13 @@ public static class Core
 
     private static async Task OnResume()
     {
+
         if (!TokenIsValid())
             await InitializeConsumer();
         
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.RemoveSavedEndSession();
+            await SessionManager.RemoveSavedEndSession();
         }
         
         await Crashes.SendBatchLogs();
@@ -111,7 +112,7 @@ public static class Core
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.SaveEndSession();
+            await SessionManager.SaveEndSession();
         }
     }
     
@@ -119,7 +120,7 @@ public static class Core
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.SaveEndSession();
+            await SessionManager.SaveEndSession();
         }
     }
 
@@ -132,8 +133,8 @@ public static class Core
         
         if (!Analytics._isManualSessionEnabled)
         {
-            Analytics.SendEndSessionIfExists();
-            await Analytics.StartSession();
+            await SessionManager.SendEndSessionIfExists();
+            await SessionManager.StartSession();
         }
     }
 
@@ -144,6 +145,7 @@ public static class Core
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
+        SessionManager.Initialize(apiService, storageService);
         Crashes.Initialize(apiService, storageService, deviceId);
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(apiService, storageService, appInfoService);
