@@ -1,5 +1,7 @@
 using AppAmbit.Models.Logs;
+using AppAmbit.Services.Auth;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Services.Queue;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
@@ -12,78 +14,90 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
-    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T: notnull
+    private readonly QueueManager _queueManager = new();
+    private readonly TokenRefreshCoordinator _tokenRefreshCoordinator = new();
+    private readonly TokenService _tokenService = new();
+
+    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
         try
         {
-            var httpClient = new HttpClient()
+            async Task<T?> ExecuteInternalAsync()
             {
-                Timeout = TimeSpan.FromMinutes(2),
-            };
-            httpClient.DefaultRequestHeaders
-                .Accept
-                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage responseMessage = await RequestHttp(endpoint);
 
-            var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+                Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
 
-            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+                await CheckStatusCodeFrom(responseMessage.StatusCode, () => ExecuteInternalAsync());
 
-            await CheckStatusCodeFrom(responseMessage.StatusCode);
+                var responseString = await responseMessage.Content.ReadAsStringAsync();
+                Debug.WriteLine($"responseString:{responseString}");
 
-            var responseString = await responseMessage.Content.ReadAsStringAsync();
-            Debug.WriteLine($"responseString:{responseString}");
-            return TryDeserializeJson<T>(responseString);
+                return TryDeserializeJson<T>(responseString);
+            }
+
+            return await ExecuteInternalAsync();
         }
         catch (Exception e)
         {
             Debug.WriteLine($"Exception:{e.Message}");
-            return default(T);
+            return default;
         }
     }
 
-    private async Task CheckStatusCodeFrom(HttpStatusCode code)
+    private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
     {
-        if (code == HttpStatusCode.Unauthorized)
+        var httpClient = new HttpClient()
         {
-            await RefreshToken();
-        }
+            Timeout = TimeSpan.FromMinutes(2),
+        };
+        httpClient.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+        return responseMessage;
     }
 
-    private async Task RefreshToken()
+    private async Task CheckStatusCodeFrom(HttpStatusCode code, Func<Task> retryAction)
     {
-        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        if (!hasInternet())
-        {
-            return;
-        }
-        int retryCount = 0;
-        while (retryCount < 3)
-        {
-            var token = await ConsumerService.CreateToken();
-
-            if (token)
-                break;
-            retryCount++;
+        if (HttpStatusCode.Unauthorized == code)
+        {     
+            await RefreshToken(retryAction);
         }
     }
-    
+
+    private async Task RefreshToken(Func<Task> retryAction)
+    {
+        _queueManager.EnqueueTaskAsync(retryAction);
+        var tokenRefresh = await _tokenRefreshCoordinator.Execute(_tokenService.TryRefreshTokenAsync);
+
+        if (tokenRefresh)
+        {
+            foreach (var action in _queueManager.DequeueTaksAll())
+            {
+                _ = Task.Run(action);
+            }
+        }
+    }
+
     public string? GetToken()
     {
         return _token;
     }
-    
-    public void SetToken( string? token)
+
+    public void SetToken(string? token)
     {
         _token = token;
     }
-    
+
     private T TryDeserializeJson<T>(string response)
     {
         try
         {
             return JsonConvert.DeserializeObject<T>(response);
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
             var exceptionMessage = "Could not parse JSON. Something went wrong.";
 
@@ -95,11 +109,11 @@ internal class APIService : IAPIService
     {
         client.Timeout = TimeSpan.FromSeconds(20);
         await AddAuthorizationHeaderIfNeeded(client);
-        
+
         var fullUrl = endpoint.BaseUrl + endpoint.Url;
         return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
     }
-    
+
     private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
     {
         var token = GetToken();
@@ -115,14 +129,14 @@ internal class APIService : IAPIService
         {
             return null;
         }
-        
+
         HttpContent content;
         if (payload is Log log)
         {
             PrintLogWithoutFile(log);
             var multipartFormDataContent = SerializeToMultipartFormDataContent(log);
             content = multipartFormDataContent;
-            
+
         }
         else if (payload is LogBatch logBatch)
         {
@@ -146,16 +160,16 @@ internal class APIService : IAPIService
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        var options = new JsonSerializerSettings() 
+        var options = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
         };
-        var data = JsonConvert.SerializeObject(payload,options);
+        var data = JsonConvert.SerializeObject(payload, options);
         Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
     }
-    
+
     private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
     {
         Debug.WriteLine("SerializeToMultipartFormDataContent");
@@ -163,7 +177,7 @@ internal class APIService : IAPIService
         formData.AddObjectToMultipartFormDataContent(payload);
         return formData;
     }
-    
+
     private string SerializeStringPayload(object payload)
     {
         if (payload == null)
@@ -205,7 +219,7 @@ internal class APIService : IAPIService
                     break;
                 case HttpMethodEnum.Post:
                     var payloadJson = await SerializePayload(payload, endpoint);
-                    result = await client.PostAsync(url,payloadJson );
+                    result = await client.PostAsync(url, payloadJson);
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)
@@ -230,6 +244,4 @@ internal class APIService : IAPIService
         }
         return result;
     }
-    
-
 }

@@ -1,8 +1,5 @@
 ﻿using System.Diagnostics;
-using AppAmbit.Models.App;
-using AppAmbit.Models.Responses;
 using AppAmbit.Services;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
 
@@ -13,7 +10,6 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    private static bool _tokenExpires = true;
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -58,7 +54,7 @@ public static class Core
     {
         await InitializeServices();
 
-        await InitializeConsumer();
+        await InitializeConsumer(appKey);
 
         Crashes.LoadCrashFileIfExists();
         

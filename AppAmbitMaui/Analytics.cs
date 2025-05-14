@@ -3,10 +3,7 @@ using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using Shared.Utils;
-using Newtonsoft.Json;
 using static AppAmbit.AppConstants;
-using static AppAmbit.FileUtils;
 
 namespace AppAmbit;
 
@@ -84,7 +81,9 @@ public static class Analytics
             g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
             g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
+
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
+        
         if (hasInternet && !string.IsNullOrEmpty(token))
         {
             var _event = new Event()
