@@ -1,7 +1,9 @@
 using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
 using AppAmbit.Services.Auth;
 using AppAmbit.Services.ExceptionsCustom;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
@@ -19,8 +21,14 @@ internal class APIService : IAPIService
 
     private readonly List<IEndpoint> endpointsQueue = new();
     private readonly List<IEndpoint> immediateRetries = new();
-    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
+    public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
+        if(!HasInternetConnection())
+        {
+            Debug.WriteLine("[APIService] No internet connection.");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet connection");
+        }
+
         try
         {
 
@@ -33,7 +41,8 @@ internal class APIService : IAPIService
             var responseString = await responseMessage.Content.ReadAsStringAsync();
             Debug.WriteLine($"responseString:{responseString}");
 
-            return TryDeserializeJson<T>(responseString);
+            var data = TryDeserializeJson<T>(responseString);
+            return ApiResult<T>.Success(data);
         }
         catch (UnauthorizedException)
         {
@@ -48,12 +57,14 @@ internal class APIService : IAPIService
             Debug.WriteLine("[APIService] Token is already refreshing. Enqueuing endpoint.");
 
             return await ProceedWithExecutionAfterTokenIsRefreshed<T>(endpoint);
+            
         }
         catch (Exception e)
         {
             Debug.WriteLine($"Exception:{e.Message}");
-            return default;
+            return ApiResult<T>.Fail(ApiErrorType.Unknown, e.Message);
         }
+
     }
     private async Task RefreshToken()
     {
@@ -98,7 +109,7 @@ internal class APIService : IAPIService
         Debug.WriteLine("[APIService] All pending endpoints processed.");
     }
 
-    private async Task<T?> ProceedWithExecutionAfterTokenIsRefreshed<T>(IEndpoint endpoint)
+    private async Task<ApiResult<T>> ProceedWithExecutionAfterTokenIsRefreshed<T>(IEndpoint endpoint) where T : notnull
     {
         Debug.WriteLine($"[APIService] Adding endpoint to queue: {endpoint.GetType().Name}");
 
@@ -114,14 +125,14 @@ internal class APIService : IAPIService
         if (!refreshSuccess)
         {
             Debug.WriteLine("[APIService] Token refresh failed. Cannot proceed with execution.");
-            throw new Exception("Token refresh failed.");
+            return ApiResult<T>.Fail(ApiErrorType.Unauthorized, "Unauthorized");
         }
 
         Debug.WriteLine($"[APIService] Retrying endpoint after token refresh: {endpoint.GetType().Name}");
 
         endpointsQueue.Remove(endpoint);
 
-        return await ExecuteRequest<T>(endpoint);
+       return await ExecuteRequest<T>(endpoint);        
     }
 
     private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
@@ -310,4 +321,8 @@ internal class APIService : IAPIService
         }
         return result;
     }
+
+    private bool HasInternetConnection() =>
+        Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+
 }

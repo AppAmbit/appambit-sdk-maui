@@ -6,6 +6,7 @@ using AppAmbit.Models.Analytics;
 using static AppAmbit.FileUtils;
 using Newtonsoft.Json;
 using Shared.Utils;
+using AppAmbit.Enums;
 
 
 namespace AppAmbit;
@@ -36,7 +37,12 @@ internal class SessionManager
             return;
         }
 
-        SessionResponse? response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
+        if (apiResponse?.ErrorType != ApiErrorType.None)
+        {
+            return;
+        }
+        var response = apiResponse?.Data;
         _sessionId = response?.SessionId;
         _storageService?.SetSessionId(response!.SessionId);
         _isSessionActive = true;

@@ -3,6 +3,7 @@ using AppAmbit.Models.Analytics;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
 
 namespace AppAmbit;
@@ -68,13 +69,10 @@ public static class Analytics
         await SendOrSaveEvent(eventTitle, data);
     }
 
-    
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
+
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-         var token = _apiService.GetToken();
-        
-        data = data?
+        data = (data ?? new Dictionary<string, string>())
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
@@ -83,17 +81,18 @@ public static class Analytics
             );
 
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
-        
-        if (hasInternet && !string.IsNullOrEmpty(token))
+
+        var eventRequest = new Event()
         {
-            var _event = new Event()
-            {
-                Name = eventTitle,
-                Data = data
-            };
-            await _apiService.ExecuteRequest<object>(new SendEventEndpoint(_event));
-        }
-        else
+            Name = eventTitle,
+            Data = data
+        };
+
+        var response = _apiService != null
+            ? await _apiService.ExecuteRequest<object>(new SendEventEndpoint(eventRequest))
+            : null;
+
+        if (response?.ErrorType == ApiErrorType.NetworkUnavailable)
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var eventEntity = new EventEntity()
@@ -104,7 +103,10 @@ public static class Analytics
                 CreatedAt = DateTime.Now,
             };
 
-            await storageService?.LogAnalyticsEventAsync(eventEntity);
+            if (storageService != null)
+            {
+                await storageService.LogAnalyticsEventAsync(eventEntity);
+            }
         }
     }
 
@@ -116,9 +118,6 @@ public static class Analytics
 
     public static async Task SendBatchEvents()
     {
-        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = _apiService?.GetToken();
-
         Debug.WriteLine("SendBatchEvents");
         var eventEntityList = await _storageService.GetOldest100EventsAsync();
         if (eventEntityList?.Count == 0)
@@ -127,18 +126,20 @@ public static class Analytics
             return;
         }
 
-        if (!hasInternet() && string.IsNullOrEmpty(token))
-        {
-            return;
-        }
         Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
+        if (eventsBatchResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine($"Batch of unsent events");
+            return;
+        }
+
         Debug.WriteLine($"eventsBatchResponse:{eventsBatchResponse}");
         await _storageService.DeleteEventList(eventEntityList);
         Debug.WriteLine("Events batch sent");
     }
 
 
- 
+
 }

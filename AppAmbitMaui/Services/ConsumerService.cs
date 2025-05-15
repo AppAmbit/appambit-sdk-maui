@@ -2,11 +2,7 @@
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AppAmbit.Enums;
 
 namespace AppAmbit.Services;
 
@@ -15,7 +11,6 @@ internal class ConsumerService
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
     private static IAppInfoService? _appInfoService;
-    private static bool _TokenExpired = true;
 
     public static void Initialize(IAPIService? apiService, IStorageService? storageService, IAppInfoService? appInfoService)
     {
@@ -66,15 +61,22 @@ internal class ConsumerService
             Language = _appInfoService.Language,
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
-        var remoteToken = await _apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-        if (remoteToken == null || string.IsNullOrEmpty(remoteToken?.Id) || string.IsNullOrEmpty(remoteToken?.Token))
+        var consumerApi = await _apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
+
+        if (consumerApi?.ErrorType != ApiErrorType.None)
         {
             _apiService.SetToken("");
             return false;
         }
-        
 
-        _apiService.SetToken(remoteToken?.Token);
+        var remoteToken = consumerApi.Data;
+        if (remoteToken == null || string.IsNullOrEmpty(remoteToken.Id) || string.IsNullOrEmpty(remoteToken.Token))
+        {
+            _apiService.SetToken("");
+            return false;
+        }
+
+        _apiService.SetToken(remoteToken.Token);
         return true;
     }
 }

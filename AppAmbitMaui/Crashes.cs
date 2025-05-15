@@ -4,6 +4,7 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using Newtonsoft.Json;
 
 namespace AppAmbit;
@@ -15,7 +16,7 @@ public static class Crashes
     private static IAPIService? _apiService;
     private static string _deviceId;
     private static bool _didCrashInLastSession = false;
-    private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1,1);
+    private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
 
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
     {
@@ -172,19 +173,16 @@ public static class Crashes
             return;
         }
 
-        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = _apiService?.GetToken();
-
-        if(!hasInternet() && string.IsNullOrEmpty(token))
-        {
-            return;
-        }
-
-
         Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
+        if (logResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine($"Batch of unsent logs");
+            return;
+        }
+
         await _storageService.DeleteLogList(logEntityList);
         Debug.WriteLine("Logs batch sent");
     }

@@ -1,6 +1,7 @@
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using Shared.Utils;
 
 namespace AppAmbit;
@@ -47,43 +48,40 @@ internal static class Logging
 
     private static async Task SendOrSaveLogEventAsync(Log log)
     {
-        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = _apiService?.GetToken();
 
-        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet() && !string.IsNullOrEmpty(token))
+        var registerEndpoint = new LogEndpoint(log);
+        var retryCount = 0;
+        var maxRetryCount = 3;
+        const int delayMilliseconds = 500;
+        var hasErrors = false;
+        var hasCompleted = false;
+
+        do
         {
-            var registerEndpoint = new LogEndpoint(log);
-
-            var retryCount = 0;
-            var maxRetryCount = 3;
-            const int delayMilliseconds = 500;
-            var hasErrors = false;
-            var hasCompleted = false;
-            do
+            try
             {
-                try
-                {
-                    var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
-                    hasCompleted = true;
-                }
-                catch (Exception ex)
-                {
-                    hasErrors = true;
+                var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
 
-                    if (retryCount < maxRetryCount)
-                    {
-                        await Task.Delay(delayMilliseconds);
-                    }
+                if (logResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+                {
+                    await StoreLogInDb(log);
+                    return;
                 }
-            } while (hasErrors && hasInternet() && retryCount++ < maxRetryCount);
 
-            if (!hasCompleted)
-            {
-                await StoreLogInDb(log);
+                hasCompleted = true;
             }
-        }
-        else
+            catch (Exception)
+            {
+                hasErrors = true;
+
+                if (retryCount < maxRetryCount)
+                {
+                    await Task.Delay(delayMilliseconds);
+                }
+            }
+        } while (hasErrors && retryCount++ < maxRetryCount);
+
+        if (!hasCompleted)
         {
             await StoreLogInDb(log);
         }

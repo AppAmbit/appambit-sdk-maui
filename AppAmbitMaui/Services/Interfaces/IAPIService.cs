@@ -1,8 +1,10 @@
+using AppAmbit.Models.Responses;
+
 namespace AppAmbit.Services.Interfaces;
 
 internal interface IAPIService
 { 
-    Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T: notnull;
+    Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T: notnull;
     
     void SetToken(string? token);
 
