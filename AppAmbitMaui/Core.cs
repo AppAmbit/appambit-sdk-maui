@@ -46,18 +46,18 @@ public static class Core
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
     private static async Task OnStart(string appKey)
     {
         await InitializeServices();
-
+        
         await InitializeConsumer(appKey);
 
         Crashes.LoadCrashFileIfExists();
-        
+
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
     }
@@ -72,6 +72,8 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
+        await EnsureServicesInitialized();
+        
         if (!TokenIsValid())
             await InitializeConsumer();
 
@@ -84,26 +86,27 @@ public static class Core
     private static bool TokenIsValid()
     {
         var token = apiService?.GetToken();
-        if( !string.IsNullOrEmpty(token) )
+        if (!string.IsNullOrEmpty(token))
             return true;
         return false;
     }
 
     private static async Task OnResume()
     {
+        await EnsureServicesInitialized();
 
         if (!TokenIsValid())
             await InitializeConsumer();
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             await SessionManager.RemoveSavedEndSession();
         }
-        
+
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
     }
-    
+
     private static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -111,7 +114,7 @@ public static class Core
             await SessionManager.SaveEndSession();
         }
     }
-    
+
     private static async Task OnEnd()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -122,15 +125,25 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
+        await EnsureServicesInitialized();
         var isToken = await ConsumerService.CreateToken(appKey);
 
         if (!isToken)
             return;
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             await SessionManager.SendEndSessionIfExists();
             await SessionManager.StartSession();
+        }
+    }
+
+
+    private static async Task EnsureServicesInitialized()
+    {
+        if (apiService == null || storageService == null || appInfoService == null)
+        {
+            await InitializeServices();
         }
     }
 
@@ -146,4 +159,5 @@ public static class Core
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(apiService, storageService, appInfoService);
     }
+
 }
