@@ -67,11 +67,12 @@ internal class ConsumerService
         };
         var registerEndpoint = new RegisterEndpoint(consumer);
         var remoteToken = await _apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-        if (remoteToken == null)
+        if (remoteToken == null || string.IsNullOrEmpty(remoteToken?.Id) || string.IsNullOrEmpty(remoteToken?.Token))
         {
             _apiService.SetToken("");
             return false;
         }
+        
 
         _apiService.SetToken(remoteToken?.Token);
         return true;

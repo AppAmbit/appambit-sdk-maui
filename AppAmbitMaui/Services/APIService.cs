@@ -1,7 +1,7 @@
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Auth;
+using AppAmbit.Services.ExceptionsCustom;
 using AppAmbit.Services.Interfaces;
-using AppAmbit.Services.Queue;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
@@ -14,35 +14,114 @@ namespace AppAmbit.Services;
 internal class APIService : IAPIService
 {
     private string? _token;
-    private readonly QueueManager _queueManager = new();
-    private readonly TokenRefreshCoordinator _tokenRefreshCoordinator = new();
-    private readonly TokenService _tokenService = new();
+    private bool isRefreshingToken = false;
+    private TaskCompletionSource<bool>? _tokenRefreshCompletionSource;
 
+    private readonly List<IEndpoint> endpointsQueue = new();
+    private readonly List<IEndpoint> immediateRetries = new();
     public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
         try
         {
-            async Task<T?> ExecuteInternalAsync()
+
+            HttpResponseMessage responseMessage = await RequestHttp(endpoint);
+
+            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+
+            CheckStatusCodeFrom(responseMessage.StatusCode);
+
+            var responseString = await responseMessage.Content.ReadAsStringAsync();
+            Debug.WriteLine($"responseString:{responseString}");
+
+            return TryDeserializeJson<T>(responseString);
+        }
+        catch (UnauthorizedException)
+        {
+            if (!isRefreshingToken)
             {
-                HttpResponseMessage responseMessage = await RequestHttp(endpoint);
-
-                Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-
-                await CheckStatusCodeFrom(responseMessage.StatusCode, () => ExecuteInternalAsync());
-
-                var responseString = await responseMessage.Content.ReadAsStringAsync();
-                Debug.WriteLine($"responseString:{responseString}");
-
-                return TryDeserializeJson<T>(responseString);
+                isRefreshingToken = true;
+                _tokenRefreshCompletionSource = new TaskCompletionSource<bool>();
+                Debug.WriteLine("[APIService] Unauthorized: starting token refresh...");
+                _ = RefreshToken();
             }
 
-            return await ExecuteInternalAsync();
+            Debug.WriteLine("[APIService] Token is already refreshing. Enqueuing endpoint.");
+
+            return await ProceedWithExecutionAfterTokenIsRefreshed<T>(endpoint);
         }
         catch (Exception e)
         {
             Debug.WriteLine($"Exception:{e.Message}");
             return default;
         }
+    }
+    private async Task RefreshToken()
+    {
+        bool success = await TokenService.TryRefreshTokenAsync();
+
+        if (!success)
+        {
+            Debug.WriteLine("[APIService] Token refresh FAILED. Clearing pending endpoints.");
+            endpointsQueue.Clear();
+            immediateRetries.Clear();
+            isRefreshingToken = false;
+            _tokenRefreshCompletionSource?.SetResult(false);
+            return;
+        }
+
+        Debug.WriteLine($"[APIService] Token refreshed successfully. Retrying {endpointsQueue.Count} endpoints.");
+
+        foreach (var endpoint in endpointsQueue)
+        {
+            if (immediateRetries.Contains(endpoint))
+            {
+                Debug.WriteLine($"[APIService] Skipping already retried endpoint: {endpoint.GetType().Name}");
+                continue;
+            }
+
+            try
+            {
+                Debug.WriteLine($"[APIService] Retrying endpoint: {endpoint.GetType().Name}");
+                await ExecuteRequest<object>(endpoint);
+
+                endpointsQueue.Remove(endpoint);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"[APIService] Failed retrying endpoint {endpoint.GetType().Name}: {e.Message}");
+            }
+        }
+
+        immediateRetries.Clear();
+        isRefreshingToken = false;
+        _tokenRefreshCompletionSource?.SetResult(true);
+        Debug.WriteLine("[APIService] All pending endpoints processed.");
+    }
+
+    private async Task<T?> ProceedWithExecutionAfterTokenIsRefreshed<T>(IEndpoint endpoint)
+    {
+        Debug.WriteLine($"[APIService] Adding endpoint to queue: {endpoint.GetType().Name}");
+
+        if (!endpointsQueue.Contains(endpoint))
+        {
+            endpointsQueue.Add(endpoint);
+        }
+
+        immediateRetries.Add(endpoint);
+
+        bool refreshSuccess = await _tokenRefreshCompletionSource!.Task;
+
+        if (!refreshSuccess)
+        {
+            Debug.WriteLine("[APIService] Token refresh failed. Cannot proceed with execution.");
+            throw new Exception("Token refresh failed.");
+        }
+
+        Debug.WriteLine($"[APIService] Retrying endpoint after token refresh: {endpoint.GetType().Name}");
+
+        endpointsQueue.Remove(endpoint);
+
+        return await ExecuteRequest<T>(endpoint);
     }
 
     private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
@@ -59,27 +138,14 @@ internal class APIService : IAPIService
         return responseMessage;
     }
 
-    private async Task CheckStatusCodeFrom(HttpStatusCode code, Func<Task> retryAction)
+    private void CheckStatusCodeFrom(HttpStatusCode code)
     {
         if (HttpStatusCode.Unauthorized == code)
-        {     
-            await RefreshToken(retryAction);
-        }
-    }
-
-    private async Task RefreshToken(Func<Task> retryAction)
-    {
-        _queueManager.EnqueueTaskAsync(retryAction);
-        var tokenRefresh = await _tokenRefreshCoordinator.Execute(_tokenService.TryRefreshTokenAsync);
-
-        if (tokenRefresh)
         {
-            foreach (var action in _queueManager.DequeueTaksAll())
-            {
-                _ = Task.Run(action);
-            }
+            throw new UnauthorizedException();
         }
     }
+
 
     public string? GetToken()
     {

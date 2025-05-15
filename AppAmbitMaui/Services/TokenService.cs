@@ -4,11 +4,8 @@ namespace AppAmbit.Services.Auth;
 
 internal class TokenService
 {
-    public async Task<bool> TryRefreshTokenAsync()
+    public static async Task<bool> TryRefreshTokenAsync()
     {
-        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
-            return false;
-
         const int maxRetries = 3;
         int retryCount = 0;
 
@@ -18,7 +15,7 @@ internal class TokenService
                 return true;
 
             retryCount++;
-            await Task.Delay(1000);
+            await Task.Delay(500);
         }
 
         return false;
