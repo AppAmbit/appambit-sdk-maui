@@ -10,130 +10,100 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using AppAmbit.Services.Endpoints;
 
 namespace AppAmbit.Services;
 
 internal class APIService : IAPIService
 {
     private string? _token;
-    private bool isRefreshingToken = false;
-    private TaskCompletionSource<bool>? _tokenRefreshCompletionSource;
-
-    private readonly List<IEndpoint> endpointsQueue = new();
-    private readonly List<IEndpoint> immediateRetries = new();
+    private bool isTokenBeingRenewed = false;
+    private Task? currentTokenRenewalTask;
+    private readonly List<IEndpoint> activeRequests = [];
+    bool HasFailedOnce = true;
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
-        if(!HasInternetConnection())
+        if (!HasInternetConnection())
         {
-            Debug.WriteLine("[APIService] No internet connection.");
-            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet connection");
+            Debug.WriteLine("[APIService] Offline - Cannot send request.");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet available");
         }
+
+        activeRequests.Add(endpoint);
 
         try
         {
+            var httpResponse = await RequestHttp(endpoint);
+            CheckStatusCodeFrom(httpResponse.StatusCode);
 
-            HttpResponseMessage responseMessage = await RequestHttp(endpoint);
-
-            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-
-            CheckStatusCodeFrom(responseMessage.StatusCode);
-
-            var responseString = await responseMessage.Content.ReadAsStringAsync();
-            Debug.WriteLine($"responseString:{responseString}");
-
-            var data = TryDeserializeJson<T>(responseString);
-            return ApiResult<T>.Success(data);
+            var json = await httpResponse.Content.ReadAsStringAsync();
+            var parsed = TryDeserializeJson<T>(json);
+            return ApiResult<T>.Success(parsed);
         }
         catch (UnauthorizedException)
         {
-            if (!isRefreshingToken)
+            if (!isTokenBeingRenewed)
             {
-                isRefreshingToken = true;
-                _tokenRefreshCompletionSource = new TaskCompletionSource<bool>();
-                Debug.WriteLine("[APIService] Unauthorized: starting token refresh...");
-                _ = RefreshToken();
+                Debug.WriteLine("[APIService] Token invalid - triggering renewal.");
+                isTokenBeingRenewed = true;
+                currentTokenRenewalTask = RenewTokenInBackground();
+
+                Debug.WriteLine($"[APIService] Preparing for retry of: {endpoint.GetType().Name}");
+            }
+            else if (endpoint is RegisterEndpoint)
+            {
+                Debug.WriteLine("[APIService] Token refresh endpoint also failed. Session and Token must be cleared.");
+                activeRequests.RemoveAll(e => e is RegisterEndpoint);
+                _token = null;
+                activeRequests.Remove(endpoint);
+                return default;
+            }
+            else
+            {
+                Debug.WriteLine("[APIService] Awaiting ongoing token renewal...");
+                await currentTokenRenewalTask!;
             }
 
-            Debug.WriteLine("[APIService] Token is already refreshing. Enqueuing endpoint.");
-
-            return await ProceedWithExecutionAfterTokenIsRefreshed<T>(endpoint);
-            
+            Debug.WriteLine("[APIService] Retrying request after token renewal.");
+            activeRequests.Remove(endpoint);
+            return await ExecuteRequest<T>(endpoint);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Debug.WriteLine($"Exception:{e.Message}");
-            return ApiResult<T>.Fail(ApiErrorType.Unknown, e.Message);
+            Debug.WriteLine($"[APIService] Unhandled error: {ex.Message}");
+            return ApiResult<T>.Fail(ApiErrorType.Unknown, ex.Message);
         }
-
+        finally
+        {
+            activeRequests.Remove(endpoint);
+        }
     }
-    private async Task RefreshToken()
+
+
+    private async Task RenewTokenInBackground()
     {
-        bool success = await TokenService.TryRefreshTokenAsync();
+        bool renewed = await TokenService.TryRefreshTokenAsync();
 
-        if (!success)
+        if (!renewed)
         {
-            Debug.WriteLine("[APIService] Token refresh FAILED. Clearing pending endpoints.");
-            endpointsQueue.Clear();
-            immediateRetries.Clear();
-            isRefreshingToken = false;
-            _tokenRefreshCompletionSource?.SetResult(false);
-            return;
+            Debug.WriteLine("[APIService] Could not refresh token. Cleaning up.");
+            activeRequests.RemoveAll(e => e is RegisterEndpoint);
+            ForceSessionReset();
+        }
+        else
+        {
+            Debug.WriteLine("[APIService] Token successfully refreshed.");
         }
 
-        Debug.WriteLine($"[APIService] Token refreshed successfully. Retrying {endpointsQueue.Count} endpoints.");
-
-        foreach (var endpoint in endpointsQueue)
-        {
-            if (immediateRetries.Contains(endpoint))
-            {
-                Debug.WriteLine($"[APIService] Skipping already retried endpoint: {endpoint.GetType().Name}");
-                continue;
-            }
-
-            try
-            {
-                Debug.WriteLine($"[APIService] Retrying endpoint: {endpoint.GetType().Name}");
-                await ExecuteRequest<object>(endpoint);
-
-                endpointsQueue.Remove(endpoint);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine($"[APIService] Failed retrying endpoint {endpoint.GetType().Name}: {e.Message}");
-            }
-        }
-
-        immediateRetries.Clear();
-        isRefreshingToken = false;
-        _tokenRefreshCompletionSource?.SetResult(true);
-        Debug.WriteLine("[APIService] All pending endpoints processed.");
+        isTokenBeingRenewed = false;
     }
 
-    private async Task<ApiResult<T>> ProceedWithExecutionAfterTokenIsRefreshed<T>(IEndpoint endpoint) where T : notnull
+    private void ForceSessionReset()
     {
-        Debug.WriteLine($"[APIService] Adding endpoint to queue: {endpoint.GetType().Name}");
-
-        if (!endpointsQueue.Contains(endpoint))
-        {
-            endpointsQueue.Add(endpoint);
-        }
-
-        immediateRetries.Add(endpoint);
-
-        bool refreshSuccess = await _tokenRefreshCompletionSource!.Task;
-
-        if (!refreshSuccess)
-        {
-            Debug.WriteLine("[APIService] Token refresh failed. Cannot proceed with execution.");
-            return ApiResult<T>.Fail(ApiErrorType.Unauthorized, "Unauthorized");
-        }
-
-        Debug.WriteLine($"[APIService] Retrying endpoint after token refresh: {endpoint.GetType().Name}");
-
-        endpointsQueue.Remove(endpoint);
-
-       return await ExecuteRequest<T>(endpoint);        
+        Debug.WriteLine("[APIService] Session is no longer valid. Clearing token.");
+        _token = null;
     }
+
 
     private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
     {
@@ -325,4 +295,6 @@ internal class APIService : IAPIService
     private bool HasInternetConnection() =>
         Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
 
+
 }
+

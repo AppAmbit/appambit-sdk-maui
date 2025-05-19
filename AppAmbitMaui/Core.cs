@@ -73,7 +73,7 @@ public static class Core
             return;
 
         await EnsureServicesInitialized();
-        
+
         if (!TokenIsValid())
             await InitializeConsumer();
 
@@ -126,10 +126,8 @@ public static class Core
     private static async Task InitializeConsumer(string appKey = "")
     {
         await EnsureServicesInitialized();
-        var isToken = await ConsumerService.CreateToken(appKey);
 
-        if (!isToken)
-            return;
+        _ = await ConsumerService.CreateToken(appKey);
 
         if (!Analytics._isManualSessionEnabled)
         {
@@ -137,7 +135,6 @@ public static class Core
             await SessionManager.StartSession();
         }
     }
-
 
     private static async Task EnsureServicesInitialized()
     {
