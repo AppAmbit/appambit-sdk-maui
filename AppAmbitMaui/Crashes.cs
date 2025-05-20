@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using AppAmbit.Enums;
 using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
@@ -14,7 +15,6 @@ public static class Crashes
     private static IStorageService? _storageService;
     private static IAPIService? _apiService;
     private static string _deviceId;
-    private static bool _didCrashInLastSession = false;
     private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1,1);
 
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
@@ -54,7 +54,7 @@ public static class Crashes
         await _ensureFileLocked.WaitAsync();
         try
         {
-            var crashFile = GetCrashFilePath();
+            var crashFile = GetCrashFilePath(CrashFileType.LastCrash);
 
             if (!CrashFileExists(crashFile))
             {
@@ -79,7 +79,8 @@ public static class Crashes
 
     public static async Task<bool> DidCrashInLastSession()
     {
-        return _didCrashInLastSession;
+        var path = GetCrashFilePath(CrashFileType.DidAppCrash);
+        return CrashFileExists(path);
     }
 
     private static async Task LogCrash(ExceptionInfo? exception = null)
@@ -123,7 +124,7 @@ public static class Crashes
     }
     private static void SaveCrashToFile(string json)
     {
-        var crashFile = GetCrashFilePath();
+        var crashFile = GetCrashFilePath(CrashFileType.LastCrash);
         Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
         File.WriteAllText(crashFile, json);
     }
@@ -182,9 +183,15 @@ public static class Crashes
         Debug.WriteLine("Logs batch sent");
     }
 
-    private static string GetCrashFilePath()
+    private static string GetCrashFilePath(CrashFileType type)
     {
-        return Path.Combine(FileSystem.AppDataDirectory, "last_crash.json");
+        string fileName = type switch
+        {
+            CrashFileType.LastCrash => "last_crash.json",
+            CrashFileType.DidAppCrash => "did_app_crash.json",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        return Path.Combine(FileSystem.AppDataDirectory, fileName);
     }
 
     private static bool CrashFileExists(string path)
@@ -194,7 +201,20 @@ public static class Crashes
 
     private static void SetCrashFlag(bool didCrash)
     {
-        _didCrashInLastSession = didCrash;
+        var path = GetCrashFilePath(CrashFileType.DidAppCrash);
+        if (!didCrash)
+        {
+            File.Delete(path);
+            return;
+        }
+        try
+        {
+            File.WriteAllText(path, String.Empty);
+        }
+        catch
+        {
+            return;
+        }
     }
 
     private static async Task<ExceptionInfo?> ReadAndDeleteCrashFileAsync(string path)
