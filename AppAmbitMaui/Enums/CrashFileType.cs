@@ -3,6 +3,6 @@
     internal enum CrashFileType
     {
         LastCrash,
-        DidACrash
+        DidAppCrash
     }
 }

@@ -79,7 +79,7 @@ public static class Crashes
 
     public static async Task<bool> DidCrashInLastSession()
     {
-        var path = GetCrashFilePath(CrashFileType.DidACrash);
+        var path = GetCrashFilePath(CrashFileType.DidAppCrash);
         return CrashFileExists(path);
     }
 
@@ -188,7 +188,7 @@ public static class Crashes
         string fileName = type switch
         {
             CrashFileType.LastCrash => "last_crash.json",
-            CrashFileType.DidACrash => "did_a_crash.json",
+            CrashFileType.DidAppCrash => "did_app_crash.json",
             _ => throw new ArgumentOutOfRangeException()
         };
         return Path.Combine(FileSystem.AppDataDirectory, fileName);
@@ -201,7 +201,7 @@ public static class Crashes
 
     private static void SetCrashFlag(bool didCrash)
     {
-        var path = GetCrashFilePath(CrashFileType.DidACrash);
+        var path = GetCrashFilePath(CrashFileType.DidAppCrash);
         if (!didCrash)
         {
             File.Delete(path);
