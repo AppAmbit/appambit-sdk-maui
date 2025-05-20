@@ -110,7 +110,6 @@ internal class APIService : IAPIService
     [Conditional("DEBUG")]
     private static void PrintLogWithoutFile(Log log)
     {
-        log.File = "_FILE_";
         var data = JsonConvert.SerializeObject(log);
         Debug.WriteLine($"data:{data}");
     }
