@@ -207,7 +207,14 @@ public static class Crashes
             File.Delete(path);
             return;
         }
-        File.WriteAllText(path, String.Empty);
+        try
+        {
+            File.WriteAllText(path, String.Empty);
+        }
+        catch
+        {
+            return;
+        }
     }
 
     private static async Task<ExceptionInfo?> ReadAndDeleteCrashFileAsync(string path)
