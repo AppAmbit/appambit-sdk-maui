@@ -81,7 +81,7 @@ internal static class MultipartFormDataContentExtensions
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
                 var encodedBytes = Encoding.ASCII.GetBytes(propValue as string ?? "");
                 var fileContent = new ByteArrayContent(encodedBytes);
-                formData.Add(fileContent,prefix + "[file]", Path.GetFileName(filePath));
+                formData.Add(fileContent,prefix + "file", Path.GetFileName(filePath));
                 continue;
             }
             
