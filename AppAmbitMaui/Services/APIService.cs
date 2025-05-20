@@ -20,7 +20,6 @@ internal class APIService : IAPIService
     private bool isTokenBeingRenewed = false;
     private Task? currentTokenRenewalTask;
     private readonly List<IEndpoint> activeRequests = [];
-    bool HasFailedOnce = true;
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
         if (!HasInternetConnection())
