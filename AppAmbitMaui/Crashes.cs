@@ -55,8 +55,6 @@ public static class Crashes
         await _ensureFileLocked.WaitAsync();
         try
         {
-            // It is a temporary solution to not make any requests if there
-            // is no internet (it will be changed when managing multiple sessions)
             if (!SessionManager.IsSessionActive)
             {
                 return;
@@ -136,15 +134,11 @@ public static class Crashes
     {
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
-        // The app can handle multiple sessions and crashes without internet
-        // Is not necessary check if a session is active to store a crash
-        //if (SessionManager.IsSessionActive)
-        //{
-            var info = ExceptionInfo.FromException(ex, _deviceId);
-            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
 
-            SaveCrashToFile(json);
-        //}
+        var info = ExceptionInfo.FromException(ex, _deviceId);
+        var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+        SaveCrashToFile(json);
 
     OnCrashException?.Invoke(ex);
     }
