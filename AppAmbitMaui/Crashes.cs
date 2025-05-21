@@ -233,9 +233,9 @@ public static class Crashes
         var crashFiles = Directory.EnumerateFiles(FileSystem.AppDataDirectory, "crash_*.json", SearchOption.TopDirectoryOnly);
         foreach (var crashFile in crashFiles)
         {
-            Debug.WriteLine("Debug all crashes deleted");
             File.Delete(crashFile);
         }
+        Debug.WriteLine("Debug all crashes deleted");
     }
 
     private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
