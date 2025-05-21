@@ -49,7 +49,7 @@ internal static class Logging
     private static async Task SendOrSaveLogEventAsync(Log log)
     {
 
-        var registerEndpoint = new LogEndpoint(log);
+        var logEndpoint = new LogEndpoint(log);
         var retryCount = 0;
         var maxRetryCount = 3;
         const int delayMilliseconds = 500;
@@ -60,7 +60,7 @@ internal static class Logging
         {
             try
             {
-                var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
+                var logResponse = await _apiService?.ExecuteRequest<LogResponse>(logEndpoint);
 
                 if (logResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
                 {
