@@ -8,18 +8,16 @@ namespace AppAmbit.Services;
 
 internal class ConsumerService
 {
-    private static IAPIService? _apiService;
     private static IStorageService? _storageService;
     private static IAppInfoService? _appInfoService;
 
-    public static void Initialize(IAPIService? apiService, IStorageService? storageService, IAppInfoService? appInfoService)
+    public static void Initialize(IStorageService? storageService, IAppInfoService? appInfoService)
     {
-        _apiService = apiService;
         _storageService = storageService;
         _appInfoService = appInfoService;
     }
 
-    public static async Task<bool> CreateToken(string appKey = "")
+    public static async Task<RegisterEndpoint> RegisterConsumer(string appKey = "")
     {
         string appId = "";
         var deviceId = await _storageService.GetDeviceId();
@@ -60,23 +58,7 @@ internal class ConsumerService
             Country = _appInfoService.Country,
             Language = _appInfoService.Language,
         };
-        var registerEndpoint = new RegisterEndpoint(consumer);
-        var consumerApi = await _apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-
-        if (consumerApi?.ErrorType != ApiErrorType.None)
-        {
-            _apiService.SetToken("");
-            return false;
-        }
-
-        var remoteToken = consumerApi.Data;
-        if (remoteToken == null || string.IsNullOrEmpty(remoteToken.Id) || string.IsNullOrEmpty(remoteToken.Token))
-        {
-            _apiService.SetToken("");
-            return false;
-        }
-
-        _apiService.SetToken(remoteToken.Token);
-        return true;
+        
+        return new RegisterEndpoint(consumer);
     }
 }

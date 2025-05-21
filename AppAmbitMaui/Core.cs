@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using AppAmbit.Enums;
+using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
@@ -127,7 +129,13 @@ public static class Core
     {
         await EnsureServicesInitialized();
 
-        _ = await ConsumerService.CreateToken(appKey);
+        var consumerEndpoint = await ConsumerService.RegisterConsumer(appKey);
+
+        var consumerApi = await apiService?.ExecuteRequest<TokenResponse>(consumerEndpoint);
+
+        TokenResponse remoteToken = consumerApi.Data ?? new TokenResponse();
+
+        apiService.SetToken(remoteToken.Token);
 
         if (!Analytics._isManualSessionEnabled)
         {
@@ -154,7 +162,7 @@ public static class Core
         SessionManager.Initialize(apiService, storageService);
         Crashes.Initialize(apiService, storageService, deviceId);
         Analytics.Initialize(apiService, storageService);
-        ConsumerService.Initialize(apiService, storageService, appInfoService);
+        ConsumerService.Initialize(storageService, appInfoService);
     }
 
 }
