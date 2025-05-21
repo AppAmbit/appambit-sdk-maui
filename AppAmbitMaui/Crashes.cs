@@ -34,13 +34,13 @@ public static class Crashes
     public static async Task LogError(Exception? exception, Dictionary<string, string> properties = null, string? classFqn = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int lineNumber = 0)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent("", Models.Logs.LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+        await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task LogError(string message, Dictionary<string, string> properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent(message, Models.Logs.LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task GenerateTestCrash()
@@ -55,15 +55,21 @@ public static class Crashes
         await _ensureFileLocked.WaitAsync();
         try
         {
-            string[] crashFiles = Directory.GetFiles(FileSystem.AppDataDirectory, "crash_*.json");
-
-            if (crashFiles.Length == 0)
+            // It is a temporary solution to not make any requests if there
+            // is no internet (it will be changed when managing multiple sessions)
+            if (!SessionManager.IsSessionActive)
+            {
+                return;
+            }
+            var crashFiles = Directory.EnumerateFiles(FileSystem.AppDataDirectory, "crash_*.json", SearchOption.TopDirectoryOnly);
+            int crashFileCount = crashFiles.Count();
+            if (crashFileCount == 0)
             {
                 SetCrashFlag(false);
                 return;
             }
 
-            Debug.WriteLine($"Debug Count of Crashes: {crashFiles.Length}");
+            Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
 
             SetCrashFlag(true);
 
@@ -77,18 +83,18 @@ public static class Crashes
                     exceptionInfos.Add(exceptionInfo);
                 }
             }
-
-            if (crashFiles.Length == 1)
+            
+            if (crashFileCount == 1)
             {
                 Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
                 await LogCrash(exceptionInfos[0]);
+                DeleteCrashes();
             }
-            else if (crashFiles.Length > 1)
+            else if (crashFileCount > 1)
             {
                 Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
                 await StoreBatchCrashesLog(exceptionInfos);
             }
-            DeleteCrashes();
         }
         finally
         {
@@ -105,13 +111,13 @@ public static class Crashes
     private static async Task LogCrash(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
-        await Logging.LogEvent(message, Models.Logs.LogType.Crash, exception);
+        await Logging.LogEvent(message, LogType.Crash, exception);
     }
 
     private static async Task LogError(ExceptionInfo? exception = null)
     {
         var message = exception?.Message;
-        await Logging.LogEvent(message, Models.Logs.LogType.Error, exception);
+        await Logging.LogEvent(message, LogType.Error, exception);
     }
 
     private static string Truncate(string value, int maxLength)
@@ -130,16 +136,17 @@ public static class Crashes
     {
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
-
-        if (SessionManager.IsSessionActive)
-        {
+        // The app can handle multiple sessions and crashes without internet
+        // Is not necessary check if a session is active to store a crash
+        //if (SessionManager.IsSessionActive)
+        //{
             var info = ExceptionInfo.FromException(ex, _deviceId);
             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
 
             SaveCrashToFile(json);
-        }
+        //}
 
-        OnCrashException?.Invoke(ex);
+    OnCrashException?.Invoke(ex);
     }
     private static void SaveCrashToFile(string json)
     {
@@ -212,22 +219,50 @@ public static class Crashes
         Debug.WriteLine("Debug Storing in DB Crashes Batches");
         foreach (var crash in crashList)
         {
-            var logEntity = crash.ConvertTo<LogEntity>();
-            Debug.WriteLine("Debug LogEntity: " +  logEntity);
-            logEntity.Id = Guid.NewGuid();
-            logEntity.CreatedAt = DateUtils.GetUtcNow;
-            await _storageService?.LogEventAsync(logEntity);
+            try
+            {
+                var logEntity = MapExceptionInfoToLogEntity(crash);
+                Debug.WriteLine("Debug LogEntity: " + logEntity);
+                logEntity.Id = Guid.NewGuid();
+                logEntity.CreatedAt = DateUtils.GetUtcNow;
+                await _storageService?.LogEventAsync(logEntity);
+            }catch(Exception e)
+            {
+                Debug.WriteLine("Debug exception: " + e);
+            }
         }
+        DeleteCrashes();
     }
 
     private static void DeleteCrashes()
     {
-        string[] crashFiles = Directory.GetFiles(FileSystem.AppDataDirectory, "crash_*.json");
+        var crashFiles = Directory.EnumerateFiles(FileSystem.AppDataDirectory, "crash_*.json", SearchOption.TopDirectoryOnly);
         foreach (var crashFile in crashFiles)
         {
             Debug.WriteLine("Debug all crashes deleted");
             File.Delete(crashFile);
         }
+    }
+
+    private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
+    {
+        var file = exception?.CrashLogFile;
+        return new LogEntity
+        {
+            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+            ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
+            FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
+            LineNumber = exception?.LineNumberFromStackTrace ?? 0,
+            Message = exception?.Message ?? "",
+            StackTrace = exception?.StackTrace,
+            Context = new Dictionary<string, string>
+        {
+            { "Source", exception?.Source ?? "" },
+            { "InnerException", exception?.InnerException ?? "" }
+        },
+            Type = logType,
+            File = (logType == LogType.Crash && exception != null ? file : null)
+        };
     }
 
     private static string GetCrashFilePath(CrashFileType type)
