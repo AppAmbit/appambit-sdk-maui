@@ -4,24 +4,26 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="AppAmbitTestingApp.AnalyticsPage">
     <ContentPage.Content>
-        <VerticalStackLayout Padding="30.0"
-                             Spacing="25"
-                             VerticalOptions="CenterAndExpand">
-            <Button Text="Start Session"
-                    Clicked="Button_OnStartSession"/>
-            <Button Text="End Session"
-                    Clicked="Button_OnEndSession"/>
-            <Button Text='Send "Button Clicked" Event w/ property'
-                    Clicked="Button_OnClicked"/>
-            <Button Text="Send Default Event w/ property"
-                    Clicked="Button_OnClickedTestEvent"/>
-            <Button Text="Send Max-300-Length Event"
-                    Clicked="Button_OnClickedTestLimitsEvent"/>
-            <Button Text="Send Max-20-Properties Event"
-                    Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
-            <Button
-                    Text="Send Batch of 220 Events" 
-                    Clicked="OnGenerateBatchEvents" />
-        </VerticalStackLayout>
+        <ScrollView>
+            <VerticalStackLayout Padding="30.0"
+                     Spacing="25"
+                     VerticalOptions="Center">
+                <Button Text="Start Session"
+            Clicked="Button_OnStartSession"/>
+                <Button Text="End Session"
+            Clicked="Button_OnEndSession"/>
+                <Button Text='Send "Button Clicked" Event w/ property'
+            Clicked="Button_OnClicked"/>
+                <Button Text="Send Default Event w/ property"
+            Clicked="Button_OnClickedTestEvent"/>
+                <Button Text="Send Max-300-Length Event"
+            Clicked="Button_OnClickedTestLimitsEvent"/>
+                <Button Text="Send Max-20-Properties Event"
+            Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
+                <Button
+            Text="Send Batch of 220 Events" 
+            Clicked="OnGenerateBatchEvents" />
+            </VerticalStackLayout>
+        </ScrollView>
     </ContentPage.Content>
 </ContentPage>
