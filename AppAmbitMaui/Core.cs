@@ -79,7 +79,7 @@ public static class Core
         if (!TokenIsValid())
             await InitializeConsumer();
 
-        Crashes.LoadCrashFileIfExists();
+        await Crashes.LoadCrashFileIfExists();
 
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
