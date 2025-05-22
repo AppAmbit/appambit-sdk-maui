@@ -6,6 +6,7 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -47,28 +48,50 @@ public static class Crashes
         throw new NullReferenceException();
     }
 
-    internal static async void LoadCrashFileIfExists()
+    internal static async Task LoadCrashFileIfExists()
     {
         // This semaphore ensures mutual exclusion
         // between onStart and onConnectivityChanged
         await _ensureFileLocked.WaitAsync();
         try
         {
-            var crashFile = GetCrashFilePath(CrashFileType.LastCrash);
-
-            if (!CrashFileExists(crashFile))
+            if (!SessionManager.IsSessionActive)
+            {
+                return;
+            }
+            var crashFiles = Directory.EnumerateFiles(FileSystem.AppDataDirectory, "crash_*.json", SearchOption.TopDirectoryOnly);
+            int crashFileCount = crashFiles.Count();
+            if (crashFileCount == 0)
             {
                 SetCrashFlag(false);
                 return;
             }
 
+            Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
+
             SetCrashFlag(true);
 
-            var exceptionInfo = await ReadAndDeleteCrashFileAsync(crashFile);
+            var exceptionInfos = new List<ExceptionInfo>();
 
-            if (exceptionInfo is not null)
+            foreach (var file in crashFiles)
             {
-                await LogCrash(exceptionInfo);
+                var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
+                if (exceptionInfo != null)
+                {
+                    exceptionInfos.Add(exceptionInfo);
+                }
+            }
+            
+            if (crashFileCount == 1)
+            {
+                Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
+                await LogCrash(exceptionInfos[0]);
+                DeleteCrashes();
+            }
+            else if (crashFileCount > 1)
+            {
+                Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
+                await StoreBatchCrashesLog(exceptionInfos);
             }
         }
         finally
@@ -112,20 +135,21 @@ public static class Crashes
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
 
-        if (SessionManager.IsSessionActive)
-        {
-            var info = ExceptionInfo.FromException(ex, _deviceId);
-            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+        var info = ExceptionInfo.FromException(ex, _deviceId);
+        var json = JsonConvert.SerializeObject(info, Formatting.Indented);
 
-            SaveCrashToFile(json);
-        }
+        SaveCrashToFile(json);
 
-        OnCrashException?.Invoke(ex);
+    OnCrashException?.Invoke(ex);
     }
     private static void SaveCrashToFile(string json)
     {
-        var crashFile = GetCrashFilePath(CrashFileType.LastCrash);
-        Debug.WriteLine($"AppDataDirectory: {FileSystem.AppDataDirectory}");
+        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        string fileName = $"crash_{timestamp}.json";
+
+        string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
+
+        Debug.WriteLine($"Crash file saved to: {crashFile}");
         File.WriteAllText(crashFile, json);
     }
 
@@ -165,7 +189,7 @@ public static class Crashes
 
     public static async Task SendBatchLogs()
     {
-        Debug.WriteLine("SendBatchLogs");
+      Debug.WriteLine("SendBatchLogs");
         var logEntityList = await _storageService.GetOldest100LogsAsync();
         if (logEntityList?.Count == 0)
         {
@@ -174,6 +198,7 @@ public static class Crashes
         }
 
         Debug.WriteLine($"SendBatchLogs: {logEntityList?.Count}");
+        Debug.WriteLine($"Debug EntityList Content: {logEntityList}");
 
         Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
@@ -181,6 +206,57 @@ public static class Crashes
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
         await _storageService.DeleteLogList(logEntityList);
         Debug.WriteLine("Logs batch sent");
+    }
+
+    public static async Task StoreBatchCrashesLog(List<ExceptionInfo> crashList)
+    {
+        Debug.WriteLine("Debug Storing in DB Crashes Batches");
+        foreach (var crash in crashList)
+        {
+            try
+            {
+                var logEntity = MapExceptionInfoToLogEntity(crash);
+                Debug.WriteLine("Debug LogEntity: " + logEntity);
+                logEntity.Id = Guid.NewGuid();
+                logEntity.CreatedAt = DateUtils.GetUtcNow;
+                await _storageService?.LogEventAsync(logEntity);
+            }catch(Exception e)
+            {
+                Debug.WriteLine("Debug exception: " + e);
+            }
+        }
+        DeleteCrashes();
+    }
+
+    private static void DeleteCrashes()
+    {
+        var crashFiles = Directory.EnumerateFiles(FileSystem.AppDataDirectory, "crash_*.json", SearchOption.TopDirectoryOnly);
+        foreach (var crashFile in crashFiles)
+        {
+            File.Delete(crashFile);
+        }
+        Debug.WriteLine("Debug all crashes deleted");
+    }
+
+    private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
+    {
+        var file = exception?.CrashLogFile;
+        return new LogEntity
+        {
+            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+            ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
+            FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
+            LineNumber = exception?.LineNumberFromStackTrace ?? 0,
+            Message = exception?.Message ?? "",
+            StackTrace = exception?.StackTrace,
+            Context = new Dictionary<string, string>
+        {
+            { "Source", exception?.Source ?? "" },
+            { "InnerException", exception?.InnerException ?? "" }
+        },
+            Type = logType,
+            File = (logType == LogType.Crash && exception != null ? file : null)
+        };
     }
 
     private static string GetCrashFilePath(CrashFileType type)
@@ -222,7 +298,6 @@ public static class Crashes
         try
         {
             var json = await File.ReadAllTextAsync(path);
-            File.Delete(path);
             return JsonConvert.DeserializeObject<ExceptionInfo>(json);
         }
         catch
