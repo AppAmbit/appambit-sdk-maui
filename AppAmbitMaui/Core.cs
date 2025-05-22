@@ -74,7 +74,7 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
-        await EnsureServicesInitialized();
+        await InitializeServices();
 
         if (!TokenIsValid())
             await InitializeConsumer();
@@ -95,7 +95,7 @@ public static class Core
 
     private static async Task OnResume()
     {
-        await EnsureServicesInitialized();
+        await InitializeServices();
 
         if (!TokenIsValid())
             await InitializeConsumer();
@@ -127,8 +127,6 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        await EnsureServicesInitialized();
-
         var consumerEndpoint = await ConsumerService.RegisterConsumer(appKey);
 
         var consumerApi = await apiService?.ExecuteRequest<TokenResponse>(consumerEndpoint);
@@ -144,16 +142,12 @@ public static class Core
         }
     }
 
-    private static async Task EnsureServicesInitialized()
-    {
-        if (apiService == null || storageService == null || appInfoService == null)
-        {
-            await InitializeServices();
-        }
-    }
 
     private static async Task InitializeServices()
     {
+        if (apiService != null && storageService != null && appInfoService != null)
+            return;
+
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
