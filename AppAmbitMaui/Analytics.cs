@@ -92,7 +92,7 @@ public static class Analytics
             ? await _apiService.ExecuteRequest<object>(new SendEventEndpoint(eventRequest))
             : null;
 
-        if (response?.ErrorType == ApiErrorType.NetworkUnavailable)
+        if (response?.ErrorType != ApiErrorType.None)
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var eventEntity = new EventEntity()

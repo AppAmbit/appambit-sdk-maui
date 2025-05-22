@@ -127,13 +127,7 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        var consumerEndpoint = await ConsumerService.RegisterConsumer(appKey);
-
-        var consumerApi = await apiService?.ExecuteRequest<TokenResponse>(consumerEndpoint);
-
-        TokenResponse remoteToken = consumerApi.Data ?? new TokenResponse();
-
-        apiService.SetToken(remoteToken.Token);
+        await apiService?.GetNewToken();
 
         if (!Analytics._isManualSessionEnabled)
         {

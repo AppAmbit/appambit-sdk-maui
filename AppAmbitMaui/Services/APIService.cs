@@ -42,7 +42,7 @@ internal class APIService : IAPIService
         {
             if (endpoint is RegisterEndpoint)
             {
-                Debug.WriteLine("[APIService] Token refresh endpoint also failed. Session and Token must be cleared");
+                Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
                 activeRequests.RemoveAll(e => e is RegisterEndpoint);
                 ClearToken();
                 activeRequests.Remove(endpoint);
@@ -52,7 +52,7 @@ internal class APIService : IAPIService
             if (currentTokenRenewalTask == null)
             {
                 Debug.WriteLine("[APIService] Token invalid - triggering renewal");
-                currentTokenRenewalTask = RenewToken();
+                currentTokenRenewalTask = GetNewToken();
             }
 
             Debug.WriteLine("[APIService] Awaiting ongoing token renewal...");
@@ -61,6 +61,7 @@ internal class APIService : IAPIService
             try
             {
                 tokenRenewalResult = await currentTokenRenewalTask;
+
             }
             catch (Exception ex)
             {
@@ -71,6 +72,13 @@ internal class APIService : IAPIService
             }
 
             currentTokenRenewalTask = null;
+
+            if (tokenRenewalResult != ApiErrorType.None)
+            {
+                Debug.WriteLine($"[APIService] Could not renew token. Cleaning up");
+                activeRequests.RemoveAll(e => e is RegisterEndpoint);
+                ClearToken();
+            }
 
             if (tokenRenewalResult == ApiErrorType.NetworkUnavailable)
             {
@@ -87,28 +95,7 @@ internal class APIService : IAPIService
         }
     }
 
-    private async Task<ApiErrorType> RenewToken()
-    {
-        Debug.WriteLine("[APIService] Starting token renewal");
-
-        var result = await TryRefreshTokenAsync();
-
-        if (result != ApiErrorType.None)
-        {
-            Debug.WriteLine("[APIService] Could not refresh token. Cleaning up");
-            activeRequests.RemoveAll(e => e is RegisterEndpoint);
-            ClearToken();
-        }
-        else
-        {
-            Debug.WriteLine("[APIService] Token successfully refreshed");
-        }
-
-        return result;
-    }
-
-
-    private async Task<ApiErrorType> TryRefreshTokenAsync()
+    public async Task<ApiErrorType> GetNewToken()
     {
         var registerEndpoint = await ConsumerService.RegisterConsumer();
 
@@ -129,12 +116,13 @@ internal class APIService : IAPIService
                 return ApiErrorType.None;
             }
 
-            Debug.WriteLine($"[APIService] Token refresh failed: {tokenResponse.ErrorType}");
+            Debug.WriteLine($"[APIService] Token renew failed: {tokenResponse.ErrorType}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[APIService] Exception during token refresh attempt: {ex}");
+            Debug.WriteLine($"[APIService] Exception during token renew attempt: {ex}");
         }
+
         return ApiErrorType.Unknown;
     }
 

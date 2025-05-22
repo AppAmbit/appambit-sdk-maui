@@ -3,6 +3,7 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using Shared.Utils;
+using System.Diagnostics;
 
 namespace AppAmbit;
 
@@ -48,44 +49,24 @@ internal static class Logging
 
     private static async Task SendOrSaveLogEventAsync(Log log)
     {
-
         var logEndpoint = new LogEndpoint(log);
-        var retryCount = 0;
-        var maxRetryCount = 3;
-        const int delayMilliseconds = 500;
-        var hasErrors = false;
-        var hasCompleted = false;
 
-        do
+        try
         {
-            try
+            var logResponse = await _apiService?.ExecuteRequest<LogResponse>(logEndpoint);
+
+            if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
             {
-                var logResponse = await _apiService?.ExecuteRequest<LogResponse>(logEndpoint);
-
-                if (logResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
-                {
-                    await StoreLogInDb(log);
-                    return;
-                }
-
-                hasCompleted = true;
+                await StoreLogInDb(log);
+                return;
             }
-            catch (Exception)
-            {
-                hasErrors = true;
-
-                if (retryCount < maxRetryCount)
-                {
-                    await Task.Delay(delayMilliseconds);
-                }
-            }
-        } while (hasErrors && retryCount++ < maxRetryCount);
-
-        if (!hasCompleted)
+        }
+        catch (Exception ex)
         {
-            await StoreLogInDb(log);
+           Debug.WriteLine($"Error {ex.Message}");
         }
     }
+
 
     private static async Task StoreLogInDb(Log log)
     {

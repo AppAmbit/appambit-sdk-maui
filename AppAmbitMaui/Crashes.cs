@@ -178,7 +178,7 @@ public static class Crashes
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
-        if (logResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+        if (logResponse?.ErrorType != ApiErrorType.None)
         {
             Debug.WriteLine($"Batch of unsent logs");
             return;
