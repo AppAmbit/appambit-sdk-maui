@@ -140,6 +140,9 @@ public static class Analytics
         Debug.WriteLine("Events batch sent");
     }
 
-
+    public static void SetTokenTest()
+    {
+        _apiService?.SetToken("");
+    }                
 
 }

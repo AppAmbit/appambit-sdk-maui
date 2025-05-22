@@ -43,6 +43,10 @@
                 Text="Test adding error log" 
                 Clicked="OnTestErrorLogClicked" />
             <Button
+                Text="Invalidate Token" 
+                Clicked="OnTestToken" />  
+                
+            <Button
                 Text="Send Test LogError " 
                 Clicked="OnSendTestLog" />
             <Button
