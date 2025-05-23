@@ -17,7 +17,6 @@ internal class APIService : IAPIService
 {
     private string? _token;
     private Task<ApiErrorType>? currentTokenRenewalTask;
-    private readonly List<IEndpoint> activeRequests = [];
 
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
@@ -26,8 +25,6 @@ internal class APIService : IAPIService
             Debug.WriteLine("[APIService] Offline - Cannot send request.");
             return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet available");
         }
-
-        activeRequests.Add(endpoint);
 
         try
         {
@@ -40,48 +37,50 @@ internal class APIService : IAPIService
         }
         catch (UnauthorizedException)
         {
+
             if (endpoint is RegisterEndpoint)
             {
                 Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
-                ClearTokenAndRemoveTokenRequestEndpoints();
-                activeRequests.Remove(endpoint);
+                ClearToken();
                 return default;
             }
 
-            if (currentTokenRenewalTask == null)
+            if (!IsRenewingToken())
             {
-                Debug.WriteLine("[APIService] Token invalid - triggering renewal");
-                currentTokenRenewalTask = GetNewToken();
-            }
+                try
+                {
+                    Debug.WriteLine("[APIService] Token invalid - triggering renewal");
+                    currentTokenRenewalTask = GetNewToken();
+                    var tokenRenewalResult = await currentTokenRenewalTask;
 
-            try
-            {
-                var tokenRenewalResult = await AwaitTokenRenewalAsync();
-                var failure = HandleFailedRenewalResult<T>(tokenRenewalResult);
-
-                if (failure != null)
-                    return failure;
-            }
-            catch (Exception ex)
-            {
-                return HandleTokenRenewalException<T>(ex);
+                    if (!IsRenewSuccess(tokenRenewalResult))
+                    {
+                        return HandleFailedRenewalResult<T>(tokenRenewalResult);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return HandleTokenRenewalException<T>(ex);
+                }
+                finally
+                { 
+                    currentTokenRenewalTask = null;
+                }
             }
 
             Debug.WriteLine("[APIService] Retrying request after token renewal");
             return await ExecuteRequest<T>(endpoint);
         }
-        finally
-        {
-            activeRequests.Remove(endpoint);
-        }
     }
 
-    private async Task<ApiErrorType> AwaitTokenRenewalAsync()
+    private bool IsRenewingToken()
+    { 
+        return currentTokenRenewalTask != null;
+    }
+
+    private bool IsRenewSuccess(ApiErrorType result)
     {
-        Debug.WriteLine("[APIService] Awaiting ongoing token renewal...");
-        var result = await currentTokenRenewalTask;
-        currentTokenRenewalTask = null;
-        return result;
+        return result == ApiErrorType.None;
     }
     
     private ApiResult<T> HandleTokenRenewalException<T>(Exception ex)
@@ -106,12 +105,6 @@ internal class APIService : IAPIService
         }
 
         return null;
-    }
-
-    private void ClearTokenAndRemoveTokenRequestEndpoints()
-    {
-        activeRequests.RemoveAll(e => e is RegisterEndpoint);
-        ClearToken();
     }
 
     public async Task<ApiErrorType> GetNewToken()
