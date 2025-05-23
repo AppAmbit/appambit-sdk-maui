@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
-using AppAmbit.Models.App;
+using AppAmbit.Enums;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
 
@@ -13,7 +12,6 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -50,14 +48,14 @@ public static class Core
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
     private static async Task OnStart(string appKey)
     {
         await InitializeServices();
-
+        
         await InitializeConsumer(appKey);
 
         await Crashes.LoadCrashFileIfExists();
@@ -76,6 +74,8 @@ public static class Core
         if (access != NetworkAccess.Internet)
             return;
 
+        await InitializeServices();
+
         if (!TokenIsValid())
             await InitializeConsumer();
 
@@ -88,26 +88,27 @@ public static class Core
     private static bool TokenIsValid()
     {
         var token = apiService?.GetToken();
-        if( !string.IsNullOrEmpty(token) )
+        if (!string.IsNullOrEmpty(token))
             return true;
         return false;
     }
 
     private static async Task OnResume()
     {
+        await InitializeServices();
 
         if (!TokenIsValid())
             await InitializeConsumer();
-        
+
         if (!Analytics._isManualSessionEnabled)
         {
             await SessionManager.RemoveSavedEndSession();
         }
-        
+
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
     }
-    
+
     private static async Task OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -115,7 +116,7 @@ public static class Core
             await SessionManager.SaveEndSession();
         }
     }
-    
+
     private static async Task OnEnd()
     {
         if (!Analytics._isManualSessionEnabled)
@@ -126,52 +127,8 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        string appId = "";     
-        var deviceId = await storageService.GetDeviceId();
-        var userId = await storageService.GetUserId();
-        var userEmail = await storageService.GetUserEmail();
+        await apiService?.GetNewToken();
 
-        if (!string.IsNullOrEmpty(appKey))
-        {
-            appId = appKey;
-            await storageService.SetAppId(appKey);
-        }
-
-        if (string.IsNullOrEmpty(appKey))
-        {
-            appId = await storageService.GetAppId() ?? "";
-        }
-
-        if (deviceId == null)
-        {
-            deviceId = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(deviceId);
-        }
-
-        if (userId == null)
-        {
-            userId = Guid.NewGuid().ToString();
-            await storageService.SetUserId(userId);
-        }
-
-        var consumer = new Consumer
-        {
-            AppKey = appId,
-            DeviceId = deviceId,
-            DeviceModel = appInfoService.DeviceModel,
-            UserId = userId,
-            UserEmail = userEmail,
-            OS = appInfoService.OS,
-            Country = appInfoService.Country,
-            Language = appInfoService.Language,
-        };
-        var registerEndpoint = new RegisterEndpoint(consumer);
-        var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-        if (remoteToken == null)
-            return;
-        
-        apiService.SetToken(remoteToken?.Token);
-        
         if (!Analytics._isManualSessionEnabled)
         {
             await SessionManager.SendEndSessionIfExists();
@@ -179,15 +136,21 @@ public static class Core
         }
     }
 
+
     private static async Task InitializeServices()
     {
+        if (apiService != null && storageService != null && appInfoService != null)
+            return;
+
         apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
         appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
         storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
         SessionManager.Initialize(apiService, storageService);
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        Crashes.Initialize(apiService, storageService, deviceId);
+        Analytics.Initialize(apiService, storageService);
+        ConsumerService.Initialize(storageService, appInfoService);
     }
+
 }

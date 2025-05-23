@@ -5,6 +5,7 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using Newtonsoft.Json;
 using Shared.Utils;
 
@@ -197,13 +198,18 @@ public static class Crashes
             return;
         }
 
-        Debug.WriteLine($"SendBatchLogs: {logEntityList?.Count}");
         Debug.WriteLine($"Debug EntityList Content: {logEntityList}");
 
         Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
+        if (logResponse?.ErrorType != ApiErrorType.None)
+        {
+            Debug.WriteLine($"Batch of unsent logs");
+            return;
+        }
+
         await _storageService.DeleteLogList(logEntityList);
         Debug.WriteLine("Logs batch sent");
     }

@@ -1,7 +1,9 @@
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
 using Shared.Utils;
+using System.Diagnostics;
 
 namespace AppAmbit;
 
@@ -17,9 +19,6 @@ internal static class Logging
 
     public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
-        if (!SessionManager.IsSessionActive)
-            return;
-
         var deviceId = await _storageService.GetDeviceId();
         var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
         LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
@@ -31,8 +30,7 @@ internal static class Logging
             return;
 
         var stackTrace = exception?.StackTrace;
-        stackTrace = (String.IsNullOrEmpty(stackTrace)) ? AppConstants.NoStackTraceAvailable : stackTrace;
-        var deviceId = await _storageService.GetDeviceId();
+        stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var file = exception?.CrashLogFile;
         var log = new Log
         {
@@ -40,7 +38,7 @@ internal static class Logging
             ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
             FileName = exception?.FileNameFromStackTrace ?? fileName ?? AppConstants.UnknownFileName,
             LineNumber = exception?.LineNumberFromStackTrace ?? lineNumber ?? 0,
-            Message = exception?.Message ?? (String.IsNullOrEmpty(message) ? "" : message),
+            Message = exception?.Message ?? (string.IsNullOrEmpty(message) ? "" : message),
             StackTrace = stackTrace,
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
@@ -51,47 +49,24 @@ internal static class Logging
 
     private static async Task SendOrSaveLogEventAsync(Log log)
     {
-        bool hasInternet() => Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        var token = _apiService?.GetToken();
+        var logEndpoint = new LogEndpoint(log);
 
-        //Check the token to see if maybe the consumer api has not been completed yet, so we need to wait to send the log.
-        if (hasInternet() && !string.IsNullOrEmpty(token))
+        try
         {
-            var registerEndpoint = new LogEndpoint(log);
+            var logResponse = await _apiService?.ExecuteRequest<LogResponse>(logEndpoint);
 
-            var retryCount = 0;
-            var maxRetryCount = 3;
-            const int delayMilliseconds = 500;
-            var hasErrors = false;
-            var hasCompleted = false;
-            do
-            {
-                try
-                {
-                    var logResponse = await _apiService?.ExecuteRequest<LogResponse>(registerEndpoint);
-                    hasCompleted = true;
-                }
-                catch (Exception ex)
-                {
-                    hasErrors = true;
-
-                    if (retryCount < maxRetryCount)
-                    {
-                        await Task.Delay(delayMilliseconds);
-                    }
-                }
-            } while (hasErrors && hasInternet() && retryCount++ < maxRetryCount);
-
-            if (!hasCompleted)
+            if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
             {
                 await StoreLogInDb(log);
+                return;
             }
         }
-        else
+        catch (Exception ex)
         {
-            await StoreLogInDb(log);
+           Debug.WriteLine($"Error {ex.Message}");
         }
     }
+
 
     private static async Task StoreLogInDb(Log log)
     {
