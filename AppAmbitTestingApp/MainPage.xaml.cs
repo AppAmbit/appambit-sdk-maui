@@ -143,6 +143,6 @@ public partial class MainPage : ContentPage
     
     private async void OnTestToken(object? sender, EventArgs eventArgs)
     {
-        Analytics.SetTokenTest();
+        Analytics.ClearToken();
     }                      
 }

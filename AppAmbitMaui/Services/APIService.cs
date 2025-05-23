@@ -43,8 +43,7 @@ internal class APIService : IAPIService
             if (endpoint is RegisterEndpoint)
             {
                 Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
-                activeRequests.RemoveAll(e => e is RegisterEndpoint);
-                ClearToken();
+                ClearTokenAndRemoveTokenRequestEndpoints();
                 activeRequests.Remove(endpoint);
                 return default;
             }
@@ -55,35 +54,17 @@ internal class APIService : IAPIService
                 currentTokenRenewalTask = GetNewToken();
             }
 
-            Debug.WriteLine("[APIService] Awaiting ongoing token renewal...");
-
-            ApiErrorType tokenRenewalResult;
             try
             {
-                tokenRenewalResult = await currentTokenRenewalTask;
+                var tokenRenewalResult = await AwaitTokenRenewalAsync();
+                var failure = HandleFailedRenewalResult<T>(tokenRenewalResult);
 
+                if (failure != null)
+                    return failure;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[APIService] Error while renewing token: {ex}");
-                ClearToken();
-                currentTokenRenewalTask = null;
-                return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during token renewal");
-            }
-
-            currentTokenRenewalTask = null;
-
-            if (tokenRenewalResult != ApiErrorType.None)
-            {
-                Debug.WriteLine($"[APIService] Could not renew token. Cleaning up");
-                activeRequests.RemoveAll(e => e is RegisterEndpoint);
-                ClearToken();
-            }
-
-            if (tokenRenewalResult == ApiErrorType.NetworkUnavailable)
-            {
-                Debug.WriteLine("[APIService] Cannot retry request: no internet after token renewal");
-                return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet after token renewal");
+                return HandleTokenRenewalException<T>(ex);
             }
 
             Debug.WriteLine("[APIService] Retrying request after token renewal");
@@ -93,6 +74,44 @@ internal class APIService : IAPIService
         {
             activeRequests.Remove(endpoint);
         }
+    }
+
+    private async Task<ApiErrorType> AwaitTokenRenewalAsync()
+    {
+        Debug.WriteLine("[APIService] Awaiting ongoing token renewal...");
+        var result = await currentTokenRenewalTask;
+        currentTokenRenewalTask = null;
+        return result;
+    }
+    
+    private ApiResult<T> HandleTokenRenewalException<T>(Exception ex)
+    {
+        Debug.WriteLine($"[APIService] Error while renewing token: {ex}");
+        ClearToken();
+        return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during token renewal");
+    }
+
+    private ApiResult<T>? HandleFailedRenewalResult<T>(ApiErrorType result)
+    {
+        if (result != ApiErrorType.None)
+        {
+            Debug.WriteLine($"[APIService] Could not renew token. Cleaning up");
+            ClearTokenAndRemoveTokenRequestEndpoints();
+        }
+
+        if (result == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine("[APIService] Cannot retry request: no internet after token renewal");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet after token renewal");
+        }
+
+        return null;
+    }
+
+    private void ClearTokenAndRemoveTokenRequestEndpoints()
+    {
+        activeRequests.RemoveAll(e => e is RegisterEndpoint);
+        ClearToken();
     }
 
     public async Task<ApiErrorType> GetNewToken()
