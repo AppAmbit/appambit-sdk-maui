@@ -1,6 +1,9 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using AppAmbit;
 using AppAmbit.Models.Logs;
+using Newtonsoft.Json;
+using Shared.Utils;
 using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
@@ -117,6 +120,46 @@ public partial class MainPage : ContentPage
     {
         await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}}, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
+    }
+
+    private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
+    {
+        await DisplayAlert("Info", "Turn off internet", "Ok");
+        try
+        {
+            throw new NullReferenceException();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                foreach (int index in Range(start: 1, count: 30))
+                {
+                    var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
+                    var crashDate = DateTime.UtcNow.AddDays(-(index - 1));
+                    info.CreatedAt = crashDate;
+                    info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss");
+
+                    var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+                    string timestamp = crashDate.ToString("yyyyMMdd_HHmmss");
+                    string fileName = $"crash_{timestamp}_{index}.json";
+
+                    string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
+
+                    Debug.WriteLine($"Crash file saved to: {crashFile}");
+                    await Task.Delay(800);
+                    File.WriteAllText(crashFile, json);
+                }
+            }
+            catch (Exception exp)
+            {
+                Debug.WriteLine("Debug error for loop: " + exp);
+            }
+            await DisplayAlert("Info", "Crashes generated", "Ok");
+            await DisplayAlert("Info", "Turn on internet to store the crashes", "Ok");
+            Debug.WriteLine("Debug exception last 30 days: " + ex);
+        }
     }
 
     private void OnCounterClicked(object sender, EventArgs e)

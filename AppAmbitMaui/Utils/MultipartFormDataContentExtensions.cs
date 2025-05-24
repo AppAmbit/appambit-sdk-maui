@@ -79,6 +79,7 @@ internal static class MultipartFormDataContentExtensions
             {
                 var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(_dateTimeFormatISO8601ForFile)}.txt";
                 var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+                Debug.WriteLine($"Debug FilePath: {filePath}");
                 var encodedBytes = Encoding.ASCII.GetBytes(propValue as string ?? "");
                 var fileContent = new ByteArrayContent(encodedBytes);
                 string formNameFile = useSquareBrakets ? "[file]" : "file";
