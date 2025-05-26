@@ -127,7 +127,7 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey = "")
     {
-        await apiService?.GetNewToken();
+        await apiService?.GetNewToken(appKey);
 
         if (!Analytics._isManualSessionEnabled)
         {
@@ -139,12 +139,9 @@ public static class Core
 
     private static async Task InitializeServices()
     {
-        if (apiService != null && storageService != null && appInfoService != null)
-            return;
-
-        apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-        appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
-        storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+        apiService = apiService == null ?  Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
+        appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
+        storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
         SessionManager.Initialize(apiService, storageService);

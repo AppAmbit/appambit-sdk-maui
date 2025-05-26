@@ -11,5 +11,5 @@ internal interface IAPIService
 
     string? GetToken();
     
-    Task<ApiErrorType> GetNewToken();
+    Task<ApiErrorType> GetNewToken(string appKey = "");
 }
