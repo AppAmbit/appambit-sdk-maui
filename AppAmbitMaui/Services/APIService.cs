@@ -1,209 +1,204 @@
-using System;
 using System.Collections;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using AppAmbit.Models.Logs;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
-namespace AppAmbit.Services
+
+namespace AppAmbit.Services;
+
+internal class APIService : IAPIService
 {
-    /// <summary>
-    /// DelegatingHandler que intercepta todas las peticiones y respuestas para loggear en consola.
-    /// </summary>
-    public class LoggingHandler : DelegatingHandler
+    private string? _token;
+    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
-        public LoggingHandler(HttpMessageHandler innerHandler)
-            : base(innerHandler)
-        { }
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
+        try
         {
-            // Log de la petición
-            Console.WriteLine("----- HTTP REQUEST -----");
-            Console.WriteLine($"{request.Method} {request.RequestUri}");
-            Console.WriteLine(request.Headers);
-            if (request.Content != null)
+            var httpClient = new HttpClient()
             {
-                var reqBody = await request.Content.ReadAsStringAsync(cancellationToken);
-                Console.WriteLine(reqBody);
-            }
-            // Ejecuta la petición real
-            var response = await base.SendAsync(request, cancellationToken);
-            // Log de la respuesta
-            Console.WriteLine("----- HTTP RESPONSE -----");
-            Console.WriteLine($"Status: {(int)response.StatusCode} {response.ReasonPhrase}");
-            Console.WriteLine(response.Headers);
-            if (response.Content != null)
-            {
-                var respBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                Console.WriteLine(respBody);
-            }
-            return response;
+                Timeout = TimeSpan.FromMinutes(2),
+            };
+            httpClient.DefaultRequestHeaders
+                .Accept
+                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
+            var responseString = await responseMessage.Content.ReadAsStringAsync();
+            Debug.WriteLine($"responseString:{responseString}");
+            return TryDeserializeJson<T>(responseString);
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Exception:{e.Message}");
+            return default(T);
         }
     }
-    internal class APIService : IAPIService
+
+    public string? GetToken()
     {
-        private string? _token;
-        public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
+        return _token;
+    }
+
+    public void SetToken(string? token)
+    {
+        _token = token;
+    }
+
+    private T TryDeserializeJson<T>(string response)
+    {
+        try
         {
-            try
-            {
-                // Usar LoggingHandler para capturar en consola todas las peticiones y respuestas
-                var handler = new HttpClientHandler();
-                var loggingHandler = new LoggingHandler(handler);
-                var httpClient = new HttpClient(loggingHandler)
-                {
-                    Timeout = TimeSpan.FromMinutes(2),
-                };
-                httpClient.DefaultRequestHeaders
-                    .Accept
-                    .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                var responseMessage = await HttpResponseMessage(endpoint, httpClient);
-                Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-                var responseString = await responseMessage.Content.ReadAsStringAsync();
-                Debug.WriteLine($"responseString:{responseString}");
-                return TryDeserializeJson<T>(responseString);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine($"Exception:{e.Message}");
-                return default(T);
-            }
+            return JsonConvert.DeserializeObject<T>(response);
         }
-        public string? GetToken()
+        catch (JsonException ex)
         {
-            return _token;
+            var exceptionMessage = "Could not parse JSON. Something went wrong.";
+
+            throw new JsonException(exceptionMessage);
         }
-        public void SetToken(string? token)
+    }
+
+    private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
+    {
+        client.Timeout = TimeSpan.FromSeconds(20);
+        await AddAuthorizationHeaderIfNeeded(client);
+
+        var fullUrl = endpoint.BaseUrl + endpoint.Url;
+        return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
+    }
+
+    private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
+    {
+        var token = GetToken();
+        if (!string.IsNullOrEmpty(token))
         {
-            _token = token;
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
-        private T TryDeserializeJson<T>(string response)
+    }
+
+    private async Task<HttpContent> SerializePayload(object payload, IEndpoint endpoint = null)
+    {
+        if (payload == null)
         {
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(response)!;
-            }
-            catch (JsonException)
-            {
-                throw new JsonException("Could not parse JSON. Something went wrong.");
-            }
+            return null;
         }
-        private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
+
+        HttpContent content;
+        if (payload is Log log)
         {
-            client.Timeout = TimeSpan.FromSeconds(20);
-            await AddAuthorizationHeaderIfNeeded(client);
-            var fullUrl = endpoint.BaseUrl + endpoint.Url;
-            return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
+            PrintLogWithoutFile(log);
+            var multipartFormDataContent = SerializeToMultipartFormDataContent(log);
+            content = multipartFormDataContent;
+
         }
-        private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
+        else if (payload is LogBatch logBatch)
         {
-            var token = GetToken();
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+            var multipartFormDataContent = SerializeToMultipartFormDataContent(logBatch);
+            content = multipartFormDataContent;
         }
-        private async Task<HttpContent> SerializePayload(object payload)
+        else
         {
-            if (payload == null)
-            {
-                return null;
-            }
-            HttpContent content;
-            if (payload is Log log)
-            {
-                PrintLogWithoutFile(log);
-                content = SerializeToMultipartFormDataContent(log);
-            }
-            else if (payload is LogBatch logBatch)
-            {
-                content = SerializeToMultipartFormDataContent(logBatch);
-            }
-            else
-            {
-                content = SerializeToJSONStringContent(payload);
-            }
-            return content;
+            content = SerializeToJSONStringContent(payload);
         }
-        [Conditional("DEBUG")]
-        private static void PrintLogWithoutFile(Log log)
+        return content;
+    }
+
+    [Conditional("DEBUG")]
+    private static void PrintLogWithoutFile(Log log)
+    {
+        var data = JsonConvert.SerializeObject(log);
+        Debug.WriteLine($"data:{data}");
+    }
+
+    private static HttpContent SerializeToJSONStringContent(object payload)
+    {
+        var options = new JsonSerializerSettings()
         {
-            var data = JsonConvert.SerializeObject(log);
-            Debug.WriteLine($"data:{data}");
+            NullValueHandling = NullValueHandling.Ignore,
+        };
+        var data = JsonConvert.SerializeObject(payload, options);
+        Debug.WriteLine($"data:{data}");
+        var content = new StringContent(data, Encoding.UTF8, "application/json");
+        return content;
+    }
+
+    private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
+    {
+        Debug.WriteLine("SerializeToMultipartFormDataContent");
+        var formData = new MultipartFormDataContent();
+        formData.AddObjectToMultipartFormDataContent(payload);
+        return formData;
+    }
+
+    private string SerializeStringPayload(object payload)
+    {
+        if (payload == null)
+        {
+            return null;
         }
-        private static HttpContent SerializeToJSONStringContent(object payload)
+
+        var serializedPayload = payload.GetType()
+            .GetRuntimeProperties()
+            .Where(pi => pi.GetValue(payload) != null)
+            .Aggregate("", (result, pi) => result
+                                           + Uri.EscapeDataString(pi.Name)
+                                           + "="
+                                           + Uri.EscapeDataString((String)(pi.GetValue(payload)))
+                                           + "&");
+        return serializedPayload.Substring(0, serializedPayload.Length - 1);
+    }
+
+    private string SerializedGetURL(string url, object payload)
+    {
+        var serializedParameters = SerializeStringPayload(payload);
+        if (serializedParameters == null)
         {
-            var options = new JsonSerializerSettings()
+            return url;
+        }
+
+        return url + "?" + serializedParameters;
+    }
+
+    private async Task<HttpResponseMessage> GetHttpResponseMessage(IEndpoint endpoint, HttpClient client, string url, object payload)
+    {
+        HttpResponseMessage result;
+        try
+        {
+            switch (endpoint.Method)
             {
-                NullValueHandling = NullValueHandling.Ignore,
-            };
-            var data = JsonConvert.SerializeObject(payload, options);
-            Debug.WriteLine($"data:{data}");
-            return new StringContent(data, Encoding.UTF8, "application/json");
-        }
-        private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
-        {
-            Debug.WriteLine("SerializeToMultipartFormDataContent");
-            var formData = new MultipartFormDataContent();
-            formData.AddObjectToMultipartFormDataContent(payload);
-            return formData;
-        }
-        private string SerializeStringPayload(object payload)
-        {
-            if (payload == null)
-            {
-                return null;
-            }
-            var serializedPayload = payload.GetType()
-                .GetRuntimeProperties()
-                .Where(pi => pi.GetValue(payload) != null)
-                .Aggregate("", (result, pi) => result
-                    + Uri.EscapeDataString(pi.Name)
-                    + "="
-                    + Uri.EscapeDataString((string)pi.GetValue(payload))
-                    + "&");
-            return serializedPayload.TrimEnd('&');
-        }
-        private string SerializedGetURL(string url, object payload)
-        {
-            var serializedParameters = SerializeStringPayload(payload);
-            if (string.IsNullOrEmpty(serializedParameters))
-            {
-                return url;
-            }
-            return url + "?" + serializedParameters;
-        }
-        private async Task<HttpResponseMessage> GetHttpResponseMessage(IEndpoint endpoint, HttpClient client, string url, object payload)
-        {
-            try
-            {
-                return endpoint.Method switch
-                {
-                    HttpMethodEnum.Get => await client.GetAsync(SerializedGetURL(url, payload)),
-                    HttpMethodEnum.Post => await client.PostAsync(url, await SerializePayload(payload)),
-                    HttpMethodEnum.Patch => await client.SendAsync(new HttpRequestMessage(new HttpMethod("PATCH"), url)
+                case HttpMethodEnum.Get:
+                    result = await client.GetAsync(SerializedGetURL(url, payload));
+                    break;
+                case HttpMethodEnum.Post:
+                    var payloadJson = await SerializePayload(payload, endpoint);
+                    result = await client.PostAsync(url, payloadJson);
+                    break;
+                case HttpMethodEnum.Patch:
+                    var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)
                     {
                         Content = await SerializePayload(payload)
-                    }),
-                    HttpMethodEnum.Put => await client.PutAsync(url, await SerializePayload(payload)),
-                    HttpMethodEnum.Delete => await client.DeleteAsync(url),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-            }
-            catch (TaskCanceledException)
-            {
-                throw new Exception("Request timed out.");
+                    };
+                    result = await client.SendAsync(requestMessage);
+                    break;
+                case HttpMethodEnum.Put:
+                    result = await client.PutAsync(url, await SerializePayload(payload));
+                    break;
+                case HttpMethodEnum.Delete:
+                    result = await client.DeleteAsync(url);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
+        catch (TaskCanceledException)
+        {
+            throw new Exception();
+        }
+        return result;
     }
+
+
 }
