@@ -1,39 +1,167 @@
-using System.Collections;
+using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
+using AppAmbit.Services.ExceptionsCustom;
+using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
+using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
-using AppAmbit.Models.Logs;
-using AppAmbit.Services.Interfaces;
-using Newtonsoft.Json;
+using AppAmbit.Services.Endpoints;
 
 namespace AppAmbit.Services;
 
 internal class APIService : IAPIService
 {
     private string? _token;
-    public async Task<T?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
+    private Task<ApiErrorType>? currentTokenRenewalTask;
+
+    public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
+        if (!HasInternetConnection())
+        {
+            Debug.WriteLine("[APIService] Offline - Cannot send request.");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet available");
+        }
+
         try
         {
-            var httpClient = new HttpClient()
-            {
-                Timeout = TimeSpan.FromMinutes(2),
-            };
-            httpClient.DefaultRequestHeaders
-                .Accept
-                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var httpResponse = await RequestHttp(endpoint);
+            CheckStatusCodeFrom(httpResponse.StatusCode);
 
-            var responseMessage = await HttpResponseMessage(endpoint, httpClient);
-            Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-            var responseString = await responseMessage.Content.ReadAsStringAsync();
-            Debug.WriteLine($"responseString:{responseString}");
-            return TryDeserializeJson<T>(responseString);
+            var json = await httpResponse.Content.ReadAsStringAsync();
+            var parsed = TryDeserializeJson<T>(json);
+            return ApiResult<T>.Success(parsed);
         }
-        catch (Exception e)
+        catch (UnauthorizedException)
         {
-            Debug.WriteLine($"Exception:{e.Message}");
-            return default(T);
+            if (endpoint is RegisterEndpoint)
+            {
+                Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
+                ClearToken();
+                return default;
+            }
+
+            if (!IsRenewingToken())
+            {
+                try
+                {
+                    Debug.WriteLine("[APIService] Token invalid - triggering renewal");
+                    currentTokenRenewalTask = GetNewToken();
+                    var tokenRenewalResult = await currentTokenRenewalTask;
+
+                    if (!IsRenewSuccess(tokenRenewalResult))
+                    {
+                        return HandleFailedRenewalResult<T>(tokenRenewalResult);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return HandleTokenRenewalException<T>(ex);
+                }
+                finally
+                {
+                    currentTokenRenewalTask = null;
+                }
+            }
+
+            Debug.WriteLine("[APIService] Retrying request after token renewal");
+            return await ExecuteRequest<T>(endpoint);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[APIService] Exception during request: {ex}");
+            return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during request");
+        }
+    }
+
+    private bool IsRenewingToken()
+    {
+        return currentTokenRenewalTask != null;
+    }
+
+    private bool IsRenewSuccess(ApiErrorType result)
+    {
+        return result == ApiErrorType.None;
+    }
+
+    private ApiResult<T> HandleTokenRenewalException<T>(Exception ex)
+    {
+        Debug.WriteLine($"[APIService] Error while renewing token: {ex}");
+        ClearToken();
+        return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during token renewal");
+    }
+
+    private ApiResult<T>? HandleFailedRenewalResult<T>(ApiErrorType result)
+    {
+        if (result == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine("[APIService] Cannot retry request: no internet after token renewal");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet after token renewal");
+        }
+
+        Debug.WriteLine($"[APIService] Could not renew token. Cleaning up");
+        return ApiResult<T>.Fail(result, "Token renewal failed");
+    }
+
+    public async Task<ApiErrorType> GetNewToken()
+    {
+
+        try
+        {
+            var registerEndpoint = await ConsumerService.RegisterConsumer();
+            var tokenResponse = await ExecuteRequest<TokenResponse>(registerEndpoint);
+
+            if (tokenResponse == null)
+                return ApiErrorType.Unknown;
+
+            if (tokenResponse.ErrorType == ApiErrorType.NetworkUnavailable)
+                return ApiErrorType.NetworkUnavailable;
+
+
+            if (tokenResponse.ErrorType == ApiErrorType.None)
+            {
+                _token = tokenResponse.Data?.Token;
+                return ApiErrorType.None;
+            }
+
+            Debug.WriteLine($"[APIService] Token renew failed: {tokenResponse.ErrorType}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[APIService] Exception during token renew attempt: {ex}");
+        }
+
+        return ApiErrorType.Unknown;
+    }
+
+    private void ClearToken()
+    {
+        Debug.WriteLine("[APIService] Session is no longer valid. Clearing token.");
+        _token = null;
+    }
+
+    private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
+    {
+        var httpClient = new HttpClient()
+        {
+            Timeout = TimeSpan.FromMinutes(2),
+        };
+        httpClient.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var responseMessage = await HttpResponseMessage(endpoint, httpClient);
+        return responseMessage;
+    }
+
+    private void CheckStatusCodeFrom(HttpStatusCode code)
+    {
+        if (HttpStatusCode.Unauthorized == code)
+        {
+            throw new UnauthorizedException();
         }
     }
 
@@ -53,14 +181,13 @@ internal class APIService : IAPIService
         {
             return JsonConvert.DeserializeObject<T>(response);
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
             var exceptionMessage = "Could not parse JSON. Something went wrong.";
 
             throw new JsonException(exceptionMessage);
         }
     }
-
     private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
     {
         client.Timeout = TimeSpan.FromSeconds(20);
@@ -200,5 +327,7 @@ internal class APIService : IAPIService
         return result;
     }
 
+    private bool HasInternetConnection() =>
+        Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
 
 }

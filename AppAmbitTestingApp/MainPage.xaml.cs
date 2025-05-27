@@ -54,18 +54,18 @@ public partial class MainPage : ContentPage
             }
         }
     }
-    
+
     public MainPage()
     {
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
     }
-    
+
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
     {
         await DisplayAlert("Info", "Turn off internet", "Ok");
-        foreach (int index in Range( 1, 220 ))
+        foreach (int index in Range(1, 220))
         {
             await Crashes.LogError("Test Batch LogError");
         }
@@ -99,7 +99,7 @@ public partial class MainPage : ContentPage
 
     private async void OnSendTestLog(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}});
+        await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
@@ -111,14 +111,14 @@ public partial class MainPage : ContentPage
         }
         catch (Exception exception)
         {
-            await Crashes.LogError(exception,new Dictionary<string,string>(){{"user_id","1"}});
+            await Crashes.LogError(exception, new Dictionary<string, string>() { { "user_id", "1" } });
             await DisplayAlert("Info", "LogError Sent", "Ok");
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}}, this.GetType().FullName);
+        await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } }, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
@@ -165,13 +165,13 @@ public partial class MainPage : ContentPage
     {
         throw new NullReferenceException();
     }
-    
+
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        await Crashes.LogError( LogMessage);
+        await Crashes.LogError(LogMessage);
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
-    
+
     private async void OnGenerateTestCrash(object sender, EventArgs e)
     {
         await Crashes.GenerateTestCrash();
@@ -182,4 +182,9 @@ public partial class MainPage : ContentPage
     {
         _logMessage = e.NewTextValue;
     }
+    
+    private async void OnTestToken(object? sender, EventArgs eventArgs)
+    {
+        Analytics.ClearToken();
+    }                      
 }
