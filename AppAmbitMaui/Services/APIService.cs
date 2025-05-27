@@ -106,12 +106,12 @@ internal class APIService : IAPIService
         return ApiResult<T>.Fail(result, "Token renewal failed");
     }
 
-    public async Task<ApiErrorType> GetNewToken()
+    public async Task<ApiErrorType> GetNewToken(string appKey = "")
     {
 
         try
         {
-            var registerEndpoint = await ConsumerService.RegisterConsumer();
+            var registerEndpoint = await ConsumerService.RegisterConsumer(appKey);
             var tokenResponse = await ExecuteRequest<TokenResponse>(registerEndpoint);
 
             if (tokenResponse == null)
