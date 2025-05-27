@@ -11,7 +11,7 @@ internal static class MultipartFormDataContentExtensions
 {
     private const string _dateTimeFormatISO8601ForFile = "yyyy-MM-ddTHH_mm_ss_fffZ";
     private const string _dateFormatStringApi = "yyyy-MM-dd HH:mm:ss";
-    public static async Task AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData,object obj,  string prefix = "", bool useSquareBrakets = false)
+    public static async void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData,object obj,  string prefix = "", bool useSquareBrakets = false)
     {
         try
         {
