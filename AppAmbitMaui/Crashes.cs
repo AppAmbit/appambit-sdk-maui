@@ -38,10 +38,10 @@ public static class Crashes
         await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
-    public static async Task LogError(string message, Dictionary<string, string> properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null)
+    public static async Task LogError(string message, Dictionary<string, string> properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null, DateTime? createdAt = null)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber, createdAt);
     }
 
     public static async Task GenerateTestCrash()

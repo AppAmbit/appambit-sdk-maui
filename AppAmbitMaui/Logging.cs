@@ -17,14 +17,14 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
     {
         var deviceId = await _storageService.GetDeviceId();
         var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
-        LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
+        LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber, createdAt);
     }
 
-    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
     {
         if (!SessionManager.IsSessionActive)
             return;
@@ -32,6 +32,7 @@ internal static class Logging
         var stackTrace = exception?.StackTrace;
         stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var file = exception?.CrashLogFile;
+        Debug.WriteLine($"DEBUG LOGGING CREATED_AT: {createdAt}");
         var log = new Log
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
@@ -43,12 +44,12 @@ internal static class Logging
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
         };
-        await SendOrSaveLogEventAsync(log);
+        await SendOrSaveLogEventAsync(log, createdAt);
     }
 
-    private static async Task SendOrSaveLogEventAsync(Log log)
+    private static async Task SendOrSaveLogEventAsync(Log log, DateTime? createdAt = null)
     {
         var logEndpoint = new LogEndpoint(log);
 
@@ -58,7 +59,7 @@ internal static class Logging
 
             if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
             {
-                await StoreLogInDb(log);
+                await StoreLogInDb(log, createdAt);
                 return;
             }
         }
@@ -68,13 +69,12 @@ internal static class Logging
         }
     }
 
-
-    private static async Task StoreLogInDb(Log log)
+    private static async Task StoreLogInDb(Log log, DateTime? createdAt = null)
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        logEntity.CreatedAt = DateUtils.GetUtcNow;
-
+        logEntity.CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow;
+        Debug.WriteLine("DEBUG SAVED ON DB");
         await _storageService?.LogEventAsync(logEntity);
     }
 }

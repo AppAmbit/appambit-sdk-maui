@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using AppAmbit;
 using AppAmbit.Models.Logs;
 using Newtonsoft.Json;
 using Shared.Utils;
+using Xamarin.KotlinX.Coroutines;
 using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
@@ -120,6 +122,20 @@ public partial class MainPage : ContentPage
     {
         await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } }, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
+    }
+
+    private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
+    {
+        await DisplayAlert("Info", "Turn off internet", "Ok");
+        foreach(int index in Range(start: 1, count: 30))
+        {
+            var errorsDate = DateUtils.GetUtcNow.AddDays(-(30 - index));
+            Debug.WriteLine($"DEBUG TIME ERROR: {errorsDate} : Index: {index}");
+            await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
+            await Task.Delay(500);
+        }
+        await DisplayAlert("Info", "Logs generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
     }
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)

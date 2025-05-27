@@ -73,6 +73,9 @@
                 Text="Send ClassInfo LogError" 
                 Clicked="OnSendTestLogWithClassFQN" />
             <Button
+                Text="Generate the last 30 daily errors"
+                Clicked="OnGenerate30daysTestErrors" />
+            <Button
                 Text="Generates the last 30 daily crashes"
                 Clicked="OnGenerate30daysTestCrash" />
             <Button
