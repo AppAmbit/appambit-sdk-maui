@@ -226,14 +226,9 @@ public static class Crashes
                 {
                     logEntity.CreatedAt = crash.CreatedAt;
                 }
-                if (_storageService != null)
-                {
-                    await _storageService.LogEventAsync(logEntity);
-                }
-                else
-                {
-                    Debug.WriteLine("Warning: _storageService is null");
-                }
+                if (_storageService == null)
+                    return;
+                await _storageService.LogEventAsync(logEntity);
             }
             catch(Exception e)
             {
