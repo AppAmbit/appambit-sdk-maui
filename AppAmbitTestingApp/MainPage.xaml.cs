@@ -1,11 +1,8 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
-using System.Globalization;
+﻿using System.Diagnostics;
 using AppAmbit;
 using AppAmbit.Models.Logs;
 using Newtonsoft.Json;
 using Shared.Utils;
-using Xamarin.KotlinX.Coroutines;
 using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;

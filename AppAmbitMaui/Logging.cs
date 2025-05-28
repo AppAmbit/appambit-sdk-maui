@@ -33,7 +33,7 @@ internal static class Logging
         stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var file = exception?.CrashLogFile;
         Debug.WriteLine($"DEBUG LOGGING CREATED_AT: {createdAt}");
-        var log = new Log
+        var log = new LogEntity
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
             ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
@@ -44,7 +44,7 @@ internal static class Logging
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+            CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow,
         };
         await SendOrSaveLogEventAsync(log, createdAt);
     }
