@@ -16,16 +16,11 @@ internal class SessionManager
     private static string? _sessionId = null;
     private static bool _isSessionActive = false;
     private static IAPIService? _apiService;
-    private static IStorageService? _storageService;
-
-    public static string? SessionId { get => _sessionId; }
     public static bool IsSessionActive { get => _isSessionActive; }
 
-
-    internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
+    internal static void Initialize(IAPIService? apiService)
     {
         _apiService = apiService;
-        _storageService = storageService;
     }
 
     public static async Task StartSession()
@@ -33,8 +28,6 @@ internal class SessionManager
         Debug.WriteLine("StartSession called");
         if (_isSessionActive)
             return;
-
-
 
         var dateUtc = DateUtils.GetUtcNow;
         var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc));
@@ -49,22 +42,20 @@ internal class SessionManager
 
         var response = apiResponse?.Data;
         _sessionId = response?.SessionId;
-        _storageService?.SetSessionId(response!.SessionId);
         _isSessionActive = true;
     }
 
     public static async Task EndSession()
     {
         if (!_isSessionActive)
-        {
             return;
-        }
 
         EndSession? endSession = new EndSession
         {
-            Id = Guid.NewGuid().ToString(),
+            SessionId = _sessionId,
             Timestamp = DateUtils.GetUtcNow
         };
+
         await EndSessionASync(endSession);
     }
 
@@ -83,7 +74,7 @@ internal class SessionManager
     {
         try
         {
-            var endSession = new EndSession() { Timestamp = DateUtils.GetUtcNow, Id = Guid.NewGuid().ToString() };
+            var endSession = new EndSession() { Timestamp = DateUtils.GetUtcNow, SessionId = _sessionId };
             var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
 
             SaveToFile<EndSession>(json);
@@ -104,7 +95,11 @@ internal class SessionManager
         var result = await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
         if (result?.ErrorType != ApiErrorType.None)
         {
-            SaveLocalEndSession(endSession);
+            SaveLocalEndSession(new SessionData()
+            {
+                Id = Guid.NewGuid().ToString(),
+                Timestamp = endSession.Timestamp
+            });
         }
         _sessionId = null;
         _isSessionActive = false;
@@ -112,17 +107,16 @@ internal class SessionManager
 
     private static void SaveLocalStartSession(DateTime dateUtc)
     {
-        var startSession = new StartSession()
+        var startSession = new SessionData()
         {
             Id = Guid.NewGuid().ToString(),
             Timestamp = dateUtc
         };
 
-        AppendToJsonArrayFile(startSession);
-    }
+        AppendToJsonArrayFile(startSession, "OfflineStartSessions");    }
 
-    private static void SaveLocalEndSession(EndSession endSession)
+    private static void SaveLocalEndSession(SessionData endSession)
     {
-        AppendToJsonArrayFile(endSession, "OfflineEndSessions.json");
+        AppendToJsonArrayFile(endSession, "OfflineEndSessions");
     }
 }

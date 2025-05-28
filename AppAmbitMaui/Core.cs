@@ -10,7 +10,7 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    private static bool _hasStartedSessionFlow = false;
+    private static bool _hasStartedSession = false;
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
@@ -24,7 +24,7 @@ public static class Core
                 android.OnResume(activity => { OnResume(); });
                 android.OnStop(activity => { OnSleep(); });
                 android.OnRestart(activity => { OnResume(); });
-                android.OnDestroy(async activity1 => { await OnEnd(); });
+                android.OnDestroy(activity => { OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
@@ -36,7 +36,7 @@ public static class Core
                 });
                 ios.DidEnterBackground(application => { OnSleep(); });
                 ios.WillEnterForeground(application => { OnResume(); });
-                ios.WillTerminate(async application => { await OnEnd(); });
+                ios.WillTerminate(application => { OnEnd(); });
             });
 #endif
         });
@@ -80,7 +80,7 @@ public static class Core
         await InitializeServices();
 
         await InitializeConsumer(appKey);
-        _hasStartedSessionFlow = true;
+        _hasStartedSession = true;
 
         await Crashes.LoadCrashFileIfExists();
 
@@ -94,7 +94,7 @@ public static class Core
             await apiService?.GetNewToken();
 
 
-        if (!Analytics._isManualSessionEnabled && _hasStartedSessionFlow)
+        if (!Analytics._isManualSessionEnabled && _hasStartedSession)
         {
             await SessionManager.RemoveSavedEndSession();
         }
@@ -103,7 +103,7 @@ public static class Core
         await Analytics.SendBatchEvents();
     }
 
-    private static async Task OnSleep()
+    private static void OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
         {
@@ -111,7 +111,7 @@ public static class Core
         }
     }
 
-    private static async Task OnEnd()
+    private static void OnEnd()
     {
         if (!Analytics._isManualSessionEnabled)
         {
@@ -138,7 +138,7 @@ public static class Core
         storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        SessionManager.Initialize(apiService, storageService);
+        SessionManager.Initialize(apiService);
         Crashes.Initialize(apiService, storageService, deviceId);
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(storageService, appInfoService);

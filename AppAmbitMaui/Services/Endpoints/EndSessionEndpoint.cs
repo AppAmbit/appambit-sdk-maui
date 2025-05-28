@@ -13,7 +13,7 @@ internal class EndSessionEndpoint : BaseEndpoint
         Method = HttpMethodEnum.Post;
         Payload = new EndSession()
         {
-            Id = sessionId,
+            SessionId = sessionId,
             Timestamp = DateUtils.GetUtcNow
         };
     }

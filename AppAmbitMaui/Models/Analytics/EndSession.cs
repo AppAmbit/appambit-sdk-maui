@@ -2,11 +2,11 @@ using Newtonsoft.Json;
 using AppAmbit.Utils;
 namespace AppAmbit.Models.Analytics;
 
-public class EndSession : IIdentifiable
+public class EndSession
 {
-    [JsonProperty("id")]
-    public string Id { get; set; } = string.Empty;
-    
+    [JsonProperty("session_id")]
+    public string SessionId { get; set; } = string.Empty;
+
     [JsonProperty("timestamp")]
-    public DateTime Timestamp { get; set; }
+    public DateTime Timestamp { get; set; }    
 }
