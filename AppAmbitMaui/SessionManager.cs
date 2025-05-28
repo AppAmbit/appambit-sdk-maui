@@ -17,8 +17,6 @@ internal class SessionManager
     private static bool _isSessionActive = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
-    private static bool _isProcessingEndSession = false;
-    private static bool _isProcessingStartSession = false;
 
     public static string? SessionId { get => _sessionId; }
     public static bool IsSessionActive { get => _isSessionActive; }
@@ -36,18 +34,14 @@ internal class SessionManager
         if (_isSessionActive)
             return;
 
-        
-        if (_isProcessingStartSession)
-            return;
 
-        _isProcessingStartSession = true;
+
         var dateUtc = DateUtils.GetUtcNow;
         var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc));
-        _isProcessingStartSession = false;
 
         if (apiResponse?.ErrorType != ApiErrorType.None)
         {
-            Debug.WriteLine("StartSession failed - saving locally.");
+            Debug.WriteLine("StartSession failed - saving locally");
             SaveLocalStartSession(dateUtc);
             _isSessionActive = true;
             return;
@@ -66,10 +60,9 @@ internal class SessionManager
             return;
         }
 
-        string? sessionId = await _storageService?.GetSessionId();
         EndSession? endSession = new EndSession
         {
-            Id = sessionId,
+            Id = Guid.NewGuid().ToString(),
             Timestamp = DateUtils.GetUtcNow
         };
         await EndSessionASync(endSession);
@@ -77,31 +70,20 @@ internal class SessionManager
 
     public static async Task SendEndSessionIfExists()
     {
-        if (_isProcessingEndSession)
+        var file = GetFilePath(GetFileName(typeof(EndSession)));
+        Debug.WriteLine($"file:{file}");
+        var endSession = await GetSavedSingleObject<EndSession>();
+        if (endSession == null)
             return;
-
-        try
-        {
-            _isProcessingEndSession = true;
-            var file = GetFilePath(GetFileName(typeof(EndSession)));
-            Debug.WriteLine($"file:{file}");
-            var endSession = await GetSavedSingleObject<EndSession>();
-            if (endSession == null)
-                return;
-            await EndSessionASync(endSession: endSession);
-        }
-        finally
-        {
-            _isProcessingEndSession = false;
-        }
+            
+        await EndSessionASync(endSession: endSession);
     }
 
-    public static async Task SaveEndSession()
+    public static void SaveEndSession()
     {
         try
         {
-            // var sessionId = _sessionId ?? await _storageService?.GetSessionId();
-            var endSession = new EndSession() { Timestamp = DateUtils.GetUtcNow };
+            var endSession = new EndSession() { Timestamp = DateUtils.GetUtcNow, Id = Guid.NewGuid().ToString() };
             var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
 
             SaveToFile<EndSession>(json);
@@ -119,7 +101,7 @@ internal class SessionManager
 
     private static async Task EndSessionASync(EndSession endSession)
     {
-        var result = await _apiService?.ExecuteRequest<EndSessionResponse>( new EndSessionEndpoint(endSession));
+        var result = await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
         if (result?.ErrorType != ApiErrorType.None)
         {
             SaveLocalEndSession(endSession);
@@ -132,6 +114,7 @@ internal class SessionManager
     {
         var startSession = new StartSession()
         {
+            Id = Guid.NewGuid().ToString(),
             Timestamp = dateUtc
         };
 

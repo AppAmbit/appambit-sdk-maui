@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Newtonsoft.Json;
-
+using AppAmbit.Utils;
 namespace AppAmbit;
 
 internal static class FileUtils
@@ -44,22 +44,26 @@ internal static class FileUtils
         Debug.WriteLine($"Saved {typeof(T).Name} to {filePath}");
     }
     
-    public static void AppendToJsonArrayFile<T>(T entry) where T : class
+    public static void AppendToJsonArrayFile<T>(T entry)
+        where T : class, IIdentifiable
         => AppendToJsonArrayFile(entry, GetFileName(typeof(T)));
 
-    public static void AppendToJsonArrayFile<T>(T entry, string fileName) where T : class
+    public static void AppendToJsonArrayFile<T>(T entry, string fileName)
+        where T : class, IIdentifiable
     {
         try
         {
             if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            {
                 fileName += ".json";
-            }
 
             var path = GetFilePath(fileName);
             var list = File.Exists(path)
                 ? JsonConvert.DeserializeObject<List<T>>(File.ReadAllText(path)) ?? new()
                 : new();
+
+            if (list.Any(x => x.Id == entry.Id))
+                return;
+
             list.Add(entry);
             File.WriteAllText(path, JsonConvert.SerializeObject(list, Formatting.Indented));
         }
@@ -67,5 +71,5 @@ internal static class FileUtils
         {
             Debug.WriteLine($"File Exception: {e.Message}");
         }
-    }    
+    }
 }
