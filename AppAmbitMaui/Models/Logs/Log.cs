@@ -44,9 +44,6 @@ internal class Log
     [JsonProperty("file")] 
     [MultipartFormDataFile]
     public string? File { get; set; }
-
-    [JsonProperty("created_at")]
-    public DateTime CreatedAt { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]

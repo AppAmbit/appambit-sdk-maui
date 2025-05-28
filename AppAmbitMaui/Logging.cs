@@ -32,7 +32,7 @@ internal static class Logging
         var stackTrace = exception?.StackTrace;
         stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
         var file = exception?.CrashLogFile;
-        var log = new Log
+        var log = new LogEntity
         {
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
             ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
