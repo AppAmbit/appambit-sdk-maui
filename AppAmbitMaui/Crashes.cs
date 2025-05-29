@@ -224,9 +224,21 @@ public static class Crashes
                 var logEntity = MapExceptionInfoToLogEntity(crash);
                 Debug.WriteLine("Debug LogEntity: " + logEntity);
                 logEntity.Id = Guid.NewGuid();
-                logEntity.CreatedAt = DateUtils.GetUtcNow;
-                await _storageService?.LogEventAsync(logEntity);
-            }catch(Exception e)
+                if (crash.CreatedAt == default)
+                {
+                    logEntity.CreatedAt = DateUtils.GetUtcNow;
+                }
+                else
+                {
+                    logEntity.CreatedAt = crash.CreatedAt;
+                }
+                if (_storageService == null)
+                {
+                    return;
+                }
+                await _storageService.LogEventAsync(logEntity);
+            }
+            catch(Exception e)
             {
                 Debug.WriteLine("Debug exception: " + e);
             }
@@ -261,7 +273,8 @@ public static class Crashes
             { "InnerException", exception?.InnerException ?? "" }
         },
             Type = logType,
-            File = (logType == LogType.Crash && exception != null ? file : null)
+            File = (logType == LogType.Crash && exception != null ? file : null),
+            CreatedAt = exception.CreatedAt
         };
     }
 
