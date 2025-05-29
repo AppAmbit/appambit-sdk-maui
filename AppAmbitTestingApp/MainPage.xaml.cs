@@ -124,41 +124,32 @@ public partial class MainPage : ContentPage
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
     {
-        await DisplayAlert("Info", "Turn off internet", "Ok");
-        try
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
         {
-            throw new NullReferenceException();
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
         }
-        catch (Exception ex)
+        var ex = new NullReferenceException();
+        foreach (int index in Range(start: 1, count: 30))
         {
-            try
-            {
-                foreach (int index in Range(start: 1, count: 30))
-                {
-                    var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
-                    var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
-                    info.CreatedAt = crashDate;
-                    info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss")+"_"+index;
+            var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
+            var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
+            info.CreatedAt = crashDate;
+            info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss")+"_"+index;
 
-                    var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
 
-                    string timestamp = crashDate.ToString("yyyyMMdd_HHmmss");
-                    string fileName = $"crash_{timestamp}_{index}.json";
+            string timestamp = crashDate.ToString("yyyyMMdd_HHmmss");
+            string fileName = $"crash_{timestamp}_{index}.json";
 
-                    string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
+            string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
 
-                    Debug.WriteLine($"Crash file saved to: {crashFile}");
-                    await Task.Delay(100);
-                    File.WriteAllText(crashFile, json);
-                }
-            }
-            catch (Exception exp)
-            {
-                Debug.WriteLine("Debug error for loop: " + exp);
-            }
-            await DisplayAlert("Info", "Crashes generated", "Ok");
-            await DisplayAlert("Info", "Turn on internet to store the crashes", "Ok");
+            Debug.WriteLine($"Crash file saved to: {crashFile}");
+            await Task.Delay(100);
+            File.WriteAllText(crashFile, json);
         }
+        await DisplayAlert("Info", "Crashes generated", "Ok");
+        await DisplayAlert("Info", "Turn on internet to store the crashes", "Ok");
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
