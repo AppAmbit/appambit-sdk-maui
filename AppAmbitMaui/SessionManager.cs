@@ -4,9 +4,10 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Models.Analytics;
 using static AppAmbit.FileUtils;
-using Newtonsoft.Json;
 using Shared.Utils;
 using AppAmbit.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 
 namespace AppAmbit;
@@ -16,35 +17,32 @@ internal class SessionManager
     private static string? _sessionId = null;
     private static bool _isSessionActive = false;
     private static IAPIService? _apiService;
-    private static IStorageService? _storageService;
-    private static EndSession? _currentEndSession = null;
+    public static bool IsSessionActive { get => _isSessionActive; }
 
-    public static string? SessionId { get => _sessionId; }
-    public static bool IsSessionActive { get => _isSessionActive;}
-
-
-    internal static void                                                                                                                      Initialize(IAPIService? apiService, IStorageService? storageService)
+    internal static void Initialize(IAPIService? apiService)
     {
         _apiService = apiService;
-        _storageService = storageService;
     }
 
     public static async Task StartSession()
     {
         Debug.WriteLine("StartSession called");
         if (_isSessionActive)
+            return;
+
+        var dateUtc = DateUtils.GetUtcNow;
+        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc));
+
+        if (apiResponse?.ErrorType != ApiErrorType.None)
         {
+            Debug.WriteLine("StartSession failed - saving locally");
+            SaveLocalStartSession(dateUtc);
+            _isSessionActive = true;
             return;
         }
 
-        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        if (apiResponse?.ErrorType != ApiErrorType.None)
-        {
-            return;
-        }
         var response = apiResponse?.Data;
         _sessionId = response?.SessionId;
-        _storageService?.SetSessionId(response!.SessionId);
         _isSessionActive = true;
     }
 
@@ -55,50 +53,84 @@ internal class SessionManager
             return;
         }
 
-        string? sessionId = await _storageService?.GetSessionId();
-        await EndSessionASync(sessionId: sessionId);
+        SessionData? endSession = new SessionData
+        {
+            Id = Guid.NewGuid().ToString(),
+            SessionType = SessionType.End,
+            SessionId = _sessionId,
+            Timestamp = DateUtils.GetUtcNow
+        };
+
+        await EndSessionASync(endSession);
     }
 
     public static async Task SendEndSessionIfExists()
     {
-        if (_currentEndSession == null)
+        var file = GetFilePath(GetFileName(typeof(SessionData)));
+        Debug.WriteLine($"file:{file}");
+        var endSession = await GetSavedSingleObject<SessionData>();
+        if (endSession == null)
+            return;
+
+        await EndSessionASync(endSession: endSession);
+    }
+
+    public static void SaveEndSession()
+    {
+        try
         {
-            var file = GetFilePath(GetFileName(typeof(EndSession)));
-            Debug.WriteLine($"file:{file}");
-            var endSession = await GetSavedSingleObject<EndSession>();
-            if (endSession == null)
-                return;
-            _currentEndSession = endSession;
+            var endSession = new SessionData()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = _sessionId,
+                Timestamp = DateUtils.GetUtcNow,
+                SessionType = SessionType.End
+            };
+
+            var json = JsonConvert.SerializeObject(endSession, new JsonSerializerSettings
+            {
+                Converters = [new StringEnumConverter()],
+                Formatting = Formatting.Indented
+            });
+
+            SaveToFile<SessionData>(json);
         }
-        await EndSessionASync(endSession: _currentEndSession);
-        _currentEndSession = null;
-
+        catch (Exception ex)
+        {
+            Debug.WriteLine("Error in SaveEndSession: " + ex);
+        }
     }
 
-
-    public static async Task SaveEndSession()
+    public static async Task RemoveSavedEndSession()
     {
-        var sessionId = _sessionId ?? await _storageService?.GetSessionId();
-        var endSession = new EndSession() { Id = sessionId, Timestamp = DateUtils.GetUtcNow };
-        var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
-
-        SaveToFile<EndSession>(json);
+        _ = await GetSavedSingleObject<SessionData>();
     }
 
-   public static async Task RemoveSavedEndSession()
+    private static async Task EndSessionASync(SessionData endSession)
     {
-        _ = await GetSavedSingleObject<EndSession>();
-    }   
-
-    private static async Task EndSessionASync(string? sessionId = null, EndSession? endSession = null)
-    {
-        var endpoint = endSession != null
-            ? new EndSessionEndpoint(endSession)
-            : new EndSessionEndpoint(sessionId!);
-
-        await _apiService?.ExecuteRequest<EndSessionResponse>(endpoint);
+        var result = await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
+        if (result?.ErrorType != ApiErrorType.None)
+        {
+            SaveLocalEndSession(endSession);
+        }
         _sessionId = null;
         _isSessionActive = false;
     }
- 
+
+    private static void SaveLocalStartSession(DateTime dateUtc)
+    {
+        var startSession = new SessionData()
+        {
+            SessionType = SessionType.Start,
+            Id = Guid.NewGuid().ToString(),
+            Timestamp = dateUtc
+        };
+
+        AppendToJsonArrayFile(startSession, "OfflineSessions");
+    }
+
+    private static void SaveLocalEndSession(SessionData endSession)
+    {
+        AppendToJsonArrayFile(endSession, "OfflineSessions");
+    }
 }
