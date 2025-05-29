@@ -49,7 +49,9 @@ internal class SessionManager
     public static async Task EndSession()
     {
         if (!_isSessionActive)
+        {
             return;
+        }
 
         SessionData? endSession = new SessionData
         {

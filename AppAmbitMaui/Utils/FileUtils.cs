@@ -70,7 +70,6 @@ internal static class FileUtils
 
             if (list.Any(x => x.Id == entry.Id))
             {
-                Debug.WriteLine($"Entry with ID {entry.Id} already exists in {fileName}. Skipping append.");
                 return;    
             }
 

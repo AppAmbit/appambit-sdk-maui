@@ -124,7 +124,9 @@ public static class Core
         await apiService?.GetNewToken(appKey);
 
         if (Analytics._isManualSessionEnabled)
+        {
             return;
+        }
 
         await SessionManager.SendEndSessionIfExists();
         await SessionManager.StartSession();
