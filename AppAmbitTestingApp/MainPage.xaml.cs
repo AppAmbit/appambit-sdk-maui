@@ -122,6 +122,23 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "LogError Sent", "Ok");
     }
 
+    private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
+    {
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+        {
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
+        }
+        foreach (int index in Range(start: 1, count: 30))
+        {
+            var errorsDate = DateUtils.GetUtcNow.AddDays(-(30 - index));
+            Debug.WriteLine($"DEBUG TIME ERROR: {errorsDate} : Index: {index}");
+            await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
+            await Task.Delay(500);
+        }
+        await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
+    }
+
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
     {
         if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)

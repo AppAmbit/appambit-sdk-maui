@@ -17,14 +17,14 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
     {
         var deviceId = await _storageService.GetDeviceId();
         var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
-        LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
+        await LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber, createdAt);
     }
 
-    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
+    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
     {
         if (!SessionManager.IsSessionActive)
             return;
@@ -43,7 +43,7 @@ internal static class Logging
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt = DateUtils.GetUtcNow,
+            CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
         };
         await SendOrSaveLogEventAsync(log);
     }
@@ -73,7 +73,6 @@ internal static class Logging
     {
         var logEntity = log.ConvertTo<LogEntity>();
         logEntity.Id = Guid.NewGuid();
-        logEntity.CreatedAt = DateUtils.GetUtcNow;
 
         await _storageService?.LogEventAsync(logEntity);
     }
