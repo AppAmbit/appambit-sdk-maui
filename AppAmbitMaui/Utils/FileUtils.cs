@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Newtonsoft.Json;
 using AppAmbit.Utils;
+using Newtonsoft.Json.Converters;
 namespace AppAmbit;
 
 internal static class FileUtils
@@ -43,7 +44,7 @@ internal static class FileUtils
         File.WriteAllText(filePath, json);
         Debug.WriteLine($"Saved {typeof(T).Name} to {filePath}");
     }
-    
+
     public static void AppendToJsonArrayFile<T>(T entry)
         where T : class, IIdentifiable
         => AppendToJsonArrayFile(entry, GetFileName(typeof(T)));
@@ -53,19 +54,28 @@ internal static class FileUtils
     {
         try
         {
+            var settings = new JsonSerializerSettings
+            {
+                Converters = [new StringEnumConverter()],
+                Formatting = Formatting.Indented
+            };
+
             if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                 fileName += ".json";
 
             var path = GetFilePath(fileName);
             var list = File.Exists(path)
-                ? JsonConvert.DeserializeObject<List<T>>(File.ReadAllText(path)) ?? new()
+                ? JsonConvert.DeserializeObject<List<T>>(File.ReadAllText(path), settings) ?? new()
                 : new();
 
             if (list.Any(x => x.Id == entry.Id))
-                return;
+            {
+                Debug.WriteLine($"Entry with ID {entry.Id} already exists in {fileName}. Skipping append.");
+                return;    
+            }
 
             list.Add(entry);
-            File.WriteAllText(path, JsonConvert.SerializeObject(list, Formatting.Indented));
+            File.WriteAllText(path, JsonConvert.SerializeObject(list, settings));
         }
         catch (Exception e)
         {

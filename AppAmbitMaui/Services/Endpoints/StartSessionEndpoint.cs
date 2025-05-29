@@ -11,7 +11,7 @@ internal class StartSessionEndpoint : BaseEndpoint
     {
         Url = "/session/start";
         Method = HttpMethodEnum.Post;
-        Payload = new StartSession
+        Payload = new SessionData
         {
             Timestamp = utcNow
         };

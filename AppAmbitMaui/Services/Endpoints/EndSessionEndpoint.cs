@@ -11,14 +11,14 @@ internal class EndSessionEndpoint : BaseEndpoint
     {
         Url = "/session/end";
         Method = HttpMethodEnum.Post;
-        Payload = new EndSession()
+        Payload = new SessionData()
         {
             SessionId = sessionId,
             Timestamp = DateUtils.GetUtcNow
         };
     }
     
-    public EndSessionEndpoint(EndSession endSession)
+    public EndSessionEndpoint(SessionData endSession)
     {
         Url = "/session/end";
         Method = HttpMethodEnum.Post;

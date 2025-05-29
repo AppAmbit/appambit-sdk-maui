@@ -4,9 +4,10 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Models.Analytics;
 using static AppAmbit.FileUtils;
-using Newtonsoft.Json;
 using Shared.Utils;
 using AppAmbit.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 
 namespace AppAmbit;
@@ -50,8 +51,10 @@ internal class SessionManager
         if (!_isSessionActive)
             return;
 
-        EndSession? endSession = new EndSession
+        SessionData? endSession = new SessionData
         {
+            Id = Guid.NewGuid().ToString(),
+            SessionType = SessionType.End,
             SessionId = _sessionId,
             Timestamp = DateUtils.GetUtcNow
         };
@@ -61,12 +64,12 @@ internal class SessionManager
 
     public static async Task SendEndSessionIfExists()
     {
-        var file = GetFilePath(GetFileName(typeof(EndSession)));
+        var file = GetFilePath(GetFileName(typeof(SessionData)));
         Debug.WriteLine($"file:{file}");
-        var endSession = await GetSavedSingleObject<EndSession>();
+        var endSession = await GetSavedSingleObject<SessionData>();
         if (endSession == null)
             return;
-            
+
         await EndSessionASync(endSession: endSession);
     }
 
@@ -74,10 +77,21 @@ internal class SessionManager
     {
         try
         {
-            var endSession = new EndSession() { Timestamp = DateUtils.GetUtcNow, SessionId = _sessionId };
-            var json = JsonConvert.SerializeObject(endSession, Formatting.Indented);
+            var endSession = new SessionData()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = _sessionId,
+                Timestamp = DateUtils.GetUtcNow,
+                SessionType = SessionType.End
+            };
 
-            SaveToFile<EndSession>(json);
+            var json = JsonConvert.SerializeObject(endSession, new JsonSerializerSettings
+            {
+                Converters = [new StringEnumConverter()],
+                Formatting = Formatting.Indented
+            });
+
+            SaveToFile<SessionData>(json);
         }
         catch (Exception ex)
         {
@@ -87,19 +101,15 @@ internal class SessionManager
 
     public static async Task RemoveSavedEndSession()
     {
-        _ = await GetSavedSingleObject<EndSession>();
+        _ = await GetSavedSingleObject<SessionData>();
     }
 
-    private static async Task EndSessionASync(EndSession endSession)
+    private static async Task EndSessionASync(SessionData endSession)
     {
         var result = await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
         if (result?.ErrorType != ApiErrorType.None)
         {
-            SaveLocalEndSession(new SessionData()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Timestamp = endSession.Timestamp
-            });
+            SaveLocalEndSession(endSession);
         }
         _sessionId = null;
         _isSessionActive = false;
@@ -109,14 +119,16 @@ internal class SessionManager
     {
         var startSession = new SessionData()
         {
+            SessionType = SessionType.Start,
             Id = Guid.NewGuid().ToString(),
             Timestamp = dateUtc
         };
 
-        AppendToJsonArrayFile(startSession, "OfflineStartSessions");    }
+        AppendToJsonArrayFile(startSession, "OfflineSessions");
+    }
 
     private static void SaveLocalEndSession(SessionData endSession)
     {
-        AppendToJsonArrayFile(endSession, "OfflineEndSessions");
+        AppendToJsonArrayFile(endSession, "OfflineSessions");
     }
 }
