@@ -190,8 +190,21 @@ public partial class MainPage : ContentPage
         _logMessage = e.NewTextValue;
     }
     
-    private async void OnTestToken(object? sender, EventArgs eventArgs)
+    private void OnTestToken(object? sender, EventArgs eventArgs)
     {
         Analytics.ClearToken();
-    }                      
+    }
+
+    private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
+    {
+        Analytics.ClearToken();
+        for (int i = 0; i < 5; i++)
+        {
+            await Crashes.LogError("Sending 5 errors after an invalid token");
+            await Analytics.TrackEvent("Sending 5 events after an invalid token", new Dictionary<string, string>
+            {{
+                "Test Token", "5 events sended"
+            }});
+        }
+    }
 }
