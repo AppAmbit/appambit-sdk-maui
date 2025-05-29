@@ -148,8 +148,7 @@ public partial class MainPage : ContentPage
             await Task.Delay(100);
             File.WriteAllText(crashFile, json);
         }
-        await DisplayAlert("Info", "Crashes generated", "Ok");
-        await DisplayAlert("Info", "Turn on internet to store the crashes", "Ok");
+        await DisplayAlert("Info", "Crashes generated, turn on internet", "Ok");
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
