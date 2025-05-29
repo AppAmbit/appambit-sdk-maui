@@ -331,4 +331,3 @@ internal class APIService : IAPIService
         Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
 
 }
-
