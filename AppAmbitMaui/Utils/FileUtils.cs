@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using AppAmbit.Utils;
 using Newtonsoft.Json.Converters;
+using System.Threading.Tasks;
 namespace AppAmbit;
 
 internal static class FileUtils
@@ -45,40 +46,65 @@ internal static class FileUtils
         Debug.WriteLine($"Saved {typeof(T).Name} to {filePath}");
     }
 
-    public static void AppendToJsonArrayFile<T>(T entry)
-        where T : class, IIdentifiable
-        => AppendToJsonArrayFile(entry, GetFileName(typeof(T)));
 
-    public static void AppendToJsonArrayFile<T>(T entry, string fileName)
+    public static async Task<List<T>> GetSaveJsonArrayAsync<T>(string fileName, T? entry)
         where T : class, IIdentifiable
     {
         try
         {
-            var settings = new JsonSerializerSettings
-            {
-                Converters = [new StringEnumConverter()],
-                Formatting = Formatting.Indented
-            };
+            fileName = PrepareFileSettings(fileName, out JsonSerializerSettings settings, out string path);
 
-            if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                fileName += ".json";
-
-            var path = GetFilePath(fileName);
             var list = File.Exists(path)
-                ? JsonConvert.DeserializeObject<List<T>>(File.ReadAllText(path), settings) ?? new()
-                : new();
+                ? JsonConvert.DeserializeObject<List<T>>(File.ReadAllText(path), settings) ?? []
+                : [];
 
-            if (list.Any(x => x.Id == entry.Id))
+            if (entry is not null && !list.Any(x => x.Id == entry.Id))
             {
-                return;    
+                list.Add(entry);
+                await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(list, settings));
             }
 
-            list.Add(entry);
-            File.WriteAllText(path, JsonConvert.SerializeObject(list, settings));
+            return list;
         }
         catch (Exception e)
         {
             Debug.WriteLine($"File Exception: {e.Message}");
+            return [];
         }
+    }
+
+    internal static async Task UpdateJsonArrayAsync<T>(string fileName, IEnumerable<T> updatedList)
+    {
+        try
+        {
+            fileName = PrepareFileSettings(fileName, out JsonSerializerSettings settings, out string path);
+
+            if (updatedList.Count() == 0)
+            {
+                File.Delete(path);
+                return;
+            }
+
+            var json = JsonConvert.SerializeObject(updatedList, settings);
+            await File.WriteAllTextAsync(path, json);
+        }
+        catch (Exception)
+        {
+            Debug.WriteLine("Error to save file json");
+        }
+    }    
+
+    private static string PrepareFileSettings(string fileName, out JsonSerializerSettings settings, out string path)
+    {
+        settings = new JsonSerializerSettings
+        {
+            Converters = [new StringEnumConverter()],
+            Formatting = Formatting.Indented
+        };
+        if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            fileName += ".json";
+
+        path = GetFilePath(fileName);
+        return fileName;
     }
 }

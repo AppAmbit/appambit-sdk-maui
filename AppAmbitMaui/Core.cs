@@ -73,6 +73,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
+        await SessionManager.SendBatchSessions();
     }
 
     private static async Task OnStart(string appKey)
@@ -86,6 +87,7 @@ public static class Core
 
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
+        await SessionManager.SendBatchSessions();
     }
 
     private static async Task OnResume()
