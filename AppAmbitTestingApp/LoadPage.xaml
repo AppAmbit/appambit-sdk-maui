@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:appAmbitTestingApp="clr-namespace:AppAmbitTestingApp"
+             x:Class="AppAmbitTestingApp.LoadPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0"
+                             Spacing="25" x:DataType="appAmbitTestingApp:LoadPage">
+
+            <Frame BackgroundColor="#F0F0F0"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Entry 
+                        Placeholder="Test Log Message"
+                        Text="{Binding Title}"/>
+                    <Button
+                        Text="Send 500 Events"
+                        Clicked="OnSend500Events" />
+                    <Button
+                        Text="Send 500 Logs"
+                        Clicked="OnSend500Logs" />
+                    <Button
+                        Text="Send 500 Start Sessions"
+                        Clicked="OnSend500StartSession" />
+                    <Button
+                        Text="Send 500 End Sessions"
+                        Clicked="OnSend500EndSession" />
+                    <Button
+                        Text="Send 500 Token"
+                        Clicked="OnSend500Tokens" />
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

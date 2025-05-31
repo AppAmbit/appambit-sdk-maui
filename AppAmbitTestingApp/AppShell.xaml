@@ -15,5 +15,9 @@
         <ShellContent Title="Analytics"
                       ContentTemplate="{DataTemplate local:AnalyticsPage}"
                       Route="Analytics Page" />
+
+        <ShellContent Title="Load"
+              ContentTemplate="{DataTemplate local:LoadPage}"
+              Route="LoadPage" />
     </TabBar>
 </Shell>

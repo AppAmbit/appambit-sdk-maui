@@ -70,4 +70,13 @@
       <ProjectReference Include="..\AppAmbitMaui\AppAmbitMaui.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <MauiXaml Update="LoadPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+      <MauiXaml Update="NewPage1.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+    </ItemGroup>
+
 </Project>

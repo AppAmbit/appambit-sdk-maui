@@ -5,6 +5,7 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
+using AppAmbit.Services;
 
 namespace AppAmbit;
 
@@ -143,6 +144,11 @@ public static class Analytics
     public static void ClearToken()
     {
         _apiService?.SetToken("");
-    }                
+    }
+
+    public async static Task RequestToken()
+    {
+        await ConsumerService.RegisterConsumer();
+    }
 
 }
