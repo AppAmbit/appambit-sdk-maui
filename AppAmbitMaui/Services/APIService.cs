@@ -159,10 +159,24 @@ internal class APIService : IAPIService
 
     private void CheckStatusCodeFrom(HttpStatusCode code)
     {
+        int statusCode = (int)code;
+
+        if (IsSuccessStatusCode(statusCode))
+        {
+            return;
+        }
+
         if (HttpStatusCode.Unauthorized == code)
         {
             throw new UnauthorizedException();
         }
+
+        throw new HttpRequestException($"HTTP error {statusCode}: {code}");
+    }
+
+    private bool IsSuccessStatusCode(int statusCode)
+    {
+        return statusCode >= 200 && statusCode < 300;
     }
 
     public string? GetToken()
