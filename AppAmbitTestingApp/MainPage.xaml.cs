@@ -197,6 +197,7 @@ public partial class MainPage : ContentPage
 
     private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
     {
+        Analytics.ClearToken();
         var logsTask = Range(0, 5).Select(
             _ => Task.Run(() => Crashes.LogError("Sending 5 errors after an invalid token")));
 
@@ -204,7 +205,6 @@ public partial class MainPage : ContentPage
             _ => Task.Run(() => Analytics.TrackEvent("Sending 5 events after an invalid token",
             new Dictionary<string, string>
             {{"Test Token", "5 events sent"}})));
-        Analytics.ClearToken();
         await Task.WhenAll(logsTask);
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
