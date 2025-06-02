@@ -14,18 +14,38 @@
                     <Entry 
                         Placeholder="Test Log Message"
                         Text="{Binding Title}"/>
+                    <Label
+                        x:Name="eventsLabel"
+                        Text=""
+                        IsVisible="false"/>
                     <Button
                         Text="Send 500 Events"
                         Clicked="OnSend500Events" />
+                    <Label
+                        x:Name="logsLabel"
+                        Text=""
+                        IsVisible="False"/>
                     <Button
                         Text="Send 500 Logs"
                         Clicked="OnSend500Logs" />
+                    <Label
+                        x:Name="startSessionLabel"
+                        Text=""
+                        IsVisible="false"/>
                     <Button
                         Text="Send 500 Start Sessions"
                         Clicked="OnSend500StartSession" />
+                    <Label
+                        x:Name="endSessionLabel"
+                        Text=""
+                        IsVisible="false"/>
                     <Button
                         Text="Send 500 End Sessions"
                         Clicked="OnSend500EndSession" />
+                    <Label
+                        x:Name="tokenLabel"
+                        Text=""
+                        IsVisible="false"/>
                     <Button
                         Text="Send 500 Token"
                         Clicked="OnSend500Tokens" />
