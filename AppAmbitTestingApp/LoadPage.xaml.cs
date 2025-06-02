@@ -31,7 +31,7 @@ public partial class LoadPage : ContentPage
         for (int i = 0; i < 500; i++)
         {
             await Analytics.TrackEvent(_title, new Dictionary<string, string> { { "Test500", "Events" } });
-            Debug.WriteLine($"Request Event: {i}");
+            Debug.WriteLine($"Request Event: {i+1}");
             await Task.Delay(100);
         }
         await DisplayAlert("Info", "500 Events generated", "Ok");
@@ -42,7 +42,7 @@ public partial class LoadPage : ContentPage
         for(int i = 0; i < 500; i++)
         {
             await Crashes.LogError(_title);
-            Debug.WriteLine($"Request Log: {i}");
+            Debug.WriteLine($"Request Log: {i+1}");
             await Task.Delay(300);
         }
         await DisplayAlert("Info", "500 Logs generated", "Ok");
@@ -52,8 +52,9 @@ public partial class LoadPage : ContentPage
     {
         for(int i = 0; i < 500; i++)
         {
+            Analytics.ValidateOrInvaliteSession(false);
             await Analytics.StartSession();
-            Debug.WriteLine($"Request StartSession: {i}");
+            Debug.WriteLine($"Request StartSession: {i+1}");
             await Task.Delay(300);
         }
         await DisplayAlert("Info", "500 StartSessions requested", "Ok");
@@ -63,8 +64,9 @@ public partial class LoadPage : ContentPage
     {
         for (int i = 0; i < 500; i++)
         {
+            Analytics.ValidateOrInvaliteSession(true);
             await Analytics.EndSession();
-            Debug.WriteLine($"Request EndSession: {i}");
+            Debug.WriteLine($"Request EndSession: {i+1}");
             await Task.Delay(300);
         }
         await DisplayAlert("Info", "500 EndSessions requested", "Ok");
@@ -74,7 +76,7 @@ public partial class LoadPage : ContentPage
         for (int i = 0; i < 500; i++)
         {
             await Analytics.RequestToken();
-            Debug.WriteLine($"Request Token: {i}");
+            Debug.WriteLine($"Request Token: {i+1}");
             await Task.Delay(300);
         }
         await DisplayAlert("Info", "500 Tokens requested", "Ok");

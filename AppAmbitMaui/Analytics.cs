@@ -6,6 +6,7 @@ using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
 using AppAmbit.Services;
+using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -148,7 +149,12 @@ public static class Analytics
 
     public async static Task RequestToken()
     {
-        await ConsumerService.RegisterConsumer();
+        await _apiService?.GetNewToken();
+    }
+
+    public static void ValidateOrInvaliteSession(bool value)
+    {
+        SessionManager.ValidateOrInvalidateSession(value);
     }
 
 }

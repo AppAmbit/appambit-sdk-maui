@@ -133,4 +133,9 @@ internal class SessionManager
     {
         AppendToJsonArrayFile(endSession, "OfflineSessions");
     }
+
+    public static void ValidateOrInvalidateSession(bool value)
+    {
+        _isSessionActive = value;
+    }
 }
