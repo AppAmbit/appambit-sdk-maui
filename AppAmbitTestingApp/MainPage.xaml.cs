@@ -204,9 +204,12 @@ public partial class MainPage : ContentPage
             _ => Task.Run(() => Analytics.TrackEvent("Sending 5 events after an invalid token",
             new Dictionary<string, string>
             {{"Test Token", "5 events sent"}})));
+        await DisplayAlert("Info", "5 events and errors generated", "Ok");
         Analytics.ClearToken();
         await Task.WhenAll(logsTask);
+        await DisplayAlert("Info", "5 errors sent", "Ok");
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
+        await DisplayAlert("Info", "5 events sent", "Ok");
     }
 }
