@@ -5,8 +5,6 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
-using AppAmbit.Services;
-using Shared.Utils;
 
 namespace AppAmbit;
 
