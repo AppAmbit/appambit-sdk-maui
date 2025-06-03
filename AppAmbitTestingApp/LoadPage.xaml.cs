@@ -34,7 +34,6 @@ public partial class LoadPage : ContentPage
             await Analytics.TrackEvent(_title, new Dictionary<string, string> { { "Test500", "Events" } });
             Debug.WriteLine($"Request Event: {i+1}");
             eventsLabel.Text = $"Sending event: {i+1} of 500";
-            await Task.Delay(100);
         }
         eventsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Events generated", "Ok");
@@ -48,7 +47,6 @@ public partial class LoadPage : ContentPage
             await Crashes.LogError(_title);
             Debug.WriteLine($"Request Log: {i+1}");
             logsLabel.Text = $"Sending Error: {i+1} of 500";
-            await Task.Delay(300);
         }
         logsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Logs generated", "Ok");
@@ -63,7 +61,6 @@ public partial class LoadPage : ContentPage
             await Analytics.StartSession();
             Debug.WriteLine($"Request StartSession: {i+1}");
             startSessionLabel.Text = $"Sending StartSession: {i+1} of 500";
-            await Task.Delay(300);
         }
         startSessionLabel.IsVisible = false;
         await DisplayAlert("Info", "500 StartSessions requested", "Ok");
@@ -78,7 +75,6 @@ public partial class LoadPage : ContentPage
             await Analytics.EndSession();
             Debug.WriteLine($"Request EndSession: {i+1}");
             endSessionLabel.Text = $"Sending EndSession: {i+1} of 500";
-            await Task.Delay(300);
         }
         endSessionLabel.IsVisible = false;
         await DisplayAlert("Info", "500 EndSessions requested", "Ok");
@@ -91,7 +87,6 @@ public partial class LoadPage : ContentPage
             await Analytics.RequestToken();
             Debug.WriteLine($"Request Token: {i+1}");
             tokenLabel.Text = $"Sending Token: {i+1} of 500";
-            await Task.Delay(300);
         }
         tokenLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Tokens requested", "Ok");
