@@ -61,8 +61,10 @@
 
             <Button
                 Text="Invalidate Token" 
-                Clicked="OnTestToken" />  
-                              
+                Clicked="OnTestToken" />
+            <Button
+                Text="Token refresh test"
+                Clicked="OnTokenRefreshTest" />
             <Button
                 Text="Send Default LogError" 
                 Clicked="OnSendTestLog" />

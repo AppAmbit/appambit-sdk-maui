@@ -190,8 +190,24 @@ public partial class MainPage : ContentPage
         _logMessage = e.NewTextValue;
     }
     
-    private async void OnTestToken(object? sender, EventArgs eventArgs)
+    private void OnTestToken(object? sender, EventArgs eventArgs)
     {
         Analytics.ClearToken();
-    }                      
+    }
+
+    private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
+    {
+        Analytics.ClearToken();
+        var logsTask = Range(0, 5).Select(
+            _ => Task.Run(() => Crashes.LogError("Sending 5 errors after an invalid token")));
+
+        var eventsTask = Range(0, 5).Select(
+            _ => Task.Run(() => Analytics.TrackEvent("Sending 5 events after an invalid token",
+            new Dictionary<string, string>
+            {{"Test Token", "5 events sent"}})));
+        await Task.WhenAll(logsTask);
+        Analytics.ClearToken();
+        await Task.WhenAll(eventsTask);
+        await DisplayAlert("Info", "5 events and errors sent", "Ok");
+    }
 }
