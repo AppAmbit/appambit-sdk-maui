@@ -143,6 +143,10 @@ public static class Analytics
     public static void ClearToken()
     {
         _apiService?.SetToken("");
-    }                
+    }
 
+    public static void SetSessionDateTimeTesting(DateTime? dateUtc)
+    {
+        SessionManager.DateSessionTest = dateUtc;
+    }
 }

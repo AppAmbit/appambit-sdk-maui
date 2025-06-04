@@ -12,6 +12,8 @@
             Clicked="Button_OnStartSession"/>
                 <Button Text="End Session"
             Clicked="Button_OnEndSession"/>
+                <Button Text="Generate the last 30 daily sessions"
+            Clicked="OnGenerate30DaysTestSessions"/>            
                 <Button Text='Send "Button Clicked" Event w/ property'
             Clicked="Button_OnClicked"/>
                 <Button Text="Send Default Event w/ property"
