@@ -5,6 +5,7 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
+using AppAmbit.Utils;
 
 namespace AppAmbit;
 
@@ -143,6 +144,15 @@ public static class Analytics
     public static void ClearToken()
     {
         _apiService?.SetToken("");
-    }                
+    }
 
+    public static double GetRequestSize()
+    {
+        return _apiService.GetRequestSize();
+    }
+
+    public static string FormattedSize(double size)
+    {
+        return FormattedRequestSize.FormatSize(size);
+    }
 }

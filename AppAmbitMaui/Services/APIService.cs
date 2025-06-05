@@ -17,6 +17,8 @@ internal class APIService : IAPIService
 {
     private string? _token;
     private Task<ApiErrorType>? currentTokenRenewalTask;
+    private static double _requestSize = 0;
+    public static double RequestSize { get => _requestSize; set => _requestSize = value; }
 
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
@@ -145,7 +147,9 @@ internal class APIService : IAPIService
 
     private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
     {
-        var httpClient = new HttpClient()
+        var handler = new HttpClientHandler();
+        var loggingHandler = new LoggingHandler(handler);
+        var httpClient = new HttpClient(loggingHandler)
         {
             Timeout = TimeSpan.FromMinutes(2),
         };
@@ -339,6 +343,43 @@ internal class APIService : IAPIService
             throw new Exception();
         }
         return result;
+    }
+
+    internal static async Task CalculateRequestSize(HttpRequestMessage request)
+    {
+        int headersSize = 0;
+        int bodySize = 0;
+
+        Debug.WriteLine("[APIService] - HEADERS:");
+        foreach (var header in request.Headers)
+        {
+            var headerLine = $"{header.Key}: {string.Join(", ", header.Value)}";
+            Debug.WriteLine($"[APIService] - HEADER: {headerLine}");
+            headersSize += Encoding.UTF8.GetByteCount(headerLine + "\r\n");
+        }
+
+        if (request.Content != null)
+        {
+            foreach (var header in request.Content.Headers)
+            {
+                var headerLine = $"{header.Key}: {string.Join(", ", header.Value)}";
+                Debug.WriteLine($"[APIService] - CONTENT HEADER: {headerLine}");
+                headersSize += Encoding.UTF8.GetByteCount(headerLine + "\r\n");
+            }
+
+            var content = await request.Content.ReadAsByteArrayAsync();
+            bodySize = content.Length;
+        }
+
+        RequestSize = headersSize + bodySize;
+        var result = $"{RequestSize:F4}";
+
+        Debug.WriteLine($"[APIService] - TOTAL SIZE: {result} BYTES");
+    }
+
+    public double GetRequestSize()
+    {
+        return _requestSize;
     }
 
     private bool HasInternetConnection() =>
