@@ -143,6 +143,16 @@ public static class Analytics
     public static void ClearToken()
     {
         _apiService?.SetToken("");
-    }                
+    }
+
+    public async static Task RequestToken()
+    {
+        await _apiService?.GetNewToken();
+    }
+
+    public static void ValidateOrInvaliteSession(bool value)
+    {
+        SessionManager.ValidateOrInvalidateSession(value);
+    }
 
 }
