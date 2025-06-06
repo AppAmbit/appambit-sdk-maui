@@ -196,4 +196,9 @@ internal class SessionManager
 
         await UpdateJsonArrayAsync(OfflineSessionsFile, remaining);        
     }
+
+    public static void ValidateOrInvalidateSession(bool value)
+    {
+        _isSessionActive = value;
+    }
 }
