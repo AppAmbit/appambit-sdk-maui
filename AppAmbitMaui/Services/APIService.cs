@@ -347,31 +347,15 @@ internal class APIService : IAPIService
 
     internal static async Task CalculateRequestSize(HttpRequestMessage request)
     {
-        int headersSize = 0;
         int bodySize = 0;
-
-        Debug.WriteLine("[APIService] - HEADERS:");
-        foreach (var header in request.Headers)
-        {
-            var headerLine = $"{header.Key}: {string.Join(", ", header.Value)}";
-            Debug.WriteLine($"[APIService] - HEADER: {headerLine}");
-            headersSize += Encoding.UTF8.GetByteCount(headerLine + "\r\n");
-        }
 
         if (request.Content != null)
         {
-            foreach (var header in request.Content.Headers)
-            {
-                var headerLine = $"{header.Key}: {string.Join(", ", header.Value)}";
-                Debug.WriteLine($"[APIService] - CONTENT HEADER: {headerLine}");
-                headersSize += Encoding.UTF8.GetByteCount(headerLine + "\r\n");
-            }
-
             var content = await request.Content.ReadAsByteArrayAsync();
             bodySize = content.Length;
         }
 
-        RequestSize = headersSize + bodySize;
+        RequestSize = bodySize;
         var result = $"{RequestSize:F4}";
 
         Debug.WriteLine($"[APIService] - TOTAL SIZE: {result} BYTES");
