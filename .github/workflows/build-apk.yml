@@ -2,7 +2,7 @@ name: Build Apk
 
 on:
   push:
-    branches: [ "develop", "chore/update-ci-android-apk" ]
+    branches: [ "develop" ]
 
 jobs:
   build-android:
