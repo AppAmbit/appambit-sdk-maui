@@ -2,7 +2,7 @@ name: Build IPA
 
 on:
   push:
-    branches: [ develop, chore/update-ci-ios-ipa ]
+    branches: [ develop, chore/add-workflow-ci-ipa ]
 
 jobs:
   maui-ios:
