@@ -82,10 +82,11 @@ public partial class AnalyticsPage : ContentPage
         if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
         {
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
         }
         foreach(int index in Range(start: 1, count: 30))
         {
-            var date = DateUtils.GetUtcNow.AddDays(-(30 - index)).AddHours(-12);
+            var date = DateUtils.GetUtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
         }
         await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
