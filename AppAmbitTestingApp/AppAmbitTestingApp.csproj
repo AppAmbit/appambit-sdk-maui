@@ -79,4 +79,9 @@
       </MauiXaml>
     </ItemGroup>
 
+    <PropertyGroup Condition="$(TargetFramework.Contains('-ios')) and '$(Configuration)' == 'Release'">
+      <ApplicationId>com.AppAmbit.TestApp</ApplicationId> <!-- Mismo Bundle Identifier del perfil .mobileprovision -->
+      <ApplicationTitle>AppAmbitTestingApp</ApplicationTitle>
+      <CodesignKey>iPhone Distribution: sonny stevenson (QP28PZ7FFF)</CodesignKey>
+    </PropertyGroup>
 </Project>
