@@ -84,7 +84,7 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
-        foreach(int index in Range(start: 1, count: 30))
+        foreach(int index in Range(start: 0, count: 30))
         {
             var date = DateUtils.GetUtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
