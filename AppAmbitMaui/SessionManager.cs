@@ -16,10 +16,8 @@ internal class SessionManager
 {
     private static IAPIService? _apiService;
     private static string? _sessionId = null;
-    private static DateTime? _dateSessionTest = null;
     private static bool _isSessionActive = false;
     public static bool IsSessionActive { get => _isSessionActive; }
-    public static DateTime? DateSessionTest { get => _dateSessionTest; set => _dateSessionTest = value; }
     private const string OfflineSessionsFile = "OfflineSessions";
 
     internal static void Initialize(IAPIService? apiService)
@@ -33,7 +31,7 @@ internal class SessionManager
         if (_isSessionActive)
             return;
 
-        DateTime dateUtc = _dateSessionTest ?? DateUtils.GetUtcNow;
+        DateTime dateUtc = DateUtils.GetUtcNow;
         var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc))!;
 
         if (apiResponse?.ErrorType != ApiErrorType.None)
@@ -56,7 +54,7 @@ internal class SessionManager
             return;
         }
 
-        DateTime dateUtc = _dateSessionTest ?? DateUtils.GetUtcNow;
+        DateTime dateUtc = DateUtils.GetUtcNow;
 
         SessionData? endSession = new SessionData
         {

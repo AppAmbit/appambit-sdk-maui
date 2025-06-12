@@ -154,9 +154,4 @@ public static class Analytics
     {
         SessionManager.ValidateOrInvalidateSession(value);
     }
-
-    public static void SetSessionDateTimeTesting(DateTime? dateUtc)
-    {
-        SessionManager.DateSessionTest = dateUtc;
-    }
 }

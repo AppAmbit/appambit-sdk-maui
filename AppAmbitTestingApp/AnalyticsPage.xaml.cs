@@ -1,14 +1,18 @@
 using Shared.Utils;
 using AppAmbit;
-using AppAmbit.Models.App;
-using Shared.Models.App;
-using Shared.Utils;
 using static System.Linq.Enumerable;
+using AppAmbit.Models.Analytics;
+using AppAmbit.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 
 namespace AppAmbitTestingApp;
 
 public partial class AnalyticsPage : ContentPage
 {
+    private const string OfflineSessionsFile = "OfflineSessions.json";
+
     public AnalyticsPage()
     {
         InitializeComponent();
@@ -87,7 +91,7 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
-        foreach(int index in Range(start: 0, count: 30))
+        foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateUtils.GetUtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
@@ -108,30 +112,49 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
-        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
-        {
-            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
-            return;
-        }
-
         var random = new Random();
-        DateTime? startDate = DateUtils.GetUtcNow.AddDays(-30);
+        DateTime startDate = DateUtils.GetUtcNow.AddDays(-30);
+        var offlineSessions = new List<SessionData>();
 
-        foreach (var index in Range(start: 1, count: 30))
+
+        foreach (var index in Range(1, 30))
         {
-            DateTime? dateStartSession = startDate?.AddDays(index);
+            DateTime dateStartSession = startDate.AddDays(index);
+            dateStartSession = dateStartSession.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
 
-            dateStartSession = dateStartSession?.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
-
-            Analytics.SetSessionDateTimeTesting(dateStartSession);
-            await Analytics.StartSession();
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateStartSession,
+                SessionType = SessionType.Start
+            });
 
             var durationEnd = TimeSpan.FromMinutes(random.Next(1, 24 * 60));
-            DateTime? dateEndSession = dateStartSession?.Add(durationEnd);
-            Analytics.SetSessionDateTimeTesting(dateEndSession);
-            await Analytics.EndSession();
+            DateTime dateEndSession = dateStartSession.Add(durationEnd);
+
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateEndSession,
+                SessionType = SessionType.End
+            });
+
         }
 
-        await DisplayAlert("Info", "Turn on internet to send the sessiones", "Ok");
+        var settings = new JsonSerializerSettings
+        {
+            Converters = [new StringEnumConverter()],
+            Formatting = Formatting.Indented
+        };
+        
+         var json = JsonConvert.SerializeObject(offlineSessions, settings);
+
+        var filePath = Path.Combine(FileSystem.AppDataDirectory, OfflineSessionsFile);
+        File.WriteAllText(filePath, json);
+
+        await DisplayAlert("Info", $"Turn off and Turn on internet to send the sessions.", "Ok");
     }
+
 }
