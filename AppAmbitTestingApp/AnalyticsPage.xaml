@@ -9,20 +9,21 @@
                      Spacing="25"
                      VerticalOptions="Center">
                 <Button Text="Start Session"
-            Clicked="Button_OnStartSession"/>
+                    Clicked="Button_OnStartSession"/>
                 <Button Text="End Session"
-            Clicked="Button_OnEndSession"/>
+                    Clicked="Button_OnEndSession"/>
                 <Button Text='Send "Button Clicked" Event w/ property'
-            Clicked="Button_OnClicked"/>
+                    Clicked="Button_OnClicked"/>
                 <Button Text="Send Default Event w/ property"
-            Clicked="Button_OnClickedTestEvent"/>
+                    Clicked="Button_OnClickedTestEvent"/>
                 <Button Text="Send Max-300-Length Event"
-            Clicked="Button_OnClickedTestLimitsEvent"/>
+                    Clicked="Button_OnClickedTestLimitsEvent"/>
                 <Button Text="Send Max-20-Properties Event"
-            Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
-                <Button
-            Text="Send Batch of 220 Events" 
-            Clicked="OnGenerateBatchEvents" />
+                    Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
+                <Button Text="Send 30 Daily Events"
+                    Clicked="OnSend30DailyEvents" />
+                <Button Text="Send Batch of 220 Events" 
+                    Clicked="OnGenerateBatchEvents" />
             </VerticalStackLayout>
         </ScrollView>
     </ContentPage.Content>
