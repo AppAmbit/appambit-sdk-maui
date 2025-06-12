@@ -146,6 +146,16 @@ public static class Analytics
         _apiService?.SetToken("");
     }
 
+    public async static Task RequestToken()
+    {
+        await _apiService?.GetNewToken();
+    }
+
+    public static void ValidateOrInvaliteSession(bool value)
+    {
+        SessionManager.ValidateOrInvalidateSession(value);
+    }
+
     public static string FormattedSize(double size)
     {
         return FormattedRequestSize.FormatSize(size);
