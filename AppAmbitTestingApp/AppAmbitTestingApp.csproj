@@ -24,7 +24,7 @@
         <ApplicationTitle>AppAmbitTestingApp</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.appambittestingapp</ApplicationId>
+        <ApplicationId>com.AppAmbit.TestApp</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -79,4 +79,9 @@
       </MauiXaml>
     </ItemGroup>
 
+    <PropertyGroup Condition="$(TargetFramework.Contains('-ios')) and '$(Configuration)' == 'Release'">
+      <ApplicationId>com.AppAmbit.TestApp</ApplicationId>
+      <ApplicationTitle>AppAmbitTestingApp</ApplicationTitle>
+      <CodesignKey>iPhone Distribution: sonny stevenson (QP28PZ7FFF)</CodesignKey>
+    </PropertyGroup>
 </Project>

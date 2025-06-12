@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using AppAmbit.Utils;
 using Newtonsoft.Json;
 using SQLite;
 
@@ -22,6 +22,7 @@ public class EventEntity : Event
     [JsonIgnore]
     public string DataJson { get; set; } = "{}";
     
-    [JsonIgnore]
+    [JsonProperty("created_at")]
+    [JsonConverter(typeof(CustomDateTimeConverter))]
     public DateTime CreatedAt { get; set; }
 }

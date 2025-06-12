@@ -1,3 +1,4 @@
+using Shared.Utils;
 using AppAmbit;
 using AppAmbit.Models.App;
 using Shared.Models.App;
@@ -77,6 +78,21 @@ public partial class AnalyticsPage : ContentPage
             { "25", "25"},//25
         };
         await Analytics.TrackEvent("TestMaxProperties", properties);
+    }
+
+    private async void OnSend30DailyEvents(object? sender, EventArgs e)
+    {
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+        {
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
+        }
+        foreach(int index in Range(start: 0, count: 30))
+        {
+            var date = DateUtils.GetUtcNow.AddDays(-index);
+            await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
+        }
+        await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
     }
 
     private async void OnGenerateBatchEvents(object? sender, EventArgs e)
