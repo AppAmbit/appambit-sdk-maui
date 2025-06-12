@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿#if DEBUG
+using System.Diagnostics;
 
 namespace AppAmbit.Services;
 
@@ -69,3 +70,4 @@ public class LoggingHandler : DelegatingHandler
         }
     }
 }
+#endif

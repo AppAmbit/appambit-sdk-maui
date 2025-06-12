@@ -63,9 +63,8 @@ public partial class MainPage : ContentPage
 
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
     {
-#if DEBUG
         LoggingHandler.ResetTotalSize();
-#endif
+
         await DisplayAlert("Info", "Turn off internet", "Ok");
         foreach (int index in Range(1, 220))
         {
@@ -73,11 +72,10 @@ public partial class MainPage : ContentPage
         }
         await DisplayAlert("Info", "Logs generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
-#if DEBUG
+
         ButtonBatchUpload.Padding = 10;
         ButtonBatchUpload.FontSize = 12;
         ButtonBatchUpload.Text = $"Generate Logs for Batch upload ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
@@ -106,16 +104,12 @@ public partial class MainPage : ContentPage
 
     private async void OnSendTestLog(object sender, EventArgs e)
     {
-#if DEBUG
         LoggingHandler.ResetTotalSize();
-#endif
         await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
         await DisplayAlert("Info", "LogError Sent", "Ok");
-#if DEBUG
         ButtonDefaultLogError.Padding = 10;
         ButtonDefaultLogError.FontSize = 12;
         ButtonDefaultLogError.Text = $"Send Default LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 
     private async void OnSendTestException(object sender, EventArgs e)
@@ -126,31 +120,23 @@ public partial class MainPage : ContentPage
         }
         catch (Exception exception)
         {
-#if DEBUG
             LoggingHandler.ResetTotalSize();
-#endif
             await Crashes.LogError(exception, new Dictionary<string, string>() { { "user_id", "1" } });
             await DisplayAlert("Info", "LogError Sent", "Ok");
-#if DEBUG
             ButtonSendTestException.Padding = 10;
             ButtonSendTestException.FontSize = 12;
             ButtonSendTestException.Text = $"Send Exception LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
-#if DEBUG
         LoggingHandler.ResetTotalSize();
-#endif
         await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } }, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
-#if DEBUG
         ButtonTestLogWithClassFQN.Padding = 10;
         ButtonTestLogWithClassFQN.FontSize = 12;
         ButtonTestLogWithClassFQN.Text = $"Send ClassInfo LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 
     private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
@@ -160,9 +146,9 @@ public partial class MainPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
-#if DEBUG
+
         LoggingHandler.ResetTotalSize();
-#endif
+
         foreach (int index in Range(start: 1, count: 30))
         {
             var errorsDate = DateUtils.GetUtcNow.AddDays(-(30 - index));
@@ -171,11 +157,9 @@ public partial class MainPage : ContentPage
             await Task.Delay(500);
         }
         await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
-#if DEBUG
         ButtonLast30DailyErrors.Padding = 10;
         ButtonLast30DailyErrors.FontSize = 12;
         ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
@@ -191,7 +175,7 @@ public partial class MainPage : ContentPage
             var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
             var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
             info.CreatedAt = crashDate;
-            info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss")+"_"+index;
+            info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss") + "_" + index;
 
             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
 
@@ -214,16 +198,12 @@ public partial class MainPage : ContentPage
 
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-#if DEBUG
         LoggingHandler.ResetTotalSize();
-#endif
         await Crashes.LogError(LogMessage);
         await DisplayAlert("Info", "LogError Sent", "Ok");
-#if DEBUG
         ButtonCustomLogError.Padding = 10;
         ButtonCustomLogError.FontSize = 12;
         ButtonCustomLogError.Text = $"Send Custom LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 
     private async void OnGenerateTestCrash(object sender, EventArgs e)
@@ -236,7 +216,7 @@ public partial class MainPage : ContentPage
     {
         _logMessage = e.NewTextValue;
     }
-    
+
     private void OnTestToken(object? sender, EventArgs eventArgs)
     {
         Analytics.ClearToken();
@@ -244,9 +224,7 @@ public partial class MainPage : ContentPage
 
     private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
     {
-#if DEBUG
         LoggingHandler.ResetTotalSize();
-#endif
         Analytics.ClearToken();
         var logsTask = Range(0, 5).Select(
             _ => Task.Run(() => {
@@ -263,10 +241,8 @@ public partial class MainPage : ContentPage
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
         await DisplayAlert("Info", "5 events and errors sent", "Ok");
-#if DEBUG
         ButtonRefreshTest.Padding = 10;
         ButtonRefreshTest.FontSize = 12;
         ButtonRefreshTest.Text = $"Token refresh test ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
-#endif
     }
 }
