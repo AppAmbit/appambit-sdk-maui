@@ -2,11 +2,12 @@ name: Build IPA
 
 on:
   push:
-    branches: [ develop]
+    branches: [ develop ]
 
 jobs:
   maui-ios:
     runs-on: macos-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,15 +25,20 @@ jobs:
       - name: Install MAUI Workload
         run: dotnet workload install maui ios
 
+      - name: Reset keychain environment
+        run: |
+          security delete-keychain build.keychain || true
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -l build.keychain
+
       - name: Decode and install P12 certificate
         env:
           P12_CERTIFICATE_BASE64: ${{ secrets.IOS_P12_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.IOS_APPLE_P12_PASSWORD }}
         run: |
           echo "$P12_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
           security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -A
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
@@ -44,6 +50,7 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           UUID=$(security cms -D -i profile.mobileprovision | plutil -extract UUID xml1 -o - - | xmllint --xpath "string(//string)" -)
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "UUID=$UUID" >> $GITHUB_ENV
 
       - name: Restore dependencies
         run: dotnet restore AppAmbitTestingApp/AppAmbitTestingApp.csproj
@@ -53,7 +60,7 @@ jobs:
           dotnet publish AppAmbitTestingApp/AppAmbitTestingApp.csproj \
             -c Release -f net8.0-ios \
             -p:ArchiveOnBuild=true \
-            -p:CodesignProvision=$UUID \
+            -p:CodesignProvision=${{ env.UUID }} \
             -o ./publish-ios
 
       - name: Upload IPA as Artifact
