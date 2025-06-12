@@ -1,3 +1,4 @@
+using Shared.Utils;
 using AppAmbit;
 using AppAmbit.Services;
 using static System.Linq.Enumerable;
@@ -109,6 +110,21 @@ public partial class AnalyticsPage : ContentPage
         ButtonMax20PropertiesEvent.Padding = 10;
         ButtonMax20PropertiesEvent.FontSize = 12;
         ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+    }
+
+    private async void OnSend30DailyEvents(object? sender, EventArgs e)
+    {
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+        {
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
+        }
+        foreach(int index in Range(start: 0, count: 30))
+        {
+            var date = DateUtils.GetUtcNow.AddDays(-index);
+            await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
+        }
+        await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
     }
 
     private async void OnGenerateBatchEvents(object? sender, EventArgs e)

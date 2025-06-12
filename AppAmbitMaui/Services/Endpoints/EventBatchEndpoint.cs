@@ -10,6 +10,9 @@ internal class EventBatchEndpoint: BaseEndpoint, IEndpoint
     {
         Url = "/events/batch";
         Method = HttpMethodEnum.Post;
-        Payload = eventBatch;
+        Payload = new EventBatchPayload
+        {
+            Events = eventBatch
+        };
     }
 }

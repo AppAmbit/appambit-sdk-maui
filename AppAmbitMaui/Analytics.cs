@@ -6,6 +6,7 @@ using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
 using AppAmbit.Utils;
+using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -65,13 +66,12 @@ public static class Analytics
         });
     }
 
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
     {
-        await SendOrSaveEvent(eventTitle, data);
+        await SendOrSaveEvent(eventTitle, data, createdAt);
     }
 
-
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
     {
         data = (data ?? new Dictionary<string, string>())
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
@@ -101,7 +101,7 @@ public static class Analytics
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
                 Data = data,
-                CreatedAt = DateTime.Now,
+                CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow,
             };
 
             if (storageService != null)
