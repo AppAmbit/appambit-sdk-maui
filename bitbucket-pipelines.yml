@@ -1,0 +1,59 @@
+image: atlassian/default-image:4
+
+pipelines:
+  branches:
+    develop:
+      - step:
+          name: Build Android APK
+          caches:
+            - dotnetcore
+          script:
+          - apt-get update && apt-get install -y wget unzip openjdk-17-jdk
+          - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+          - chmod +x dotnet-install.sh
+          - ./dotnet-install.sh --version 8.0.100
+          - export DOTNET_ROOT=$HOME/.dotnet
+          - export PATH=$PATH:$HOME/.dotnet
+          - export ANDROID_SDK_ROOT=$HOME/android-sdk
+          - mkdir -p $ANDROID_SDK_ROOT
+          - cd $ANDROID_SDK_ROOT
+          - wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+          - unzip cmdline-tools.zip -d temp-cmdline
+          - mkdir -p cmdline-tools/latest
+          - mv temp-cmdline/cmdline-tools/* cmdline-tools/latest/
+          - rm -rf temp-cmdline
+          - export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+          - export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
+          - yes | sdkmanager --licenses
+          - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+          - echo $ANDROID_KEYSTORE_FILE | base64 -d > appambit.keystore
+          - dotnet workload install maui-android
+          - cd /opt/atlassian/pipelines/agent/build/AppAmbitTestingApp
+          - dotnet restore -p:TargetFramework=net8.0-android
+          - |
+            dotnet build -c Release -f net8.0-android \
+              -p:AndroidSigningKeyStore=../appambit.keystore \
+              -p:AndroidSigningKeyAlias=kavaup \
+              -p:AndroidSigningKeyPass="$ANDROID_KEYSTORE_PASSWORD" \
+              -p:AndroidSigningStorePass="$ANDROID_KEYSTORE_PASSWORD_ALIAS" \
+              -p:AndroidSdkDirectory="$ANDROID_SDK_ROOT" \
+              --no-restore
+
+          - APK_FILE=$(find . -name "*.apk" -type f | head -1)
+          - echo "$APK_FILE"
+          - COMMIT_SHORT=${BITBUCKET_COMMIT:0:7}
+          - APK_NAME="AppAmbit.apk"
+          - cp "$APK_FILE" "../$APK_NAME"
+
+          artifacts:
+            - "*.apk"
+      - step:
+            name: Subir archivo IPA
+            image: atlassian/default-image:4
+            script:
+              - pipe: atlassian/bitbucket-upload-file:0.1.2
+                variables:
+                  BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                  BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                  FILENAME: "AppAmbit.apk"
