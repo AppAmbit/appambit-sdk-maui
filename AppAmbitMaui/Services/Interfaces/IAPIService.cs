@@ -12,6 +12,4 @@ internal interface IAPIService
     string? GetToken();
     
     Task<ApiErrorType> GetNewToken(string appKey = "");
-
-    double GetRequestSize();
 }

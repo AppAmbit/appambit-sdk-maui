@@ -146,11 +146,6 @@ public static class Analytics
         _apiService?.SetToken("");
     }
 
-    public static double GetRequestSize()
-    {
-        return _apiService.GetRequestSize();
-    }
-
     public static string FormattedSize(double size)
     {
         return FormattedRequestSize.FormatSize(size);

@@ -17,8 +17,6 @@ internal class APIService : IAPIService
 {
     private string? _token;
     private Task<ApiErrorType>? currentTokenRenewalTask;
-    private static double _requestSize = 0;
-    public static double RequestSize { get => _requestSize; set => _requestSize = value; }
 
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
@@ -147,12 +145,21 @@ internal class APIService : IAPIService
 
     private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
     {
+        HttpClient httpClient;
+
+#if DEBUG
         var handler = new HttpClientHandler();
         var loggingHandler = new LoggingHandler(handler);
-        var httpClient = new HttpClient(loggingHandler)
+        httpClient = new HttpClient(loggingHandler)
         {
             Timeout = TimeSpan.FromMinutes(2),
         };
+#else
+        httpClient = new HttpClient()
+        {
+            Timeout = TimeSpan.FromMinutes(2),
+        };
+#endif
         httpClient.DefaultRequestHeaders
             .Accept
             .Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -343,27 +350,6 @@ internal class APIService : IAPIService
             throw new Exception();
         }
         return result;
-    }
-
-    internal static async Task CalculateRequestSize(HttpRequestMessage request)
-    {
-        int bodySize = 0;
-
-        if (request.Content != null)
-        {
-            var content = await request.Content.ReadAsByteArrayAsync();
-            bodySize = content.Length;
-        }
-
-        RequestSize = bodySize;
-        var result = $"{RequestSize:F4}";
-
-        Debug.WriteLine($"[APIService] - TOTAL SIZE: {result} BYTES");
-    }
-
-    public double GetRequestSize()
-    {
-        return _requestSize;
     }
 
     private bool HasInternetConnection() =>

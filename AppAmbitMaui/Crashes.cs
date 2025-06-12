@@ -325,11 +325,6 @@ public static class Crashes
         }
     }
 
-    public static double GetRequestSize()
-    {
-        return _apiService.GetRequestSize();
-    }
-
     public static string FormattedSize(double size)
     {
         return FormattedRequestSize.FormatSize(size);

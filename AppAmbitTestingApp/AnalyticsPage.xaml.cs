@@ -12,38 +12,61 @@ public partial class AnalyticsPage : ContentPage
 
     private async void Button_OnStartSession(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         await Analytics.StartSession();
+#if DEBUG
         ButtonStartSession.Padding = 10;
         ButtonStartSession.FontSize = 12;
-        ButtonStartSession.Text = $"Start Session ({Analytics.FormattedSize(Analytics.GetRequestSize())})";
+        ButtonStartSession.Text = $"Start Session ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+#endif
     }
     
     private async void Button_OnEndSession(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         await Analytics.EndSession();
+#if DEBUG
         ButtonEndSession.Padding = 10;
         ButtonEndSession.FontSize = 12;
-        ButtonEndSession.Text = $"End Session ({Analytics.FormattedSize(Analytics.GetRequestSize())})";
+        ButtonEndSession.Text = $"End Session ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+#endif
     }
 
     private async void Button_OnClicked(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
+#if DEBUG
         ButtonClickedEventWProperty.Padding = 10;
         ButtonClickedEventWProperty.FontSize = 12;
-        ButtonClickedEventWProperty.Text = $"Send 'Button Clicked' Event w/ property {Analytics.FormattedSize(Analytics.GetRequestSize())}";
+        ButtonClickedEventWProperty.Text = $"Send 'Button Clicked' Event w/ property {Analytics.FormattedSize(LoggingHandler.TotalRequestSize)}";
+#endif
     }
     
     private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         await Analytics.GenerateTestEvent();
+#if DEBUG
         ButtonDefaultClickedEventWProperty.Padding = 10;
         ButtonDefaultClickedEventWProperty.FontSize = 12;
-        ButtonDefaultClickedEventWProperty.Text = $"Send Default Event w/ property ({Analytics.FormattedSize(Analytics.GetRequestSize())})";
+        ButtonDefaultClickedEventWProperty.Text = $"Send Default Event w/ property ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+#endif
     }
 
     private async void Button_OnClickedTestLimitsEvent(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         //300 characters:
         var _300Characters ="123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
         var _300Characters2 ="1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678902";
@@ -53,13 +76,18 @@ public partial class AnalyticsPage : ContentPage
             { _300Characters2, _300Characters2 }
         };
         await Analytics.TrackEvent(_300Characters,properties );
+#if DEBUG
         ButtonMax300LengthEvent.Padding = 10;
         ButtonMax300LengthEvent.FontSize = 12;
-        ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({Analytics.FormattedSize(Analytics.GetRequestSize())})";
+        ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+#endif
     }
 
     private async void Button_OnClickedTestMaxPropertiesEvent(object? sender, EventArgs e)
     {
+#if DEBUG
+        LoggingHandler.ResetTotalSize();
+#endif
         var properties = new Dictionary<string, string>
         {
             { "01", "01"},
@@ -89,24 +117,21 @@ public partial class AnalyticsPage : ContentPage
             { "25", "25"},//25
         };
         await Analytics.TrackEvent("TestMaxProperties",properties );
+#if DEBUG
         ButtonMax20PropertiesEvent.Padding = 10;
         ButtonMax20PropertiesEvent.FontSize = 12;
-        ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({Analytics.FormattedSize(Analytics.GetRequestSize())})";
+        ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+#endif
     }
 
     private async void OnGenerateBatchEvents(object? sender, EventArgs e)
     {
         await DisplayAlert("Info", "Turn off internet", "Ok");
-        double totalSize = 0;
         foreach (int index in Range( 1, 220 ))
         {
             await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "test1", "test1" } });
-            totalSize += Analytics.GetRequestSize();
         }
         await DisplayAlert("Info", "Events generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
-        Button220BatchEvents.Padding = 10;
-        Button220BatchEvents.FontSize = 12;
-        Button220BatchEvents.Text = $"Send Batch of 220 Events ({Analytics.FormattedSize(totalSize)})";
     }
 }
