@@ -1,12 +1,7 @@
-# based on: https://github.com/Redth/Maui.ContentButton/blob/main/.github/workflows/build-publish.yml
-name: Build and Publish NuGet Package 2
+name: Build and Publish NuGet Package
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
-  release:
-    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,9 +9,10 @@ permissions:
 jobs:
   build:
     name: Build
+    timeout-minutes: 20
     env:
       NUPKG_MAJOR: 0.999
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
 
       - name: Checkout repository
@@ -28,11 +24,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Install .NET MAUI
-        shell: pwsh
         run: |
-          & dotnet nuget locals all --clear
-          & dotnet workload install maui --source https://api.nuget.org/v3/index.json
-          & dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
+          dotnet nuget locals all --clear
+          dotnet workload install maui --source https://api.nuget.org/v3/index.json
+          dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
 
       - name: Restore dependencies
         run: dotnet restore
@@ -42,36 +37,32 @@ jobs:
 
       - name: Get project version
         id: project_version
-        shell: pwsh
         run: |
-          [xml]$proj = Get-Content ./AppAmbitMaui/AppAmbitMaui.csproj
-          $version = $proj.Project.PropertyGroup.Version
-          echo "Project version: $version"
-          echo "::set-output name=csproj_version::$version"
+          VERSION=$(grep -oP '<Version>\K[^<]+' ./AppAmbitMaui/AppAmbitMaui.csproj)
+          echo "Project version: $VERSION"
+          echo "csproj_version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Package NuGets and set version
         id: package_set_version
-        shell: pwsh
         run: |
-          $NUPKG_Version= "$env:NUPKG_MAJOR"
-          $VERSION="$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
-          if ($env:GITHUB_EVENT_NAME -eq "release") {
-            $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
-          }
-          echo "::set-output name=ngpkgversion::$NUPKG_Version"
-          echo "::set-output name=pkgverci::$VERSION"
+          NUPKG_Version="${NUPKG_MAJOR}"
+          VERSION="${NUPKG_MAJOR}-ci${GITHUB_RUN_ID}"
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            VERSION="${GITHUB_REF##*/}"
+          fi
+          echo "ngpkgversion=$NUPKG_Version" >> $GITHUB_OUTPUT
+          echo "pkgverci=$VERSION" >> $GITHUB_OUTPUT
           echo "PACKAGE VERSION: $VERSION"
-          echo "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
 
       - name: Create artifacts directory
-        run: mkdir artifacts
+        run: mkdir -p artifacts
 
       - name: Package NuGet
         run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.project_version.outputs.csproj_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
       - name: Upload release asset
         id: create_release
-#        if: 1 == 0 # change this if you want to publish.
+        if: false # change this to true if you want to publish
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.project_version.outputs.csproj_version }}
@@ -81,32 +72,3 @@ jobs:
             AppAmbit v${{ steps.project_version.outputs.csproj_version }} - Preview Release
             This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
           prerelease: true
-
-#    - name: Artifacts
-#      uses: actions/upload-artifact@v4
-#      with:
-#        name: NuGet
-#        path: ./artifacts
-
-#  publish:
-#    name: Publish
-#    needs: build
-#    runs-on: windows-latest
-#    if: github.event_name == 'release'
-#    steps:
-#      - name: Download Artifacts
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: NuGet
-#      - name: Setup .NET
-#        uses: actions/setup-dotnet@v3
-#        with:
-#          dotnet-version: '9.0.x'
-#      - name: Push to NuGet
-#        run: |
-#          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-# test
-# test 2
-# test 3
-
