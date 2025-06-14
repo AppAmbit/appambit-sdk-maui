@@ -1,10 +1,11 @@
-image: atlassian/default-image:4
+image: mcr.microsoft.com/dotnet/sdk:8.0
 
 pipelines:
   branches:
     develop:
       - step:
           name: Build Android APK
+          max-time: 10
           caches:
             - dotnetcore
           script:
@@ -48,12 +49,117 @@ pipelines:
 
           artifacts:
             - "*.apk"
+
       - step:
-            name: Subir archivo IPA
-            image: atlassian/default-image:4
-            script:
-              - pipe: atlassian/bitbucket-upload-file:0.1.2
-                variables:
-                  BITBUCKET_USERNAME: $BITBUCKET_USERNAME
-                  BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-                  FILENAME: "AppAmbit.apk"
+          name: Upload APK
+          max-time: 5
+          image: atlassian/default-image:4
+          script:
+            - pipe: atlassian/bitbucket-upload-file:0.1.2
+              variables:
+                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME: "AppAmbit.apk"
+
+      - step:
+          name: Build iOS IPA
+          max-time: 10
+          runs-on:
+            - self.hosted
+            - macos
+          caches:
+            - dotnetcore
+          script:
+            - echo "Configuring Xcode"
+            - sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+            - export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+            - xcrun --sdk iphoneos --show-sdk-version
+            - xcrun --sdk iphoneos --show-sdk-path
+
+            - echo "Downloading iOS platform"
+            - sudo xcodebuild -downloadPlatform iOS
+
+            - echo "Installing MAUI workloads"
+            - sudo dotnet workload install maui ios
+
+            - echo "Restoring packages"
+            - dotnet restore AppAmbitTestingApp/AppAmbitTestingApp.csproj -p:TargetFramework=net8.0-ios
+
+            - echo "Installing certificate and provisioning profile"
+            - |
+                export HOME=/var/root
+                mkdir -p "$HOME/Library/Keychains"
+                mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+                KC="$HOME/Library/Keychains/build.keychain"
+
+                # Decode files
+                echo "$IOS_P12_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > cert.p12
+                echo "$IOS_PROVISIONING_PROFILE_BASE64"  | tr -d '\n' | base64 --decode > profile.mobileprovision
+
+                # Create and configure keychain
+                security delete-keychain "$KC" || true
+                security create-keychain -p "" "$KC"
+                # ensure our new keychain is in the search list
+                security list-keychains -s "$KC" "$HOME/Library/Keychains/login.keychain-db"
+                security default-keychain -s "$KC"
+                security unlock-keychain -p "" "$KC"
+                security set-keychain-settings -t 3600 -l "$KC"
+
+                # Import P12 without prompt
+                security import cert.p12 \
+                  -k "$KC" \
+                  -P "$IOS_APPLE_P12_PASSWORD" \
+                  -T /usr/bin/codesign \
+                  -A
+
+                # Allow codesign and Apple tools to access keys
+                security set-key-partition-list \
+                  -S apple-tool:,apple: \
+                  -s \
+                  -k "" \
+                  "$KC"
+
+                # Move provisioning profile into place
+                mv profile.mobileprovision \
+                  "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+
+                # DEBUG: list identities
+                echo "Code‐signing identities in keychain:"
+                security find-identity -v -p codesigning "$KC"
+
+            - echo "Publishing signed IPA"
+            - |
+                dotnet publish AppAmbitTestingApp/AppAmbitTestingApp.csproj \
+                  -f net8.0-ios \
+                  -c Release \
+                  -p:RuntimeIdentifier=ios-arm64 \
+                  -p:ArchiveOnBuild=true \
+                  -p:BuildIpa=true \
+                  -p:Platform=iOS \
+                  -p:MtouchLink=Full \
+                  -p:SupportedOSPlatformVersion=11.0 \
+                  -p:CodesignProvision=$UUID \
+                  -p:CodesignKey="iPhone Distribution: sonny stevenson (QP28PZ7FFF)" \
+                  -o publish-ios
+
+            - echo "List of IPAs in publish-ios/"
+            - ls -l publish-ios/*.ipa
+
+            - echo "Packaging artifacts"
+            - mkdir -p artifacts
+            - cp publish-ios/*.ipa artifacts/
+
+          artifacts:
+            - artifacts/*.ipa
+
+      - step:
+          name: Upload IPA
+          max-time: 10
+          image: atlassian/default-image:4
+          script:
+            - IPA_FILE=$(ls artifacts/*.ipa)
+            - pipe: atlassian/bitbucket-upload-file:0.7.4
+              variables:
+                BITBUCKET_USERNAME:     $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME:               $IPA_FILE
