@@ -2,8 +2,7 @@ name: Build and Publish NuGet Package
 
 on:
   push:
-    branches:
-      - feature/Nuget_CICD
+    branches: [ feature/Nuget_CICD ]
 
 permissions:
   contents: write
@@ -11,11 +10,12 @@ permissions:
 jobs:
   build:
     name: Build
-    timeout-minutes: 20
+    timeout-minutes: 15
     env:
       NUPKG_MAJOR: 0.999
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -25,6 +25,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Install .NET MAUI
+        shell: pwsh
         run: |
           dotnet nuget locals all --clear
           dotnet workload install maui --source https://api.nuget.org/v3/index.json
@@ -34,29 +35,32 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
       - name: Get project version
         id: project_version
+        shell: pwsh
         run: |
-          VERSION=$(grep -oP '<Version>\K[^<]+' ./AppAmbitMaui/AppAmbitMaui.csproj)
-          echo "Project version: $VERSION"
-          echo "csproj_version=$VERSION" >> $GITHUB_OUTPUT
+          [xml]$proj = Get-Content ./AppAmbitMaui/AppAmbitMaui.csproj
+          $version = $proj.Project.PropertyGroup.Version
+          Write-Output "Project version: $version"
+          "csproj_version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Package NuGets and set version
         id: package_set_version
+        shell: pwsh
         run: |
-          NUPKG_Version="${NUPKG_MAJOR}"
-          VERSION="${NUPKG_MAJOR}-ci${GITHUB_RUN_ID}"
-          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
-            VERSION="${GITHUB_REF##*/}"
-          fi
-          echo "ngpkgversion=$NUPKG_Version" >> $GITHUB_OUTPUT
-          echo "pkgverci=$VERSION" >> $GITHUB_OUTPUT
-          echo "PACKAGE VERSION: $VERSION"
+          $NUPKG_Version = "$env:NUPKG_MAJOR"
+          $VERSION = "$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
+          if ($env:GITHUB_EVENT_NAME -eq "release") {
+            $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
+          }
+          Write-Output "PACKAGE VERSION: $VERSION"
+          "ngpkgversion=$NUPKG_Version" >> $env:GITHUB_OUTPUT
+          "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
 
       - name: Create artifacts directory
-        run: mkdir -p artifacts
+        run: mkdir -Force artifacts
 
       - name: Package NuGet
         run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.project_version.outputs.csproj_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
