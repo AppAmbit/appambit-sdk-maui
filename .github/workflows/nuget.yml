@@ -1,7 +1,9 @@
 name: Build and Publish NuGet Package
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - feature/Nuget_CICD
 
 permissions:
   contents: write
