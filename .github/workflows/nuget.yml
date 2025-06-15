@@ -4,76 +4,47 @@ on:
   push:
     branches: [ feature/Nuget_CICD ]
 
-permissions:
-  contents: write
-
 jobs:
-  build:
-    name: Build
-    timeout-minutes: 15
-    env:
-      NUPKG_MAJOR: 0.999
-    runs-on: windows-latest
-    steps:
+  generate-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: GitHub Tag Bump
+        id: tab_bump
+        uses: anothrNick/github-tag-action@1.71.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INITIAL_VERSION: 1.0.0
+          DEFAULT_BUMP: patch
+
+    outputs:
+      new_version: ${{ steps.tab_bump.outputs.new_tag }}
+
+  package-and-publish-lib:
+    runs-on: ubuntu-latest
+    needs: generate-version
+
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 8.0.x
 
-      - name: Install .NET MAUI
-        shell: pwsh
+      - name: Generate NuGet package
         run: |
-          dotnet nuget locals all --clear
-          dotnet workload install maui --source https://api.nuget.org/v3/index.json
-          dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
+          dotnet pack ./AppAmbitMaui/AppAmbitMaui.csproj \
+          --configuration Release \
+          -p:PackageVersion=${{ needs.generate-version.outputs.new_version }} \
+          -o packages
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Get project version
-        id: project_version
-        shell: pwsh
-        run: |
-          [xml]$proj = Get-Content ./AppAmbitMaui/AppAmbitMaui.csproj
-          $version = $proj.Project.PropertyGroup.Version
-          Write-Output "Project version: $version"
-          "csproj_version=$version" >> $env:GITHUB_OUTPUT
-
-      - name: Package NuGets and set version
-        id: package_set_version
-        shell: pwsh
-        run: |
-          $NUPKG_Version = "$env:NUPKG_MAJOR"
-          $VERSION = "$env:NUPKG_MAJOR-ci$env:GITHUB_RUN_ID"
-          if ($env:GITHUB_EVENT_NAME -eq "release") {
-            $VERSION = $env:GITHUB_REF.Substring($env:GITHUB_REF.LastIndexOf('/') + 1)
-          }
-          Write-Output "PACKAGE VERSION: $VERSION"
-          "ngpkgversion=$NUPKG_Version" >> $env:GITHUB_OUTPUT
-          "pkgverci=$VERSION" >> $env:GITHUB_OUTPUT
-
-      - name: Create artifacts directory
-        run: mkdir -Force artifacts
-
-      - name: Package NuGet
-        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.project_version.outputs.csproj_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
-
-      - name: Upload release asset
-        id: create_release
-        if: false # change this to true if you want to publish
-        uses: softprops/action-gh-release@v2
+      - name: Upload NuGet package as artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: v${{ steps.project_version.outputs.csproj_version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./artifacts/*.nupkg
-          body: |
-            AppAmbit v${{ steps.project_version.outputs.csproj_version }} - Preview Release
-            This is the initial preview release of AppAmbit — designed to help developers easily track analytics, capture crashes, and monitor usage across mobile and desktop apps.
-          prerelease: true
+          name: nuget-package-${{ needs.generate-version.outputs.new_version }}
+          path: packages/*.nupkg
