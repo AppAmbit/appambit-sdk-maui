@@ -1,9 +1,7 @@
 name: Build and Publish NuGet Package
 
-on:
-  pull_request:
-  push:
-    branches: [ feature/Nuget_CICD]
+on: 
+  workflow_dispatch:
   release:
     types: [published]
 
