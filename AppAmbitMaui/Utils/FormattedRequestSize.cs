@@ -10,11 +10,11 @@
             }
             else if (size < 1024 * 1024)
             {
-                return $"{(size / 1024):F2} KB";
+                return $"{size / 1024:F2} KB";
             }
             else
             {
-                return $"{(size / (1024 * 1024)):F2} MB";
+                return $"{size / 1024 * 1024:F2} MB";
             }
         }
     }
