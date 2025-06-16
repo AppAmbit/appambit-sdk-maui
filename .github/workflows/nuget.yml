@@ -20,6 +20,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INITIAL_VERSION: 1.0.0
           DEFAULT_BUMP: patch
+          FORCE: true # Force the tag bump even if the version already exists
 
     outputs:
       new_version: ${{ steps.tab_bump.outputs.new_tag }}
@@ -41,7 +42,7 @@ jobs:
 
       - name: Build the project
         run: dotnet build ./AppAmbitMaui/AppAmbitMaui.csproj --configuration Release
-        
+
       - name: Generate NuGet package
         run: |
           dotnet pack ./AppAmbitMaui/AppAmbitMaui.csproj \
