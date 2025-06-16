@@ -39,7 +39,7 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $tags = git tag -l "v*.*.*" | Sort-Object {[System.Version]($_ -replace '^v', '')} -Descending
+          $tags = git tag -l "v*.*.*" | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } | Sort-Object {[System.Version]($_ -replace '^v', '')} -Descending
           
           if ($tags.Count -eq 0) {
             $CURRENT_VERSION = $env:INITIAL_VERSION
@@ -55,7 +55,7 @@ jobs:
           $minor = [int]$versionParts[1]
           $patch = [int]$versionParts[2]
           
-          $INCREMENT_TYPE = "patch"  # Por defecto incrementar patch
+          $INCREMENT_TYPE = "patch"
           
           $COMMIT_MESSAGE = git log -1 --pretty=%B
           Write-Host "Commit message: $COMMIT_MESSAGE"
@@ -84,7 +84,6 @@ jobs:
           $NEW_VERSION = "$major.$minor.$patch"
           $NEW_TAG = "v$NEW_VERSION"
           
-          # Verificar si el tag ya existe
           $tagExists = git tag -l $NEW_TAG
           if ($tagExists) {
             Write-Host "Tag $NEW_TAG already exists. Incrementing patch version."
