@@ -1,6 +1,7 @@
 name: Build and Publish NuGet Package
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
 
 jobs:
   generate-version:
