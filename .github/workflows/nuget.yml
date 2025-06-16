@@ -39,30 +39,24 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          # Obtener el último tag que siga el formato v*.*.* 
           $tags = git tag -l "v*.*.*" | Sort-Object {[System.Version]($_ -replace '^v', '')} -Descending
           
           if ($tags.Count -eq 0) {
-            # Si no hay tags, usar la versión inicial
             $CURRENT_VERSION = $env:INITIAL_VERSION
             Write-Host "No previous tags found. Using initial version: $CURRENT_VERSION"
           } else {
-            # Obtener la versión más reciente
             $LATEST_TAG = $tags[0]
             $CURRENT_VERSION = $LATEST_TAG -replace '^v', ''
             Write-Host "Latest tag found: $LATEST_TAG (version: $CURRENT_VERSION)"
           }
           
-          # Parsear la versión actual
           $versionParts = $CURRENT_VERSION.Split('.')
           $major = [int]$versionParts[0]
           $minor = [int]$versionParts[1]
           $patch = [int]$versionParts[2]
           
-          # Determinar el tipo de incremento basado en el contexto
           $INCREMENT_TYPE = "patch"  # Por defecto incrementar patch
           
-          # Buscar palabras clave en el commit message para determinar el tipo de incremento
           $COMMIT_MESSAGE = git log -1 --pretty=%B
           Write-Host "Commit message: $COMMIT_MESSAGE"
           
@@ -72,7 +66,6 @@ jobs:
             $INCREMENT_TYPE = "minor"
           }
           
-          # Incrementar la versión según el tipo
           switch ($INCREMENT_TYPE) {
             "major" {
               $major++
@@ -105,7 +98,6 @@ jobs:
           if ($IS_PRERELEASE) {
             $BRANCH_NAME = $env:GITHUB_REF_NAME -replace '[^a-zA-Z0-9]', '-'
             $BUILD_NUMBER = $env:GITHUB_RUN_NUMBER
-            $NEW_VERSION = "$NEW_VERSION-$BRANCH_NAME.$BUILD_NUMBER"
             $NEW_TAG = "v$NEW_VERSION"
           }
           
@@ -139,7 +131,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
-          name: "AppAmbit ${{ steps.version.outputs.new_tag }}"
+          name: "${{ steps.version.outputs.new_tag }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./artifacts/*.nupkg
           body: |
@@ -166,4 +158,3 @@ jobs:
             ---
             **Build**: #${{ github.run_number }} | **Workflow**: ${{ github.workflow }}
           prerelease: ${{ steps.version.outputs.is_prerelease }}
-          generate_release_notes: true
