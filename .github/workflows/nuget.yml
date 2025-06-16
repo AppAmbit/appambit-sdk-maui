@@ -4,9 +4,10 @@ on:
   push: 
     branches: [ feature/Nuget_CICD ]
     # workflow_dispatch
+
 jobs:
   generate-version:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
       
@@ -19,22 +20,36 @@ jobs:
 
       - name: Get latest tag
         id: get_latest_tag
+        shell: pwsh
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          echo "Latest tag found: $LATEST_TAG"
+          try {
+            $LATEST_TAG = git describe --tags --abbrev=0 2>$null
+            if (-not $LATEST_TAG) {
+              $LATEST_TAG = "v0.0.0"
+            }
+          } catch {
+            $LATEST_TAG = "v0.0.0"
+          }
+          echo "latest_tag=$LATEST_TAG" >> $env:GITHUB_OUTPUT
+          Write-Host "Latest tag found: $LATEST_TAG"
 
       - name: Determine version bump type
         id: bump_type
+        shell: pwsh
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ $COMMIT_MSG == *"BREAKING CHANGE"* ]] || [[ $COMMIT_MSG == *"major:"* ]]; then
-            echo "bump=major" >> $GITHUB_OUTPUT
-          elif [[ $COMMIT_MSG == *"feat:"* ]] || [[ $COMMIT_MSG == *"feature:"* ]]; then
-            echo "bump=minor" >> $GITHUB_OUTPUT
-          else
-            echo "bump=patch" >> $GITHUB_OUTPUT
-          fi
+          $COMMIT_MSG = git log -1 --pretty=%B
+          Write-Host "Commit message: $COMMIT_MSG"
+          
+          if ($COMMIT_MSG -match "BREAKING CHANGE" -or $COMMIT_MSG -match "major:") {
+            echo "bump=major" >> $env:GITHUB_OUTPUT
+            Write-Host "Version bump: major"
+          } elseif ($COMMIT_MSG -match "feat:" -or $COMMIT_MSG -match "feature:") {
+            echo "bump=minor" >> $env:GITHUB_OUTPUT
+            Write-Host "Version bump: minor"
+          } else {
+            echo "bump=patch" >> $env:GITHUB_OUTPUT
+            Write-Host "Version bump: patch"
+          }
 
       - name: Generate new version
         id: version_bump
@@ -52,7 +67,7 @@ jobs:
       previous_version: ${{ steps.get_latest_tag.outputs.latest_tag }}
 
   package-and-publish-lib:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: generate-version
     if: needs.generate-version.outputs.new_version != ''
 
@@ -66,40 +81,81 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Install MAUI workloads
+        shell: pwsh
         run: |
+          Write-Host "Installing MAUI workloads..."
           dotnet workload install maui
+          Write-Host "Workloads installed successfully"
+
+      - name: List installed workloads
+        shell: pwsh
+        run: |
+          Write-Host "Installed workloads:"
+          dotnet workload list
 
       - name: Restore dependencies
+        shell: pwsh
         run: |
-          dotnet restore ./AppAmbitMaui/AppAmbitMaui.csproj \
-          --property TargetFramework=net8.0
+          Write-Host "Restoring dependencies..."
+          dotnet restore ./AppAmbitMaui/AppAmbitMaui.csproj --property TargetFramework=net8.0
 
       - name: Build library
+        shell: pwsh
         run: |
-          dotnet build ./AppAmbitMaui/AppAmbitMaui.csproj \
-          --configuration Release \
-          --no-restore \
-          --property TargetFramework=net8.0
+          Write-Host "Building library..."
+          dotnet build ./AppAmbitMaui/AppAmbitMaui.csproj --configuration Release --no-restore --property TargetFramework=net8.0
 
       - name: Generate NuGet package
+        shell: pwsh
         run: |
-          VERSION=${{ needs.generate-version.outputs.new_version }}
-          CLEAN_VERSION=${VERSION#v}
+          $VERSION = "${{ needs.generate-version.outputs.new_version }}"
+          $CLEAN_VERSION = $VERSION -replace '^v', ''
+          Write-Host "Original version: $VERSION"
+          Write-Host "Clean version: $CLEAN_VERSION"
           
-          dotnet pack ./AppAmbitMaui/AppAmbitMaui.csproj \
-          --configuration Release \
-          --no-build \
-          --property TargetFramework=net8.0 \
-          -p:PackageVersion=$CLEAN_VERSION \
-          -p:AssemblyVersion=$CLEAN_VERSION \
-          -p:FileVersion=$CLEAN_VERSION \
-          -o packages
+          dotnet pack ./AppAmbitMaui/AppAmbitMaui.csproj --configuration Release --no-build --property TargetFramework=net8.0 -p:PackageVersion=$CLEAN_VERSION -p:AssemblyVersion=$CLEAN_VERSION -p:FileVersion=$CLEAN_VERSION -o packages
 
       - name: List generated packages
-        run: ls -la packages/
+        shell: pwsh
+        run: |
+          Write-Host "Generated packages:"
+          Get-ChildItem -Path packages -Filter "*.nupkg" | Format-Table Name, Length, LastWriteTime
 
       - name: Upload NuGet package as artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-package-${{ needs.generate-version.outputs.new_version }}
           path: packages/*.nupkg
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.generate-version.outputs.new_version }}
+          release_name: Release ${{ needs.generate-version.outputs.new_version }}
+          body: |
+            ## Changes in this Release
+            - Version bumped from ${{ needs.generate-version.outputs.previous_version }} to ${{ needs.generate-version.outputs.new_version }}
+            
+            ## Package Information
+            - **Package Version**: ${{ needs.generate-version.outputs.new_version }}
+            - **Build Date**: ${{ github.event.head_commit.timestamp }}
+            - **Commit**: ${{ github.sha }}
+            - **Platform**: Windows
+          draft: false
+          prerelease: false
+
+  publish-to-nuget:
+    runs-on: windows-latest
+    needs: [generate-version, package-and-publish-lib]
+    if: github.ref == 'refs/heads/main' && needs.generate-version.outputs.new_version != ''
+    environment: development
+
+    steps:
+      - name: Download NuGet package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-package-${{ needs.generate-version.outputs.new_version }}
+          path: packages
