@@ -1,10 +1,9 @@
-name: Build and Publish NuGet Package
+name: Build and Publish NuGet Package (Library Only)
 
 on: 
   push: 
     branches: [ feature/Nuget_CICD ]
-  # workflow_dispatch:
-
+    # workflow_dispatch
 jobs:
   generate-version:
     runs-on: ubuntu-latest
@@ -21,7 +20,6 @@ jobs:
       - name: Get latest tag
         id: get_latest_tag
         run: |
-          # Get the latest tag, if no tags exist, use v0.0.0
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Latest tag found: $LATEST_TAG"
@@ -29,7 +27,6 @@ jobs:
       - name: Determine version bump type
         id: bump_type
         run: |
-          # Check commit messages for version bump indicators
           COMMIT_MSG=$(git log -1 --pretty=%B)
           if [[ $COMMIT_MSG == *"BREAKING CHANGE"* ]] || [[ $COMMIT_MSG == *"major:"* ]]; then
             echo "bump=major" >> $GITHUB_OUTPUT
@@ -68,24 +65,34 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Install MAUI workloads
+        run: |
+          dotnet workload install maui
+
       - name: Restore dependencies
-        run: dotnet restore ./AppAmbitMaui/AppAmbitMaui.csproj
+        run: |
+          dotnet restore ./AppAmbitMaui/AppAmbitMaui.csproj \
+          --property TargetFramework=net8.0
 
-      - name: Build the project
-        run: dotnet build ./AppAmbitMaui/AppAmbitMaui.csproj --configuration Release --no-restore
-
-      - name: Run tests (if any)
-        run: dotnet test ./AppAmbitMaui/AppAmbitMaui.csproj --configuration Release --no-build --verbosity normal
-        continue-on-error: true
+      - name: Build library
+        run: |
+          dotnet build ./AppAmbitMaui/AppAmbitMaui.csproj \
+          --configuration Release \
+          --no-restore \
+          --property TargetFramework=net8.0
 
       - name: Generate NuGet package
         run: |
+          VERSION=${{ needs.generate-version.outputs.new_version }}
+          CLEAN_VERSION=${VERSION#v}
+          
           dotnet pack ./AppAmbitMaui/AppAmbitMaui.csproj \
           --configuration Release \
           --no-build \
-          -p:PackageVersion=${{ needs.generate-version.outputs.new_version }} \
-          -p:AssemblyVersion=${{ needs.generate-version.outputs.new_version }} \
-          -p:FileVersion=${{ needs.generate-version.outputs.new_version }} \
+          --property TargetFramework=net8.0 \
+          -p:PackageVersion=$CLEAN_VERSION \
+          -p:AssemblyVersion=$CLEAN_VERSION \
+          -p:FileVersion=$CLEAN_VERSION \
           -o packages
 
       - name: List generated packages
@@ -96,35 +103,3 @@ jobs:
         with:
           name: nuget-package-${{ needs.generate-version.outputs.new_version }}
           path: packages/*.nupkg
-
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.generate-version.outputs.new_version }}
-          release_name: Release ${{ needs.generate-version.outputs.new_version }}
-          body: |
-            ## Changes in this Release
-            - Version bumped from ${{ needs.generate-version.outputs.previous_version }} to ${{ needs.generate-version.outputs.new_version }}
-            
-            ## Package Information
-            - **Package Version**: ${{ needs.generate-version.outputs.new_version }}
-            - **Build Date**: ${{ github.event.head_commit.timestamp }}
-            - **Commit**: ${{ github.sha }}
-          draft: false
-          prerelease: false
-
-  publish-to-nuget:
-    runs-on: ubuntu-latest
-    needs: [generate-version, package-and-publish-lib]
-    if: github.ref == 'refs/heads/main' && needs.generate-version.outputs.new_version != ''
-    environment: development
-
-    steps:
-      - name: Download NuGet package
-        uses: actions/download-artifact@v4
-        with:
-          name: nuget-package-${{ needs.generate-version.outputs.new_version }}
-          path: packages
