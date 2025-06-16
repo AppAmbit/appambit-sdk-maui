@@ -1,49 +1,169 @@
 name: Build and Publish NuGet Package
 
 on:
+  pull_request:
   push:
-    branches:
-      [ feature/Nuget_CICD ]
+    branches: [ feature/Nuget_CICD]
+  release:
+    types: [published]
 
-env:
-  PROJECT_PATH: 'AppAmbitMaui/AppAmbitMaui.csproj'
-  PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
+permissions:
+  contents: write
 
 jobs:
-  deploy:
-    name: 'Deploy'
-    runs-on: 'windows-latest'
+  build:
+    name: Build
+    env:
+      INITIAL_VERSION: "1.0.0"
+    runs-on: windows-latest
     timeout-minutes: 20
     steps:
-    - name: 'Checkout'
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: 'Install dotnet'
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '8.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: 'Get latest tag and bump version'
-      id: tag
-      uses: anothrNick/github-tag-action@1.71.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        default_bump: patch
-        tag_prefix: 'v'
-        initial_version: '1.0.0'
+      - name: Install .NET MAUI
+        shell: pwsh
+        run: |
+          & dotnet nuget locals all --clear
+          & dotnet workload install maui --source https://api.nuget.org/v3/index.json
+          & dotnet workload install android ios maccatalyst tvos macos maui wasm-tools maui-maccatalyst --source https://api.nuget.org/v3/index.json
 
-    - name: 'Restore packages'
-      run: dotnet restore ${{ env.PROJECT_PATH }}
+      - name: Calculate Next Version
+        id: version
+        shell: pwsh
+        run: |
+          # Obtener el último tag que siga el formato v*.*.* 
+          $tags = git tag -l "v*.*.*" | Sort-Object {[System.Version]($_ -replace '^v', '')} -Descending
+          
+          if ($tags.Count -eq 0) {
+            # Si no hay tags, usar la versión inicial
+            $CURRENT_VERSION = $env:INITIAL_VERSION
+            Write-Host "No previous tags found. Using initial version: $CURRENT_VERSION"
+          } else {
+            # Obtener la versión más reciente
+            $LATEST_TAG = $tags[0]
+            $CURRENT_VERSION = $LATEST_TAG -replace '^v', ''
+            Write-Host "Latest tag found: $LATEST_TAG (version: $CURRENT_VERSION)"
+          }
+          
+          # Parsear la versión actual
+          $versionParts = $CURRENT_VERSION.Split('.')
+          $major = [int]$versionParts[0]
+          $minor = [int]$versionParts[1]
+          $patch = [int]$versionParts[2]
+          
+          # Determinar el tipo de incremento basado en el contexto
+          $INCREMENT_TYPE = "patch"  # Por defecto incrementar patch
+          
+          # Buscar palabras clave en el commit message para determinar el tipo de incremento
+          $COMMIT_MESSAGE = git log -1 --pretty=%B
+          Write-Host "Commit message: $COMMIT_MESSAGE"
+          
+          if ($COMMIT_MESSAGE -match '\[major\]|\bBREAKING CHANGE\b|\bbreaking\b') {
+            $INCREMENT_TYPE = "major"
+          } elseif ($COMMIT_MESSAGE -match '\[minor\]|\bfeat\b|\bfeature\b') {
+            $INCREMENT_TYPE = "minor"
+          }
+          
+          # Incrementar la versión según el tipo
+          switch ($INCREMENT_TYPE) {
+            "major" {
+              $major++
+              $minor = 0
+              $patch = 0
+            }
+            "minor" {
+              $minor++
+              $patch = 0
+            }
+            "patch" {
+              $patch++
+            }
+          }
+          
+          $NEW_VERSION = "$major.$minor.$patch"
+          $NEW_TAG = "v$NEW_VERSION"
+          
+          # Verificar si el tag ya existe
+          $tagExists = git tag -l $NEW_TAG
+          if ($tagExists) {
+            Write-Host "Tag $NEW_TAG already exists. Incrementing patch version."
+            $patch++
+            $NEW_VERSION = "$major.$minor.$patch"
+            $NEW_TAG = "v$NEW_VERSION"
+          }
+          
+          $IS_PRERELEASE = $env:GITHUB_REF_NAME -ne "main" -and $env:GITHUB_REF_NAME -ne "master"
+          
+          if ($IS_PRERELEASE) {
+            $BRANCH_NAME = $env:GITHUB_REF_NAME -replace '[^a-zA-Z0-9]', '-'
+            $BUILD_NUMBER = $env:GITHUB_RUN_NUMBER
+            $NEW_VERSION = "$NEW_VERSION-$BRANCH_NAME.$BUILD_NUMBER"
+            $NEW_TAG = "v$NEW_VERSION"
+          }
+          
+          echo "current_version=$CURRENT_VERSION" >> $env:GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $env:GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $env:GITHUB_OUTPUT
+          echo "increment_type=$INCREMENT_TYPE" >> $env:GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $env:GITHUB_OUTPUT
+          
+          Write-Host "=== VERSION CALCULATION ==="
+          Write-Host "Current Version: $CURRENT_VERSION"
+          Write-Host "Increment Type: $INCREMENT_TYPE"
+          Write-Host "New Version: $NEW_VERSION"
+          Write-Host "New Tag: $NEW_TAG"
+          Write-Host "Is Prerelease: $IS_PRERELEASE"
 
-    - name: 'Build project'
-      run: dotnet build ${{ env.PROJECT_PATH }} --no-restore --configuration Release
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: 'Pack project'
-      run: dotnet pack ${{ env.PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols -p:PackageVersion=${{ steps.tag.outputs.new_tag }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+      - name: Build
+        run: dotnet build --configuration Release
 
-    - name: 'Upload NuGet package as artifact'
-      uses: actions/upload-artifact@v4.6.2
-      with:
-        name: nuget-package-${{ steps.tag.outputs.new_tag }}
-        path: ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Package NuGet
+        run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.version.outputs.new_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
+
+      - name: Create Release and Upload Assets
+        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'feature/Nuget_CICD')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: "AppAmbit ${{ steps.version.outputs.new_tag }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ./artifacts/*.nupkg
+          body: |
+            ## 🚀 AppAmbit ${{ steps.version.outputs.new_version }}
+            
+            - **Previous Version**: v${{ steps.version.outputs.current_version }}
+            - **New Version**: ${{ steps.version.outputs.new_tag }}
+            - **Increment Type**: ${{ steps.version.outputs.increment_type }}
+            - **Branch**: `${{ github.ref_name }}`
+            - **Commit**: `${{ github.sha }}`
+            
+            ```bash
+            dotnet add package AppAmbit --version ${{ steps.version.outputs.new_version }}
+            ```
+            
+            This release was automatically versioned based on:
+            - **[major]** or **BREAKING CHANGE** in commit → Major version bump
+            - **[minor]** or **feat** in commit → Minor version bump  
+            - **Default** → Patch version bump
+            
+            - AppAmbit NuGet package for analytics, crash tracking, and usage monitoring
+            - Compatible with mobile and desktop applications
+            
+            ---
+            **Build**: #${{ github.run_number }} | **Workflow**: ${{ github.workflow }}
+          prerelease: ${{ steps.version.outputs.is_prerelease }}
+          generate_release_notes: true
