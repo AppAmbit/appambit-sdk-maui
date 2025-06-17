@@ -6,9 +6,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "chore/testing-flow" ]
 
 permissions:
   contents: write
