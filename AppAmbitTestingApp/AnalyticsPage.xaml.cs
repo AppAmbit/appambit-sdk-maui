@@ -1,11 +1,18 @@
 using Shared.Utils;
 using AppAmbit;
 using static System.Linq.Enumerable;
+using AppAmbit.Models.Analytics;
+using AppAmbit.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 
 namespace AppAmbitTestingApp;
 
 public partial class AnalyticsPage : ContentPage
 {
+    private const string OfflineSessionsFile = "OfflineSessions.json";
+
     public AnalyticsPage()
     {
         InitializeComponent();
@@ -15,7 +22,7 @@ public partial class AnalyticsPage : ContentPage
     {
         await Analytics.StartSession();
     }
-    
+
     private async void Button_OnEndSession(object? sender, EventArgs e)
     {
         await Analytics.EndSession();
@@ -23,9 +30,9 @@ public partial class AnalyticsPage : ContentPage
 
     private async void Button_OnClicked(object? sender, EventArgs e)
     {
-        await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" }});
+        await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" } });
     }
-    
+
     private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
     {
         await Analytics.GenerateTestEvent();
@@ -34,14 +41,14 @@ public partial class AnalyticsPage : ContentPage
     private async void Button_OnClickedTestLimitsEvent(object? sender, EventArgs e)
     {
         //300 characters:
-        var _300Characters ="123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
-        var _300Characters2 ="1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678902";
+        var _300Characters = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+        var _300Characters2 = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678902";
         var properties = new Dictionary<string, string>
         {
             { _300Characters, _300Characters },
             { _300Characters2, _300Characters2 }
         };
-        await Analytics.TrackEvent(_300Characters,properties );
+        await Analytics.TrackEvent(_300Characters, properties);
     }
 
     private async void Button_OnClickedTestMaxPropertiesEvent(object? sender, EventArgs e)
@@ -74,7 +81,7 @@ public partial class AnalyticsPage : ContentPage
             { "24", "24"},
             { "25", "25"},//25
         };
-        await Analytics.TrackEvent("TestMaxProperties",properties );
+        await Analytics.TrackEvent("TestMaxProperties", properties);
     }
 
     private async void OnSend30DailyEvents(object? sender, EventArgs e)
@@ -84,7 +91,7 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
-        foreach(int index in Range(start: 0, count: 30))
+        foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateUtils.GetUtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
@@ -95,11 +102,59 @@ public partial class AnalyticsPage : ContentPage
     private async void OnGenerateBatchEvents(object? sender, EventArgs e)
     {
         await DisplayAlert("Info", "Turn off internet", "Ok");
-        foreach (int index in Range( 1, 220 ))
+        foreach (int index in Range(1, 220))
         {
-            await Analytics.TrackEvent("Test Batch TrackEvent",new Dictionary<string, string> { { "test1", "test1" } });
+            await Analytics.TrackEvent("Test Batch TrackEvent", new Dictionary<string, string> { { "test1", "test1" } });
         }
         await DisplayAlert("Info", "Events generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
     }
+
+    private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
+    {
+        var random = new Random();
+        DateTime startDate = DateUtils.GetUtcNow.AddDays(-30);
+        var offlineSessions = new List<SessionData>();
+
+
+        foreach (var index in Range(1, 30))
+        {
+            DateTime dateStartSession = startDate.AddDays(index);
+            dateStartSession = dateStartSession.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
+
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateStartSession,
+                SessionType = SessionType.Start
+            });
+
+            var durationEnd = TimeSpan.FromMinutes(random.Next(1, 24 * 60));
+            DateTime dateEndSession = dateStartSession.Add(durationEnd);
+
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateEndSession,
+                SessionType = SessionType.End
+            });
+
+        }
+
+        var settings = new JsonSerializerSettings
+        {
+            Converters = [new StringEnumConverter()],
+            Formatting = Formatting.Indented
+        };
+        
+         var json = JsonConvert.SerializeObject(offlineSessions, settings);
+
+        var filePath = Path.Combine(FileSystem.AppDataDirectory, OfflineSessionsFile);
+        File.WriteAllText(filePath, json);
+
+        await DisplayAlert("Info", $"Turn off and Turn on internet to send the sessions.", "Ok");
+    }
+
 }

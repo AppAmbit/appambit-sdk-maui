@@ -154,5 +154,4 @@ public static class Analytics
     {
         SessionManager.ValidateOrInvalidateSession(value);
     }
-
 }
