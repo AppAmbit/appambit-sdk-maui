@@ -3,11 +3,18 @@ using AppAmbit;
 using AppAmbit.Services;
 using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
+using AppAmbit.Models.Analytics;
+using AppAmbit.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 
 namespace AppAmbitTestingApp;
 
 public partial class AnalyticsPage : ContentPage
 {
+    private const string OfflineSessionsFile = "OfflineSessions.json";
+
     public AnalyticsPage()
     {
         InitializeComponent();
@@ -68,7 +75,6 @@ public partial class AnalyticsPage : ContentPage
             { _300Characters2, _300Characters2 }
         };
         await Analytics.TrackEvent(_300Characters, properties);
-
         ButtonMax300LengthEvent.Padding = 10;
         ButtonMax300LengthEvent.FontSize = 12;
         ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
@@ -107,7 +113,6 @@ public partial class AnalyticsPage : ContentPage
             { "25", "25"},//25
         };
         await Analytics.TrackEvent("TestMaxProperties", properties);
-
         ButtonMax20PropertiesEvent.Padding = 10;
         ButtonMax20PropertiesEvent.FontSize = 12;
         ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
@@ -120,7 +125,7 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
-        foreach(int index in Range(start: 0, count: 30))
+        foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateUtils.GetUtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
@@ -138,4 +143,52 @@ public partial class AnalyticsPage : ContentPage
         await DisplayAlert("Info", "Events generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
     }
+
+    private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
+    {
+        var random = new Random();
+        DateTime startDate = DateUtils.GetUtcNow.AddDays(-30);
+        var offlineSessions = new List<SessionData>();
+
+
+        foreach (var index in Range(1, 30))
+        {
+            DateTime dateStartSession = startDate.AddDays(index);
+            dateStartSession = dateStartSession.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
+
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateStartSession,
+                SessionType = SessionType.Start
+            });
+
+            var durationEnd = TimeSpan.FromMinutes(random.Next(1, 24 * 60));
+            DateTime dateEndSession = dateStartSession.Add(durationEnd);
+
+            offlineSessions.Add(new SessionData
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = null,
+                Timestamp = dateEndSession,
+                SessionType = SessionType.End
+            });
+
+        }
+
+        var settings = new JsonSerializerSettings
+        {
+            Converters = [new StringEnumConverter()],
+            Formatting = Formatting.Indented
+        };
+        
+         var json = JsonConvert.SerializeObject(offlineSessions, settings);
+
+        var filePath = Path.Combine(FileSystem.AppDataDirectory, OfflineSessionsFile);
+        File.WriteAllText(filePath, json);
+
+        await DisplayAlert("Info", $"Turn off and Turn on internet to send the sessions.", "Ok");
+    }
+
 }

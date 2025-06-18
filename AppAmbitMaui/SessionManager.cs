@@ -14,9 +14,9 @@ namespace AppAmbit;
 
 internal class SessionManager
 {
+    private static IAPIService? _apiService;
     private static string? _sessionId = null;
     private static bool _isSessionActive = false;
-    private static IAPIService? _apiService;
     public static bool IsSessionActive { get => _isSessionActive; }
     private const string OfflineSessionsFile = "OfflineSessions";
 
@@ -31,8 +31,8 @@ internal class SessionManager
         if (_isSessionActive)
             return;
 
-        var dateUtc = DateUtils.GetUtcNow;
-        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc));
+        DateTime dateUtc = DateUtils.GetUtcNow;
+        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc))!;
 
         if (apiResponse?.ErrorType != ApiErrorType.None)
         {
@@ -54,12 +54,14 @@ internal class SessionManager
             return;
         }
 
+        DateTime dateUtc = DateUtils.GetUtcNow;
+
         SessionData? endSession = new SessionData
         {
             Id = Guid.NewGuid().ToString(),
             SessionType = SessionType.End,
             SessionId = _sessionId,
-            Timestamp = DateUtils.GetUtcNow
+            Timestamp = dateUtc
         };
 
         await EndSessionASync(endSession);
@@ -137,6 +139,7 @@ internal class SessionManager
 
     public static async Task SendBatchSessions()
     {
+        Debug.WriteLine("Send Sessions...");
         var sessions = await GetSaveJsonArrayAsync<SessionData>(OfflineSessionsFile, null) ?? [];
 
         if (sessions.Count == 0)
@@ -150,10 +153,12 @@ internal class SessionManager
 
         if (!success)
         {
+            Debug.WriteLine("Unset sessions");
             return;
         }
-
-        await UpdateOfflineSessionsFile(sessions, batches.Count);
+        
+        Debug.WriteLine($"Sessions sent: {batches.Count}");
+        await UpdateOfflineSessionsFile(sessions);
     }
 
     private static async Task<bool> SendBatchAsync(List<SessionBatch> batches)
@@ -172,7 +177,7 @@ internal class SessionManager
 
     private static List<SessionBatch> BuildSessionBatches(List<SessionData> sessions)
     {
-        var batchSessions = sessions.Take(200);
+        var batchSessions = sessions.OrderBy(d => d.Timestamp).Take(200);
         var starts = batchSessions.Where(s => s.SessionType == SessionType.Start).Select(x => x.Timestamp);
         var ends = batchSessions.Where(s => s.SessionType == SessionType.End).Select(x => x.Timestamp);
 
@@ -183,9 +188,9 @@ internal class SessionManager
         }).ToList();
     }
 
-    private static async Task UpdateOfflineSessionsFile(List<SessionData> sessions, int batchCount)
+    private static async Task UpdateOfflineSessionsFile(List<SessionData> sessions)
     {
-        var remaining = sessions.Skip(batchCount);
+        var remaining = sessions.Skip(200);
 
         await UpdateJsonArrayAsync(OfflineSessionsFile, remaining);        
     }
