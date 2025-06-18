@@ -5,7 +5,6 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
-using AppAmbit.Utils;
 using Shared.Utils;
 
 namespace AppAmbit;
@@ -154,10 +153,5 @@ public static class Analytics
     public static void ValidateOrInvaliteSession(bool value)
     {
         SessionManager.ValidateOrInvalidateSession(value);
-    }
-
-    public static string FormattedSize(double size)
-    {
-        return FormattedRequestSize.FormatSize(size);
     }
 }

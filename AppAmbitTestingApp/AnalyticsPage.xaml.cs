@@ -1,6 +1,7 @@
 using Shared.Utils;
 using AppAmbit;
 using AppAmbit.Services;
+using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
@@ -20,7 +21,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonStartSession.Padding = 10;
         ButtonStartSession.FontSize = 12;
-        ButtonStartSession.Text = $"Start Session ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonStartSession.Text = $"Start Session ({(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
@@ -31,7 +32,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonEndSession.Padding = 10;
         ButtonEndSession.FontSize = 12;
-        ButtonEndSession.Text = $"End Session ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonEndSession.Text = $"End Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClicked(object? sender, EventArgs e)
@@ -42,7 +43,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonClickedEventWProperty.Padding = 10;
         ButtonClickedEventWProperty.FontSize = 12;
-        ButtonClickedEventWProperty.Text = $"Send 'Button Clicked' Event w/ property {Analytics.FormattedSize(LoggingHandler.TotalRequestSize)}";
+        ButtonClickedEventWProperty.Text = $"Send 'Button Clicked' Event w/ property ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
@@ -52,7 +53,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonDefaultClickedEventWProperty.Padding = 10;
         ButtonDefaultClickedEventWProperty.FontSize = 12;
-        ButtonDefaultClickedEventWProperty.Text = $"Send Default Event w/ property ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonDefaultClickedEventWProperty.Text = $"Send Default Event w/ property ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestLimitsEvent(object? sender, EventArgs e)
@@ -70,7 +71,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonMax300LengthEvent.Padding = 10;
         ButtonMax300LengthEvent.FontSize = 12;
-        ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestMaxPropertiesEvent(object? sender, EventArgs e)
@@ -109,7 +110,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonMax20PropertiesEvent.Padding = 10;
         ButtonMax20PropertiesEvent.FontSize = 12;
-        ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({Analytics.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnSend30DailyEvents(object? sender, EventArgs e)

@@ -4,6 +4,7 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Services;
 using Newtonsoft.Json;
 using Shared.Utils;
+using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
 
 namespace AppAmbitTestingApp;
@@ -75,7 +76,7 @@ public partial class MainPage : ContentPage
 
         ButtonBatchUpload.Padding = 10;
         ButtonBatchUpload.FontSize = 12;
-        ButtonBatchUpload.Text = $"Generate Logs for Batch upload ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonBatchUpload.Text = $"Generate Logs for Batch upload ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
@@ -109,7 +110,7 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "LogError Sent", "Ok");
         ButtonDefaultLogError.Padding = 10;
         ButtonDefaultLogError.FontSize = 12;
-        ButtonDefaultLogError.Text = $"Send Default LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonDefaultLogError.Text = $"Send Default LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnSendTestException(object sender, EventArgs e)
@@ -125,7 +126,7 @@ public partial class MainPage : ContentPage
             await DisplayAlert("Info", "LogError Sent", "Ok");
             ButtonSendTestException.Padding = 10;
             ButtonSendTestException.FontSize = 12;
-            ButtonSendTestException.Text = $"Send Exception LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+            ButtonSendTestException.Text = $"Send Exception LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
         }
     }
 
@@ -136,7 +137,7 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "LogError Sent", "Ok");
         ButtonTestLogWithClassFQN.Padding = 10;
         ButtonTestLogWithClassFQN.FontSize = 12;
-        ButtonTestLogWithClassFQN.Text = $"Send ClassInfo LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonTestLogWithClassFQN.Text = $"Send ClassInfo LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
@@ -159,7 +160,7 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
         ButtonLast30DailyErrors.Padding = 10;
         ButtonLast30DailyErrors.FontSize = 12;
-        ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
@@ -203,7 +204,7 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "LogError Sent", "Ok");
         ButtonCustomLogError.Padding = 10;
         ButtonCustomLogError.FontSize = 12;
-        ButtonCustomLogError.Text = $"Send Custom LogError ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonCustomLogError.Text = $"Send Custom LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnGenerateTestCrash(object sender, EventArgs e)
@@ -243,6 +244,6 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Info", "5 events and errors sent", "Ok");
         ButtonRefreshTest.Padding = 10;
         ButtonRefreshTest.FontSize = 12;
-        ButtonRefreshTest.Text = $"Token refresh test ({Crashes.FormattedSize(LoggingHandler.TotalRequestSize)})";
+        ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 }

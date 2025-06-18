@@ -5,7 +5,6 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using AppAmbit.Utils;
 using Newtonsoft.Json;
 using Shared.Utils;
 
@@ -323,10 +322,5 @@ public static class Crashes
         {
             return null;
         }
-    }
-
-    public static string FormattedSize(double size)
-    {
-        return FormattedRequestSize.FormatSize(size);
     }
 }
