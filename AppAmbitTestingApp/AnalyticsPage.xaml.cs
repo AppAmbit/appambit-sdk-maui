@@ -21,7 +21,7 @@ public partial class AnalyticsPage : ContentPage
 
         ButtonStartSession.Padding = 10;
         ButtonStartSession.FontSize = 12;
-        ButtonStartSession.Text = $"Start Session ({(LoggingHandler.TotalRequestSize)})";
+        ButtonStartSession.Text = $"Start Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
