@@ -5,7 +5,6 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using AppAmbit.Enums;
 using Newtonsoft.Json;
 using Shared.Utils;
 

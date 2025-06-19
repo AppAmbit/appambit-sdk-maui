@@ -17,7 +17,7 @@
                 Text="Did the app crash during your last session?" 
                 Clicked="OnHasCrashedTheLastSession" />
 
-            <Button
+            <Button x:Name="ButtonBatchUpload"
                 Text="Generate Logs for Batch upload" 
                 Clicked="OnGenerateLogsForBatch" />
 
@@ -53,7 +53,7 @@
                         Placeholder="Type log message"
                         Text="{Binding LogMessage}"
                         TextChanged="MessageInputView_OnTextChanged"/>
-                    <Button
+                    <Button x:Name="ButtonCustomLogError"
                         Text="Send Custom LogError" 
                         Clicked="OnTestErrorLogClicked" />
                 </VerticalStackLayout>
@@ -62,19 +62,19 @@
             <Button
                 Text="Invalidate Token" 
                 Clicked="OnTestToken" />
-            <Button
+            <Button x:Name="ButtonRefreshTest"
                 Text="Token refresh test"
                 Clicked="OnTokenRefreshTest" />
-            <Button
+            <Button x:Name="ButtonDefaultLogError"
                 Text="Send Default LogError" 
                 Clicked="OnSendTestLog" />
-            <Button
+            <Button x:Name="ButtonSendTestException"
                 Text="Send Exception LogError" 
                 Clicked="OnSendTestException" />
-            <Button
+            <Button x:Name="ButtonTestLogWithClassFQN"
                 Text="Send ClassInfo LogError" 
                 Clicked="OnSendTestLogWithClassFQN" />
-            <Button
+            <Button x:Name="ButtonLast30DailyErrors"
                 Text="Generate the last 30 daily errors"
                 Clicked="OnGenerate30daysTestErrors" />
             <Button
@@ -84,7 +84,7 @@
                 Text="Throw new Crash" 
                 Clicked="OnCounterClicked" />
             <Button
-                Text="Generate Test Crash" 
+                Text="Generate Test Crash"
                 Clicked="OnGenerateTestCrash" />
         </VerticalStackLayout>
     </ScrollView>

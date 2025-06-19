@@ -6,26 +6,29 @@
     <ContentPage.Content>
         <ScrollView>
             <VerticalStackLayout Padding="30.0"
-                                 Spacing="25"
-                                 VerticalOptions="Center">
-                <Button Text="Start Session"
+                     Spacing="25"
+                     VerticalOptions="Center">
+                    <Button x:Name="ButtonStartSession"
+                        Text="Start Session"
                         Clicked="Button_OnStartSession"/>
-                <Button Text="End Session"
+                    <Button x:Name="ButtonEndSession"
+                        Text="End Session"
                         Clicked="Button_OnEndSession"/>
-                <Button Text="Generate the last 30 daily sessions"
-                        Clicked="OnGenerate30DaysTestSessions"/>
-                <Button Text='Send "Button Clicked" Event w/ property'
+                    <Button x:Name="ButtonClickedEventWProperty"
+                        Text='Send "Button Clicked" Event w/ property'
                         Clicked="Button_OnClicked"/>
-                <Button Text="Send Default Event w/ property"
+                    <Button x:Name="ButtonDefaultClickedEventWProperty"
+                        Text="Send Default Event w/ property"
                         Clicked="Button_OnClickedTestEvent"/>
-                <Button Text="Send Max-300-Length Event"
+                    <Button x:Name="ButtonMax300LengthEvent"
+                        Text="Send Max-300-Length Event"
                         Clicked="Button_OnClickedTestLimitsEvent"/>
-                <Button Text="Send Max-20-Properties Event"
+                    <Button x:Name="ButtonMax20PropertiesEvent"
+                        Text="Send Max-20-Properties Event"
                         Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
-                <Button Text="Send 30 Daily Events"
-                        Clicked="OnSend30DailyEvents"/>
-                <Button Text="Send Batch of 220 Events"
-                        Clicked="OnGenerateBatchEvents"/>
+                    <Button x:Name="Button220BatchEvents"
+                        Text="Send Batch of 220 Events" 
+                        Clicked="OnGenerateBatchEvents" />
             </VerticalStackLayout>
         </ScrollView>
     </ContentPage.Content>
