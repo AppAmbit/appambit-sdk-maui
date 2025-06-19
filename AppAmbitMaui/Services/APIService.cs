@@ -147,19 +147,13 @@ internal class APIService : IAPIService
     {
         HttpClient httpClient;
 
-#if DEBUG
         var handler = new HttpClientHandler();
         var loggingHandler = new LoggingHandler(handler);
         httpClient = new HttpClient(loggingHandler)
         {
             Timeout = TimeSpan.FromMinutes(2),
         };
-#else
-        httpClient = new HttpClient()
-        {
-            Timeout = TimeSpan.FromMinutes(2),
-        };
-#endif
+
         httpClient.DefaultRequestHeaders
             .Accept
             .Add(new MediaTypeWithQualityHeaderValue("application/json"));
