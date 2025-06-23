@@ -1,8 +1,17 @@
 name: Build IPA
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ "refactor/variables-renamed" ]
+    
 
+env:
+  TYPE_RELEASE: release
+  PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
+  OUTPUT_PATH: ./build-ios
+  IPA_NAME: com_appambit_testapp
+
+  
 jobs:
   maui-ios:
     runs-on: macos-latest
@@ -24,7 +33,7 @@ jobs:
       - name: Install MAUI Workload
         run: dotnet workload install maui ios
 
-      - name: Reset keychain environment
+      - name: Reset Keychain Environment
         run: |
           security delete-keychain build.keychain || true
           security create-keychain -p "" build.keychain
@@ -52,17 +61,26 @@ jobs:
           echo "UUID=$UUID" >> $GITHUB_ENV
 
       - name: Restore dependencies
-        run: dotnet restore AppAmbitTestingApp/AppAmbitTestingApp.csproj
+        run: dotnet restore ${{env.PROJECT_PATH}}
 
       - name: Build IPA
         run: |
-          dotnet publish AppAmbitTestingApp/AppAmbitTestingApp.csproj \
+          dotnet publish ${{env.PROJECT_PATH}} \
             -c Release -f net8.0-ios \
             -p:ArchiveOnBuild=true \
             -p:CodesignProvision=${{ env.UUID }} \
             -o ./publish-ios
 
-      - name: Upload IPA as Artifact
+      - name: Rename the launch type
+        run: |
+          ORIGINAL_PATH=$(find ./publish-ios -name "*.ipa" | head -n 1)
+          echo "IPA found: $ORIGINAL_PATH"
+          DIR=$(dirname "$ORIGINAL_PATH")
+          NEW_NAME="${{env.IPA_NAME}}_${TYPE_RELEASE}.ipa"
+          echo "Renaming to: $NEW_NAME"
+          mv "$ORIGINAL_PATH" "$DIR/$NEW_NAME"            
+
+      - name: Upload iOS Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa

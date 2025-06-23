@@ -1,6 +1,5 @@
 name: Build Apk
 
-
 on:
   push:
     branches: [ "refactor/variables-renamed" ]  
@@ -9,7 +8,7 @@ env:
   TYPE_RELEASE: alpha
   BUILD_CONFIGURATION: Release
   BUILD_FRAMEWORK: net8.0-android
-  APK_NAME: com.appambit.testapp
+  APK_NAME: com_appambit_testapp
   PROJECT_DIR: ./AppAmbitTestingApp
   KEYSTORE_ASC: appambit.keystore.asc
   KEYSTORE_FILE: appambit.keystore  
@@ -56,7 +55,7 @@ jobs:
         --no-restore
       working-directory: ${{ env.PROJECT_DIR }}
 
-    - name: Rename the release type
+    - name: Rename the launch type
       run: |
         ORIGINAL_PATH=$(find ${{ env.PROJECT_DIR }}/bin/${{ env.BUILD_CONFIGURATION }}/${{ env.BUILD_FRAMEWORK }}/ -name "*.apk" | head -n 1)
         echo "APK found: $ORIGINAL_PATH"
