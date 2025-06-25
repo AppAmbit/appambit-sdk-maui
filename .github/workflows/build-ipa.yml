@@ -1,8 +1,7 @@
 name: Build IPA
 
 on:
-  push:
-    branches: [ "refactor/variables-renamed" ]
+  workflow_dispatch:
     
 
 env:

@@ -1,8 +1,8 @@
 name: Build Apk
 
 on:
-  push:
-    branches: [ "refactor/variables-renamed" ]  
+  workflow_dispatch:
+ 
 
 env:
   TYPE_RELEASE: alpha
