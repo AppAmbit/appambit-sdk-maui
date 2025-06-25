@@ -10,6 +10,9 @@ variables:
   javaHome: '$(HOME)/DevTools/openjdk-11.0.7+10'
   androidSdkRoot: '$(HOME)/DevTools/android-sdk'
   androidSdkCmdlineTools: '$(HOME)/DevTools/android-sdk/cmdline-tools/tools/bin'
+  androidKeyAlias: 'kavaup'
+  apkName: 'appambit_android'
+  typeRelease: 'alpha'
 
 jobs:
 - job: BuildAndroidApp
@@ -61,14 +64,12 @@ jobs:
         wget -q "https://dl.google.com/android/repository/commandlinetools-linux-$(androidSdkToolsVersion)_latest.zip" -O $(devToolsDir)/commandlinetools.zip
         unzip -o $(devToolsDir)/commandlinetools.zip -d $(androidSdkRoot)
         
-        # Move tools into cmdline-tools directory
         mkdir -p $(androidSdkRoot)/cmdline-tools/tools
         mv $(androidSdkRoot)/tools $(androidSdkRoot)/cmdline-tools
 
         export ANDROID_SDK_ROOT=$(androidSdkRoot)
         export PATH=$(androidSdkCmdlineTools):$PATH
         
-        # Accept SDK licenses and install packages
         yes | sdkmanager --licenses
         sdkmanager "platform-tools" "platforms;android-$(androidApiLevel)" "build-tools;$(androidApiLevel).0.0"
         sdkmanager --update
@@ -90,8 +91,8 @@ jobs:
         -c $(buildConfiguration) \
         -p:JavaSdkDirectory="$(javaHome)" \
         -p:AndroidSdkDirectory="$(androidSdkRoot)" \
-        -p:AndroidSigningKeyStore="$(Build.SourcesDirectory)/$(ANDROID_KEYSTORE_FILE)" \
-        -p:AndroidSigningKeyAlias="kavaup" \
+        -p:AndroidSigningKeyStore="$(Build.SourcesDirectory)/$(androidKeyAlias)" \
+        -p:AndroidSigningKeyAlias="$(ANDROID_KEY_ALIAS)" \
         -p:AndroidSigningKeyPass="$(ANDROID_KEYSTORE_PASSWORD)" \
         -p:AndroidSigningStorePass="$(ANDROID_KEYSTORE_PASSWORD_ALIAS)" \
         --no-restore
@@ -105,10 +106,8 @@ jobs:
         rm -rf $(outputDirectory)/*
         mkdir -p $(outputDirectory)
         
-        # Find all APK files and copy them to the artifact staging directory
-        find $(Build.SourcesDirectory) -name "*.apk" -type f -exec cp {} $(outputDirectory)/ \;
+        find $(Build.SourcesDirectory) -name "*.apk" -type f -exec sh -c 'cp "$1" "$(outputDirectory)/$(apkName)_$(typeRelease).apk"' sh {} \;
         
-        # List the files that will be published
         echo "Files to be published:"
         ls -la $(outputDirectory)
 

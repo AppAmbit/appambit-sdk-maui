@@ -8,7 +8,6 @@ on:
 env:
   TYPE_RELEASE: release
   PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
-  OUTPUT_PATH: ./build-ios
   IPA_NAME: com_appambit_testapp
 
   
