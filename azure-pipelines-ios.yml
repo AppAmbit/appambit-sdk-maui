@@ -18,6 +18,10 @@ variables:
     value: 'AppAmbitTestingApp/AppAmbitTestingApp.csproj'
   - name: outputPath
     value: 'publish-ios'
+  - name: typeRelease
+    value: 'alpha'
+  - name: ipaName
+    value: 'appamabit_test'
 
 jobs:
 - job: BuildiOSIPA
@@ -80,7 +84,7 @@ jobs:
     - task: DownloadSecureFile@1
       name: DownloadCertificate
       inputs:
-        secureFile: 'AdHocCertificates.p12'
+        secureFile: '$(IOS_P12_CERTIFICATE)'
       displayName: 'Download P12 Certificate'
 
     - script: |
@@ -91,7 +95,7 @@ jobs:
     - task: DownloadSecureFile@1
       name: DownloadProvision
       inputs:
-        secureFile: 'AppAmbit_TestApp__AdHoc-2.mobileprovision'
+        secureFile: '$(IOS_PROVISIONING_PROFILE)'
       displayName: 'Download Provisioning Profile'
 
     - script: |
@@ -120,9 +124,9 @@ jobs:
 
     - script: |
         IPA_PATH=$(find "$(outputPath)" -name "*.ipa" | head -n 1)
-        mv "$IPA_PATH" "$(outputPath)/AppAmbit.ipa"
-        find "$(outputPath)" ! -name "AppAmbit.ipa" -type f -delete
-      displayName: 'Keep only IPA in outputPath'
+        mv "$IPA_PATH" "$(outputPath)/$(ipaName)_$(typeRelease).ipa"
+        find "$(outputPath)" ! -name "$(ipaName)_$(typeRelease).ipa" -type f -delete
+      displayName: 'Keep only IPA in outputPath and rename'
 
     - task: PublishBuildArtifacts@1
       displayName: 'Upload IPA Artifact'
