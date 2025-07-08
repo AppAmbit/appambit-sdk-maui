@@ -94,13 +94,13 @@ public partial class MainPage : ContentPage
     private async void OnChangeUserId(object? sender, EventArgs e)
     {
         Analytics.SetUserId(UserId);
-        await DisplayAlert("Info", "LogError Sent", "Ok");
+        await DisplayAlert("Info", "User id changed", "Ok");
     }
 
     private async void OnChangeUserEmail(object? sender, EventArgs e)
     {
         Analytics.SetUserEmail(UserEmail);
-        await DisplayAlert("Info", "LogError Sent", "Ok");
+        await DisplayAlert("Info", "User email changed", "Ok");
     }
 
     private async void OnSendTestLog(object sender, EventArgs e)
