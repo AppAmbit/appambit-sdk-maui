@@ -5,7 +5,7 @@ on:
     
 
 env:
-  TYPE_RELEASE: release
+  TYPE_RELEASE: alpha
   PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
   IPA_NAME: com_appambit_testapp
 
