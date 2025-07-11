@@ -67,5 +67,5 @@ jobs:
     - name: Upload Android Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
-        name: android-apk
+        name: app_appambit_testapp_android_${{ env.TYPE_RELEASE }}
         path: ${{ env.PROJECT_DIR }}/bin/${{ env.BUILD_CONFIGURATION }}/${{ env.BUILD_FRAMEWORK }}/**/*.apk
