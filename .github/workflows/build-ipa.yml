@@ -77,5 +77,5 @@ jobs:
       - name: Upload iOS Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app_appambit_testapp_ios_${{ env.TYPE_RELEASE }}
+          name: app_ios_${{ env.TYPE_RELEASE }}
           path: ./publish-ios/**/*.ipa
