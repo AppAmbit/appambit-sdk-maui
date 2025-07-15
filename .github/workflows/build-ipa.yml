@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     
 env:
-  TYPE_RELEASE: alpha
+  TYPE_RELEASE: production
   PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
   IPA_NAME: com_appambit_testapp
   
