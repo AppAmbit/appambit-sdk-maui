@@ -25,7 +25,6 @@ jobs:
       run: |
         echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" > ${{ env.KEYSTORE_ASC }}
         gpg -d --passphrase "${{ secrets.ANDROID_KEYSTORE_PASSWORD_GPG }}" --batch ${{ env.KEYSTORE_ASC }} > ${{ env.KEYSTORE_FILE }}
-
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -63,9 +62,8 @@ jobs:
         NEW_NAME="${{ env.APK_NAME }}_${{ env.TYPE_RELEASE }}.apk"
         echo "Renaming to: $NEW_NAME"
         mv "$ORIGINAL_PATH" "$DIR/$NEW_NAME"
-
     - name: Upload Android Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
-        name: android-apk
+        name: app_appambit_testapp_android_${{ env.TYPE_RELEASE }}
         path: ${{ env.PROJECT_DIR }}/bin/${{ env.BUILD_CONFIGURATION }}/${{ env.BUILD_FRAMEWORK }}/**/*.apk
