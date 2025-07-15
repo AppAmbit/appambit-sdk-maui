@@ -5,7 +5,7 @@ on:
  
 
 env:
-  TYPE_RELEASE: alpha
+  TYPE_RELEASE: beta
   BUILD_CONFIGURATION: Release
   BUILD_FRAMEWORK: net8.0-android
   APK_NAME: com_appambit_testapp
