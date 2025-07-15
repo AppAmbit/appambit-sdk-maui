@@ -3,12 +3,10 @@ name: Build IPA
 on:
   workflow_dispatch:
     
-
 env:
-  TYPE_RELEASE: alpha
+  TYPE_RELEASE: release
   PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
   IPA_NAME: com_appambit_testapp
-
   
 jobs:
   maui-ios:
@@ -38,7 +36,6 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -l build.keychain
-
       - name: Decode and install P12 certificate
         env:
           P12_CERTIFICATE_BASE64: ${{ secrets.IOS_P12_CERTIFICATE_BASE64 }}
@@ -47,7 +44,6 @@ jobs:
           echo "$P12_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -A
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-
       - name: Decode and install Provisioning Profile
         env:
           PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
@@ -57,7 +53,6 @@ jobs:
           UUID=$(security cms -D -i profile.mobileprovision | plutil -extract UUID xml1 -o - - | xmllint --xpath "string(//string)" -)
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
           echo "UUID=$UUID" >> $GITHUB_ENV
-
       - name: Restore dependencies
         run: dotnet restore ${{env.PROJECT_PATH}}
 
@@ -68,7 +63,6 @@ jobs:
             -p:ArchiveOnBuild=true \
             -p:CodesignProvision=${{ env.UUID }} \
             -o ./publish-ios
-
       - name: Rename the launch type
         run: |
           ORIGINAL_PATH=$(find ./publish-ios -name "*.ipa" | head -n 1)
@@ -77,9 +71,8 @@ jobs:
           NEW_NAME="${{env.IPA_NAME}}_${TYPE_RELEASE}.ipa"
           echo "Renaming to: $NEW_NAME"
           mv "$ORIGINAL_PATH" "$DIR/$NEW_NAME"            
-
       - name: Upload iOS Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app_appambit_testapp_ios_${{ env.TYPE_RELEASE }}
+          name: ios-ipa
           path: ./publish-ios/**/*.ipa
