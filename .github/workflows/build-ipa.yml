@@ -11,7 +11,7 @@ env:
 jobs:
   maui-ios:
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
