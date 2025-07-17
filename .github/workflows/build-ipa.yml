@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
     
 env:
-  TYPE_RELEASE: alpha
   PROJECT_PATH: AppAmbitTestingApp/AppAmbitTestingApp.csproj
   IPA_NAME: com_appambit_testapp
   
@@ -15,6 +14,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Extract release type from branch name
+        run: |
+          FULL_BRANCH="${GITHUB_REF#refs/heads/}"
+
+          if [[ "$FULL_BRANCH" == *"/"* ]]; then
+            TYPE_RELEASE="${FULL_BRANCH%%/*}"
+          else
+            TYPE_RELEASE="$FULL_BRANCH"
+          fi
+
+          echo "TYPE_RELEASE=$TYPE_RELEASE" >> $GITHUB_ENV
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
