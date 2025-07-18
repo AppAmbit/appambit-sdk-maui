@@ -15,17 +15,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract release type from branch name
+      - name: Validate and extract release type from branch name
         run: |
           FULL_BRANCH="${GITHUB_REF#refs/heads/}"
 
-          if [[ "$FULL_BRANCH" == *"/"* ]]; then
+          if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
             TYPE_RELEASE="${FULL_BRANCH%%/*}"
+            echo "TYPE_RELEASE=$TYPE_RELEASE" >> $GITHUB_ENV
           else
-            TYPE_RELEASE="$FULL_BRANCH"
+            echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+            exit 1
           fi
-
-          echo "TYPE_RELEASE=$TYPE_RELEASE" >> $GITHUB_ENV
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
