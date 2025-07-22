@@ -12,7 +12,6 @@ variables:
   androidSdkCmdlineTools: '$(HOME)/DevTools/android-sdk/cmdline-tools/tools/bin'
   androidKeyAlias: 'kavaup'
   apkName: 'appambit_android'
-  typeRelease: 'alpha'
 
 jobs:
 - job: BuildAndroidApp
@@ -20,6 +19,27 @@ jobs:
   timeoutInMinutes: 10 
 
   steps:
+
+  - task: Bash@3
+    displayName: 'Validate and extract release type from branch name'
+    inputs:
+      targetType: 'inline'
+      script: |
+        FULL_REF="$(Build.SourceBranch)"
+        echo "Full ref: $FULL_REF"
+        
+        FULL_BRANCH="${FULL_REF#refs/heads/}"
+        echo "Branch name: $FULL_BRANCH"
+        
+        if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+          TYPE_RELEASE="${FULL_BRANCH%%/*}"
+          echo "##vso[task.setvariable variable=typeRelease]$TYPE_RELEASE"
+          echo "Valid release type: $TYPE_RELEASE"
+        else
+          echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+          exit 1
+        fi
+
   - task: UseDotNet@2
     displayName: Use dotnet 8.0
     inputs:

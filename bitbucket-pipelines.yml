@@ -8,7 +8,18 @@ pipelines:
           caches:
             - dotnetcore
           script:
-            - apt-get update && apt-get install -y wget unzip openjdk-17-jdk
+            - |
+              export FULL_BRANCH="${BITBUCKET_BRANCH}"
+              echo "Current branch: $FULL_BRANCH"
+
+              if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+                export TYPE_RELEASE="${FULL_BRANCH%%/*}"
+                echo "TYPE_RELEASE=$TYPE_RELEASE"
+              else
+                echo "Branch '$FULL_BRANCH' must start with alpha/, beta/ or production/. Exiting..."
+                exit 1
+              fi
+            - apt-get update && apt-get install -y wget unzip zip openjdk-17-jdk
             - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
             - chmod +x dotnet-install.sh
             - ./dotnet-install.sh --version 8.0.100
@@ -47,10 +58,11 @@ pipelines:
             - APK_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.apk"
             - mkdir -p ../artifacts
             - cp "$APK_FILE" "../artifacts/$APK_NAME"
+            - zip -j "../artifacts/${APP_NAME_BASE}_${TYPE_RELEASE}.zip" "../artifacts/$APK_NAME"
             - cd ..
 
           artifacts:
-            - artifacts/*.apk
+            - artifacts/*.zip
 
       - step:
           name: Upload APK
@@ -62,7 +74,7 @@ pipelines:
               variables:
                 BITBUCKET_USERNAME: $BITBUCKET_USERNAME
                 BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-                FILENAME: "artifacts/*.apk"
+                FILENAME: "artifacts/*.zip"
 
       - step:
           name: Build iOS IPA
@@ -73,6 +85,17 @@ pipelines:
           caches:
             - dotnetcore
           script:
+            - |
+              export FULL_BRANCH="${BITBUCKET_BRANCH}"
+              echo "Current branch: $FULL_BRANCH"
+
+              if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+                export TYPE_RELEASE="${FULL_BRANCH%%/*}"
+                echo "TYPE_RELEASE=$TYPE_RELEASE"
+              else
+                echo "Branch '$FULL_BRANCH' must start with alpha/, beta/ or production/. Exiting..."
+                exit 1
+              fi
             - echo "Configuring Xcode"
             - sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
             - export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
@@ -143,9 +166,9 @@ pipelines:
             - mkdir -p artifacts
             - IPA_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.ipa"
             - cp publish-ios/*.ipa "artifacts/$IPA_NAME"
-
+            - zip -j "artifacts/${APP_NAME_BASE}_${TYPE_RELEASE}.zip" "artifacts/$IPA_NAME"
           artifacts:
-            - artifacts/*.ipa
+            - artifacts/*.zip
 
       - step:
           name: Upload IPA
@@ -157,6 +180,6 @@ pipelines:
               variables:
                 BITBUCKET_USERNAME:     $BITBUCKET_USERNAME
                 BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-                FILENAME:               "artifacts/$IPA_NAME"
+                FILENAME:               "artifacts/*.zip"
           artifacts:
-            - artifacts/*.ipa
+            - artifacts/*.zip
