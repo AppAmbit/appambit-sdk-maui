@@ -3,9 +3,7 @@ name: Build Apk
 on:
   workflow_dispatch:
  
-
 env:
-  TYPE_RELEASE: alpha
   BUILD_CONFIGURATION: Release
   BUILD_FRAMEWORK: net8.0-android
   APK_NAME: com_appambit_testapp
@@ -20,6 +18,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Validate and extract release type from branch name
+      run: |
+        FULL_BRANCH="${GITHUB_REF#refs/heads/}"
+
+        if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+          TYPE_RELEASE="${FULL_BRANCH%%/*}"
+          echo "TYPE_RELEASE=$TYPE_RELEASE" >> $GITHUB_ENV
+        else
+          echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+          exit 1
+        fi
 
     - name: Setup Keystore File
       run: |
