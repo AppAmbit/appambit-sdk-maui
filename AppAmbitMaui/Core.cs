@@ -11,6 +11,8 @@ public static class Core
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
     private static bool _hasStartedSession = false;
+    private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
+
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
@@ -66,7 +68,7 @@ public static class Core
         await InitializeServices();
 
         if (!TokenIsValid())
-            await apiService?.GetNewToken();
+            await GetNewToken(null);
 
 
         await Crashes.LoadCrashFileIfExists();
@@ -123,7 +125,7 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey)
     {
-        await apiService?.GetNewToken(appKey);
+        await GetNewToken(appKey);
 
         if (Analytics._isManualSessionEnabled)
         {
@@ -140,12 +142,47 @@ public static class Core
         apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
         appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
         storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
-        await storageService?.InitializeAsync();
+        await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
         SessionManager.Initialize(apiService);
-        Crashes.Initialize(apiService, storageService, deviceId);
+        Crashes.Initialize(apiService, storageService, deviceId ?? "");
         Analytics.Initialize(apiService, storageService);
-        ConsumerService.Initialize(storageService, appInfoService);
+        ConsumerService.Initialize(storageService, appInfoService, apiService);
+        TokenService.Initialize(storageService);
+    }
+
+    private static async Task GetNewToken(string? appKey)
+    {
+        await consumerSemaphore.WaitAsync();
+        try
+        {
+            if (storageService == null)
+            {
+                return;
+            }
+
+            var consumerId = await storageService.GetConsumerId();
+            if (!string.IsNullOrWhiteSpace(consumerId))
+            {
+                Debug.WriteLine($"[Core] Consumer ID exists ({consumerId}), renewing token...");
+                var result = await apiService?.GetNewToken()!;
+                Debug.WriteLine($"[Core] Token renewal result: {result}");
+            }
+            else
+            {
+                Debug.WriteLine("[Core] There is no consumerId, creating a new one...");
+                var result = await ConsumerService.CreateConsumer(appKey ?? "");
+                Debug.WriteLine($"[Core] CreateConsumer result: {result}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Core] Exception during token operation: {ex}");
+        }
+        finally
+        {
+            consumerSemaphore.Release();
+        }
     }
 
     private static bool TokenIsValid()
@@ -155,5 +192,4 @@ public static class Core
             return true;
         return false;
     }
-
 }

@@ -17,7 +17,7 @@ public class Consumer
     public string UserId { get; set; }
 
     [JsonProperty("user_email")]
-    public string UserEmail { get; set; }
+    public string? UserEmail { get; set; }
 
     [JsonProperty("os")]
     public string OS { get; set; }

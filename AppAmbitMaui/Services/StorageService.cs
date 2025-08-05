@@ -25,20 +25,33 @@ internal class StorageService : IStorageService
         await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<EventEntity>();
     }
-    
+
     public async Task SetDeviceId(string? deviceId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.DeviceId = deviceId;
-        await _database.UpdateAsync(appSecrets);
+
+        if (appSecrets != null)
+        {
+            appSecrets.DeviceId = deviceId;
+            await _database.UpdateAsync(appSecrets);
+        }
+        else
+        {
+            appSecrets = new AppSecrets()
+            {
+                DeviceId = deviceId
+            };
+
+            await _database.InsertAsync(appSecrets);
+        }
     }
-    
+
     public async Task<string?> GetDeviceId()
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
         return appSecrets?.DeviceId;
     }
-    
+
     public async Task SetAppId(string? appId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
@@ -56,7 +69,7 @@ internal class StorageService : IStorageService
             await _database.InsertAsync(appSecrets);
         }
     }
-    
+
     public async Task<string?> GetAppId()
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
@@ -66,8 +79,17 @@ internal class StorageService : IStorageService
     public async Task SetUserId(string userId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.UserId = userId;
-        await _database.UpdateAsync(appSecrets);
+
+        if (appSecrets != null)
+        {
+            appSecrets.UserId = userId;
+            await _database.UpdateAsync(appSecrets);
+        }
+        else
+        {
+            appSecrets = new AppSecrets { UserId = userId };
+            await _database.InsertAsync(appSecrets);
+        }
     }
 
     public async Task<string?> GetUserId()
@@ -76,11 +98,20 @@ internal class StorageService : IStorageService
         return appSecrets?.UserId;
     }
 
-    public async Task SetUserEmail(string userEmail)
+    public async Task SetUserEmail(string? userEmail)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.UserEmail = userEmail;
-        await _database.UpdateAsync(appSecrets);
+
+        if (appSecrets != null)
+        {
+            appSecrets.UserEmail = userEmail;
+            await _database.UpdateAsync(appSecrets);
+        }
+        else
+        {
+            appSecrets = new AppSecrets() { UserEmail = userEmail };
+            await _database.InsertAsync(appSecrets);
+        }
     }
 
     public async Task<string?> GetUserEmail()
@@ -92,8 +123,21 @@ internal class StorageService : IStorageService
     public async Task SetSessionId(string sessionId)
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        appSecrets.SessionId = sessionId;
-        await _database.UpdateAsync(appSecrets);
+
+        if (appSecrets != null)
+        {
+            appSecrets.SessionId = sessionId;
+            await _database.UpdateAsync(appSecrets);
+        }
+        else
+        {
+            appSecrets = new AppSecrets()
+            {
+                SessionId = sessionId,
+            };
+
+            await _database.InsertAsync(appSecrets);
+        }
     }
 
     public async Task<string?> GetSessionId()
@@ -101,7 +145,33 @@ internal class StorageService : IStorageService
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
         return appSecrets?.SessionId;
     }
-    
+
+    public async Task<string?> GetConsumerId()
+    {
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+        return appSecrets?.ConsumerId ?? "";
+    }
+
+    public async Task SetConsumerId(string consumerId)
+    {
+
+        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
+
+        if (appSecrets != null)
+        {
+            appSecrets.ConsumerId = consumerId ?? "";
+            await _database.UpdateAsync(appSecrets);
+        }
+        else
+        {
+            appSecrets = new AppSecrets
+            {
+                ConsumerId = consumerId
+            };
+            await _database.InsertAsync(appSecrets);
+        }
+    }
+
     public async Task LogEventAsync(LogEntity logEntity)
     {
         await _database.InsertAsync(logEntity);
@@ -146,7 +216,7 @@ internal class StorageService : IStorageService
     {
         await _database.DeleteAllAsync<Log>();
     }
-    
+
     public async Task<List<EventEntity>> GetOldest100EventsAsync()
     {
         return await _database.Table<EventEntity>()
@@ -166,4 +236,5 @@ internal class StorageService : IStorageService
             }
         });
     }
+
 }

@@ -7,6 +7,8 @@ public class AppSecrets
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
+    public string? ConsumerId { get; set; }
+
     public string? AppId { get; set; }
     
     public string? DeviceId { get; set; } 

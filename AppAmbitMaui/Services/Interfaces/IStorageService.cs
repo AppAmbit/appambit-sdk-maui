@@ -23,15 +23,15 @@ internal interface IStorageService
 
     #region Sensetive data
     
-    Task SetDeviceId(string? token);
+    Task SetDeviceId(string? deviceId);
 
     Task<string?> GetDeviceId();
     
-    Task SetUserId(string? token);
+    Task SetUserId(string userId);
 
     Task<string?> GetUserId();
     
-    Task SetUserEmail(string? token);
+    Task SetUserEmail(string? email);
 
     Task<string?> GetUserEmail();
 
@@ -42,6 +42,10 @@ internal interface IStorageService
     Task SetSessionId(string sessionId);
     
     Task<string?> GetSessionId();
+
+    Task<string?> GetConsumerId();
+
+    Task SetConsumerId(string consumerId);
 
     Task<List<LogEntity>> GetOldest100LogsAsync();
 

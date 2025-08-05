@@ -106,28 +106,32 @@ internal class APIService : IAPIService
         return ApiResult<T>.Fail(result, "Token renewal failed");
     }
 
-    public async Task<ApiErrorType> GetNewToken(string appKey = "")
+    public async Task<ApiErrorType> GetNewToken()
     {
-
         try
         {
-            var registerEndpoint = await ConsumerService.RegisterConsumer(appKey);
-            var tokenResponse = await ExecuteRequest<TokenResponse>(registerEndpoint);
+            var tokenEndpoint = await TokenService.CreateTokenendpoint();
+            var tokenResponse = await ExecuteRequest<TokenResponse>(tokenEndpoint);
 
             if (tokenResponse == null)
-                return ApiErrorType.Unknown;
-
-            if (tokenResponse.ErrorType == ApiErrorType.NetworkUnavailable)
-                return ApiErrorType.NetworkUnavailable;
-
-
-            if (tokenResponse.ErrorType == ApiErrorType.None)
             {
-                _token = tokenResponse.Data?.Token;
-                return ApiErrorType.None;
+                return ApiErrorType.Unknown;
             }
 
-            Debug.WriteLine($"[APIService] Token renew failed: {tokenResponse.ErrorType}");
+            if (tokenResponse.ErrorType != ApiErrorType.None)
+            {
+                Debug.WriteLine($"[APIService] Token renew failed: {tokenResponse.ErrorType}");
+                return tokenResponse.ErrorType;
+            }
+
+            if (tokenResponse.Data == null)
+            {
+                Debug.WriteLine("[APIService] Token renew failed: Data is null");
+                return ApiErrorType.Unknown;
+            }
+
+            _token = tokenResponse.Data.Token;
+            return ApiErrorType.None;
         }
         catch (Exception ex)
         {
@@ -136,6 +140,7 @@ internal class APIService : IAPIService
 
         return ApiErrorType.Unknown;
     }
+
 
     private void ClearToken()
     {
@@ -261,14 +266,15 @@ internal class APIService : IAPIService
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        var options = new JsonSerializerSettings()
+        var settings = new JsonSerializerSettings
         {
-            NullValueHandling = NullValueHandling.Ignore,
+            NullValueHandling = NullValueHandling.Ignore
         };
-        var data = JsonConvert.SerializeObject(payload, options);
-        Debug.WriteLine($"data:{data}");
-        var content = new StringContent(data, Encoding.UTF8, "application/json");
-        return content;
+
+        var json = JsonConvert.SerializeObject(payload, settings);
+        Debug.WriteLine($"data:{json}");
+
+        return new StringContent(json, Encoding.UTF8, "application/json");
     }
 
     private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
@@ -279,23 +285,30 @@ internal class APIService : IAPIService
         return formData;
     }
 
-    private string SerializeStringPayload(object payload)
+private string SerializeStringPayload(object payload)
+{
+    if (payload == null)
     {
-        if (payload == null)
-        {
-            return null;
-        }
-
-        var serializedPayload = payload.GetType()
-            .GetRuntimeProperties()
-            .Where(pi => pi.GetValue(payload) != null)
-            .Aggregate("", (result, pi) => result
-                                           + Uri.EscapeDataString(pi.Name)
-                                           + "="
-                                           + Uri.EscapeDataString((String)(pi.GetValue(payload)))
-                                           + "&");
-        return serializedPayload.Substring(0, serializedPayload.Length - 1);
+        return "";
     }
+
+    var type = payload.GetType();
+    var properties = type.GetRuntimeProperties();
+
+    var keyValuePairs = properties
+        .Where(pi => pi.GetValue(payload) != null)
+        .Select(pi =>
+        {
+            // Obtener el nombre del atributo [JsonProperty] si existe
+            var jsonProperty = pi.GetCustomAttribute<JsonPropertyAttribute>();
+            var key = jsonProperty?.PropertyName ?? pi.Name;
+
+            var value = pi.GetValue(payload)?.ToString() ?? "";
+            return $"{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value)}";
+        });
+
+    return string.Join("&", keyValuePairs);
+}
 
     private string SerializedGetURL(string url, object payload)
     {
