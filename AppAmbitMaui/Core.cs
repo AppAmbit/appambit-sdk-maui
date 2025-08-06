@@ -68,9 +68,10 @@ public static class Core
         await InitializeServices();
 
         if (!TokenIsValid())
+        {
             await GetNewToken(null);
-
-
+        }
+        
         await Crashes.LoadCrashFileIfExists();
 
         await Crashes.SendBatchLogs();
@@ -95,7 +96,9 @@ public static class Core
     private static async Task OnResume()
     {
         if (!TokenIsValid())
-            await apiService?.GetNewToken();
+        {
+            await GetNewToken(null);            
+        }
 
 
         if (!Analytics._isManualSessionEnabled && _hasStartedSession)
@@ -132,8 +135,10 @@ public static class Core
             return;
         }
 
-        await SessionManager.SendEndSessionIfExists();
-        await SessionManager.StartSession();
+        var endSessionTask = SessionManager.SendEndSessionIfExists();
+        var startSessionTask = SessionManager.StartSession();
+
+        await Task.WhenAll(endSessionTask, startSessionTask);
     }
 
 
@@ -142,20 +147,27 @@ public static class Core
         apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
         appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
         storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
+        TokenService.Initialize(storageService);
         await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
         SessionManager.Initialize(apiService);
         Crashes.Initialize(apiService, storageService, deviceId ?? "");
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(storageService, appInfoService, apiService);
-        TokenService.Initialize(storageService);
     }
 
     private static async Task GetNewToken(string? appKey)
     {
+        Debug.WriteLine($"[Core] Trying to get the token...");
         await consumerSemaphore.WaitAsync();
         try
         {
+            if (TokenIsValid())
+            {
+                return;
+            }
+            
+            Debug.WriteLine($"[Core] Obtaining the token");
             if (storageService == null)
             {
                 return;

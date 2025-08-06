@@ -37,7 +37,7 @@ internal class APIService : IAPIService
         }
         catch (UnauthorizedException)
         {
-            if (endpoint is RegisterEndpoint)
+            if (endpoint is RegisterEndpoint || endpoint is TokenEndpoint)
             {
                 Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
                 ClearToken();
@@ -214,7 +214,7 @@ internal class APIService : IAPIService
     }
     private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
     {
-        client.Timeout = TimeSpan.FromSeconds(20);
+        client.Timeout = TimeSpan.FromSeconds(10);
         await AddAuthorizationHeaderIfNeeded(client);
 
         var fullUrl = endpoint.BaseUrl + endpoint.Url;
@@ -299,7 +299,6 @@ private string SerializeStringPayload(object payload)
         .Where(pi => pi.GetValue(payload) != null)
         .Select(pi =>
         {
-            // Obtener el nombre del atributo [JsonProperty] si existe
             var jsonProperty = pi.GetCustomAttribute<JsonPropertyAttribute>();
             var key = jsonProperty?.PropertyName ?? pi.Name;
 

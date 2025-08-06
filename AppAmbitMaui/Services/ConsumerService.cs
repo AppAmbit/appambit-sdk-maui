@@ -43,12 +43,16 @@ internal class ConsumerService
                 await _storageService.SetConsumerId("");
             }
 
-                if (!string.IsNullOrWhiteSpace(appKey))
+            if (!string.IsNullOrWhiteSpace(appKey))
             {
+                appId = appKey;
                 await _storageService.SetAppId(appKey);
             }
 
-            appId = appKey ?? storedAppKey;
+            if (string.IsNullOrWhiteSpace(appKey))
+            {
+                appId = storedAppKey ?? "";
+            }
 
             if (string.IsNullOrWhiteSpace(deviceId))
             {
