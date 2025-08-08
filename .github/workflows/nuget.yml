@@ -1,9 +1,9 @@
 name: Build and Publish NuGet Package
 
 on: 
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    - main
+    - feature/Nuget_CICD
 
 permissions:
   contents: write
@@ -124,7 +124,7 @@ jobs:
         run: dotnet pack --output ./artifacts --configuration Release -p:PackageVersion=${{ steps.version.outputs.new_version }} ./AppAmbitMaui/AppAmbitMaui.csproj 
 
       - name: Create Release and Upload Assets
-        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master' || github.ref_name == 'feature/Nuget_CICD')
+        if: github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'feature/Nuget_CICD')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
@@ -155,4 +155,3 @@ jobs:
             ---
             **Build**: #${{ github.run_number }} | **Workflow**: ${{ github.workflow }}
           prerelease: ${{ steps.version.outputs.is_prerelease }}
-          
