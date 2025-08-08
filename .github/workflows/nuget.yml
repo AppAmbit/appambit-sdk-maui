@@ -1,9 +1,10 @@
 name: Build and Publish NuGet Package
 
-on: 
+on:
   push:
-    - main
-    - feature/Nuget_CICD
+    branches:
+      - main
+      - feature/Nuget_CICD
 
 permissions:
   contents: write
