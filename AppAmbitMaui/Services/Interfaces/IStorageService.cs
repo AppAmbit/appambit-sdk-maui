@@ -13,7 +13,7 @@ internal interface IStorageService
 
     Task LogAnalyticsEventAsync(EventEntity analyticsLog);
 
-    Task<List<Log>> GetAllLogsAsync();
+    Task<List<LogEntity>> GetAllLogsAsync();
     
     Task<List<EventEntity>> GetAllAnalyticsAsync();
     
@@ -42,6 +42,14 @@ internal interface IStorageService
     Task SetSessionId(string sessionId);
     
     Task<string?> GetSessionId();
-    
+
+    Task<List<LogEntity>> GetOldest100LogsAsync();
+
+    Task DeleteLogList(List<LogEntity> logs);
+
+    Task<List<EventEntity>> GetOldest100EventsAsync();
+
+    Task DeleteEventList(List<EventEntity> logs);
+
     #endregion"
 }

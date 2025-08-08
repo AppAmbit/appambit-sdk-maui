@@ -1,0 +1,79 @@
+name: Build Apk
+
+on:
+  workflow_dispatch:
+ 
+env:
+  BUILD_CONFIGURATION: Release
+  BUILD_FRAMEWORK: net8.0-android
+  APK_NAME: com_appambit_testapp
+  PROJECT_DIR: ./AppAmbitTestingApp
+  KEYSTORE_ASC: appambit.keystore.asc
+  KEYSTORE_FILE: appambit.keystore  
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10    
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Validate and extract release type from branch name
+      run: |
+        FULL_BRANCH="${GITHUB_REF#refs/heads/}"
+
+        if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+          TYPE_RELEASE="${FULL_BRANCH%%/*}"
+          echo "TYPE_RELEASE=$TYPE_RELEASE" >> $GITHUB_ENV
+        else
+          echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+          exit 1
+        fi
+
+    - name: Setup Keystore File
+      run: |
+        echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" > ${{ env.KEYSTORE_ASC }}
+        gpg -d --passphrase "${{ secrets.ANDROID_KEYSTORE_PASSWORD_GPG }}" --batch ${{ env.KEYSTORE_ASC }} > ${{ env.KEYSTORE_FILE }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'microsoft'
+        java-version: '17'
+
+    - name: Install Android Workload
+      run: dotnet workload install maui-android
+
+    - name: Restore Android dependencies
+      run: dotnet restore -p:TargetFramework=${{ env.BUILD_FRAMEWORK }}
+      working-directory: ${{ env.PROJECT_DIR }}
+
+    - name: Build Android
+      run: >
+        dotnet build -c:${{ env.BUILD_CONFIGURATION }} 
+        -f:${{ env.BUILD_FRAMEWORK }} 
+        /p:AndroidSigningKeyStore=../${{ env.KEYSTORE_FILE }}
+        /p:AndroidSigningKeyAlias=kavaup 
+        /p:AndroidSigningKeyPass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" 
+        /p:AndroidSigningStorePass="${{ secrets.ANDROID_KEYSTORE_PASSWORD_ALIAS }}" 
+        --no-restore
+      working-directory: ${{ env.PROJECT_DIR }}
+
+    - name: Rename the launch type
+      run: |
+        ORIGINAL_PATH=$(find ${{ env.PROJECT_DIR }}/bin/${{ env.BUILD_CONFIGURATION }}/${{ env.BUILD_FRAMEWORK }}/ -name "*.apk" | head -n 1)
+        echo "APK found: $ORIGINAL_PATH"
+        DIR=$(dirname "$ORIGINAL_PATH")
+        NEW_NAME="${{ env.APK_NAME }}_${{ env.TYPE_RELEASE }}.apk"
+        echo "Renaming to: $NEW_NAME"
+        mv "$ORIGINAL_PATH" "$DIR/$NEW_NAME"
+    - name: Upload Android Build Artifact
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: app_android_${{ env.TYPE_RELEASE }}
+        path: ${{ env.PROJECT_DIR }}/bin/${{ env.BUILD_CONFIGURATION }}/${{ env.BUILD_FRAMEWORK }}/**/*.apk

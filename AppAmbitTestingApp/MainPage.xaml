@@ -12,46 +12,79 @@
                 HeightRequest="185"
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a race car number eight" />
-            
+                
             <Button
                 Text="Did the app crash during your last session?" 
                 Clicked="OnHasCrashedTheLastSession" />
-            
-            <Entry Placeholder="User id"
-                   Text="{Binding UserId}"/>
-            
+
+            <Button x:Name="ButtonBatchUpload"
+                Text="Generate Logs for Batch upload" 
+                Clicked="OnGenerateLogsForBatch" />
+
+            <Frame BackgroundColor="#F0F0F0"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Entry 
+                        Placeholder="User id"
+                        Text="{Binding UserId}"/>
+                    <Button
+                        Text="Change user id" 
+                        Clicked="OnChangeUserId" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BackgroundColor="#F0F0F0"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="10">
+                    <Entry 
+                        Placeholder="User email"
+                        Text="{Binding UserEmail}" />
+                    <Button 
+                        Text="Change user email"
+                        Clicked="OnChangeUserEmail" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BackgroundColor="#F0F0F0"
+                   HasShadow="True">
+                <VerticalStackLayout
+                    Spacing="10">
+                    <Entry 
+                        Placeholder="Type log message"
+                        Text="{Binding LogMessage}"
+                        TextChanged="MessageInputView_OnTextChanged"/>
+                    <Button x:Name="ButtonCustomLogError"
+                        Text="Send Custom LogError" 
+                        Clicked="OnTestErrorLogClicked" />
+                </VerticalStackLayout>
+            </Frame>
+
             <Button
-                Text="Change user id" 
-                Clicked="OnChangeUserId" />
-            
-            <Entry Placeholder="User email"
-                   Text="{Binding UserEmail}"/>
-            
-            <Button
-                Text="Change user email" 
-                Clicked="OnChangeUserEmail" />
-            
-            <Entry Placeholder="Type log message"
-                    Text="{Binding LogMessage}"
-                    TextChanged="MessageInputView_OnTextChanged"/>
-            
-            <Button
-                Text="Test adding error log" 
-                Clicked="OnTestErrorLogClicked" />
-            <Button
-                Text="Send Test LogError " 
+                Text="Invalidate Token" 
+                Clicked="OnTestToken" />
+            <Button x:Name="ButtonRefreshTest"
+                Text="Token refresh test"
+                Clicked="OnTokenRefreshTest" />
+            <Button x:Name="ButtonDefaultLogError"
+                Text="Send Default LogError" 
                 Clicked="OnSendTestLog" />
-            <Button
-                Text="Send Test Log Exception " 
+            <Button x:Name="ButtonSendTestException"
+                Text="Send Exception LogError" 
                 Clicked="OnSendTestException" />
-            <Button
-                Text="Send Test LogError with classFQN " 
+            <Button x:Name="ButtonTestLogWithClassFQN"
+                Text="Send ClassInfo LogError" 
                 Clicked="OnSendTestLogWithClassFQN" />
+            <Button x:Name="ButtonLast30DailyErrors"
+                Text="Generate the last 30 daily errors"
+                Clicked="OnGenerate30daysTestErrors" />
             <Button
-                Text="Test Crash ( App crashes )" 
+                Text="Generates the last 30 daily crashes"
+                Clicked="OnGenerate30daysTestCrash" />
+            <Button
+                Text="Throw new Crash" 
                 Clicked="OnCounterClicked" />
             <Button
-                Text="Generate test crash" 
+                Text="Generate Test Crash"
                 Clicked="OnGenerateTestCrash" />
         </VerticalStackLayout>
     </ScrollView>

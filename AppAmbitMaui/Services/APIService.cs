@@ -1,58 +1,221 @@
+using AppAmbit.Models.Logs;
+using AppAmbit.Models.Responses;
+using AppAmbit.Services.ExceptionsCustom;
+using AppAmbit.Services.Interfaces;
+using AppAmbit.Enums;
+using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
-using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
-using AppAmbit.Services.Interfaces;
-using Newtonsoft.Json;
 
 namespace AppAmbit.Services;
 
 internal class APIService : IAPIService
 {
     private string? _token;
-    
-    public async Task<T> ExecuteRequest<T>(IEndpoint endpoint)
+    private Task<ApiErrorType>? currentTokenRenewalTask;
+
+    public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
-        var httpClient = new HttpClient(){
+        if (!HasInternetConnection())
+        {
+            Debug.WriteLine("[APIService] Offline - Cannot send request.");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet available");
+        }
+
+        try
+        {
+            var httpResponse = await RequestHttp(endpoint);
+            CheckStatusCodeFrom(httpResponse.StatusCode);
+
+            var json = await httpResponse.Content.ReadAsStringAsync();
+            var parsed = TryDeserializeJson<T>(json);
+            return ApiResult<T>.Success(parsed);
+        }
+        catch (UnauthorizedException)
+        {
+            if (endpoint is RegisterEndpoint)
+            {
+                Debug.WriteLine("[APIService] Token renew endpoint also failed. Session and Token must be cleared");
+                ClearToken();
+                return default;
+            }
+
+            if (!IsRenewingToken())
+            {
+                try
+                {
+                    Debug.WriteLine("[APIService] Token invalid - triggering renewal");
+                    currentTokenRenewalTask = GetNewToken();
+                    var tokenRenewalResult = await currentTokenRenewalTask;
+
+                    if (!IsRenewSuccess(tokenRenewalResult))
+                    {
+                        return HandleFailedRenewalResult<T>(tokenRenewalResult);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return HandleTokenRenewalException<T>(ex);
+                }
+                finally
+                {
+                    currentTokenRenewalTask = null;
+                }
+            }
+
+            Debug.WriteLine("[APIService] Retrying request after token renewal");
+            return await ExecuteRequest<T>(endpoint);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[APIService] Exception during request: {ex}");
+            return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during request");
+        }
+    }
+
+    private bool IsRenewingToken()
+    {
+        return currentTokenRenewalTask != null;
+    }
+
+    private bool IsRenewSuccess(ApiErrorType result)
+    {
+        return result == ApiErrorType.None;
+    }
+
+    private ApiResult<T> HandleTokenRenewalException<T>(Exception ex)
+    {
+        Debug.WriteLine($"[APIService] Error while renewing token: {ex}");
+        ClearToken();
+        return ApiResult<T>.Fail(ApiErrorType.Unknown, "Unexpected error during token renewal");
+    }
+
+    private ApiResult<T>? HandleFailedRenewalResult<T>(ApiErrorType result)
+    {
+        if (result == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine("[APIService] Cannot retry request: no internet after token renewal");
+            return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet after token renewal");
+        }
+
+        Debug.WriteLine($"[APIService] Could not renew token. Cleaning up");
+        return ApiResult<T>.Fail(result, "Token renewal failed");
+    }
+
+    public async Task<ApiErrorType> GetNewToken(string appKey = "")
+    {
+
+        try
+        {
+            var registerEndpoint = await ConsumerService.RegisterConsumer(appKey);
+            var tokenResponse = await ExecuteRequest<TokenResponse>(registerEndpoint);
+
+            if (tokenResponse == null)
+                return ApiErrorType.Unknown;
+
+            if (tokenResponse.ErrorType == ApiErrorType.NetworkUnavailable)
+                return ApiErrorType.NetworkUnavailable;
+
+
+            if (tokenResponse.ErrorType == ApiErrorType.None)
+            {
+                _token = tokenResponse.Data?.Token;
+                return ApiErrorType.None;
+            }
+
+            Debug.WriteLine($"[APIService] Token renew failed: {tokenResponse.ErrorType}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[APIService] Exception during token renew attempt: {ex}");
+        }
+
+        return ApiErrorType.Unknown;
+    }
+
+    private void ClearToken()
+    {
+        Debug.WriteLine("[APIService] Session is no longer valid. Clearing token.");
+        _token = null;
+    }
+
+    private async Task<HttpResponseMessage> RequestHttp(IEndpoint endpoint)
+    {
+        HttpClient httpClient;
+
+        var handler = new HttpClientHandler();
+        var loggingHandler = new LoggingHandler(handler);
+        httpClient = new HttpClient(loggingHandler)
+        {
             Timeout = TimeSpan.FromMinutes(2),
         };
+
         httpClient.DefaultRequestHeaders
             .Accept
             .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        
+
         var responseMessage = await HttpResponseMessage(endpoint, httpClient);
-        Debug.WriteLine($"StatusCode:{(int)responseMessage.StatusCode} {responseMessage.StatusCode}");
-        var responseString = await responseMessage.Content.ReadAsStringAsync();
-        Debug.WriteLine($"responseString:{responseString}");
-        return TryDeserializeJson<T>(responseString);
+        return responseMessage;
     }
-    
+
+    private void CheckStatusCodeFrom(HttpStatusCode code)
+    {
+        int statusCode = (int)code;
+
+        if (IsSuccessStatusCode(statusCode))
+        {
+            return;
+        }
+
+        if (HttpStatusCode.Unauthorized == code)
+        {
+            throw new UnauthorizedException();
+        }
+
+        throw new HttpRequestException($"HTTP error {statusCode}: {code}");
+    }
+
+    private bool IsSuccessStatusCode(int statusCode)
+    {
+        return statusCode >= 200 && statusCode < 300;
+    }
+
+    public string? GetToken()
+    {
+        return _token;
+    }
+
+    public void SetToken(string? token)
+    {
+        _token = token;
+    }
+
     private T TryDeserializeJson<T>(string response)
     {
         try
         {
             return JsonConvert.DeserializeObject<T>(response);
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
             var exceptionMessage = "Could not parse JSON. Something went wrong.";
 
             throw new JsonException(exceptionMessage);
         }
     }
-
     private async Task<HttpResponseMessage> HttpResponseMessage(IEndpoint endpoint, HttpClient client)
     {
         client.Timeout = TimeSpan.FromSeconds(20);
         await AddAuthorizationHeaderIfNeeded(client);
-        
+
         var fullUrl = endpoint.BaseUrl + endpoint.Url;
         return await GetHttpResponseMessage(endpoint, client, fullUrl, endpoint.Payload);
     }
-    
+
     private async Task AddAuthorizationHeaderIfNeeded(HttpClient client)
     {
         var token = GetToken();
@@ -68,13 +231,19 @@ internal class APIService : IAPIService
         {
             return null;
         }
-        
+
         HttpContent content;
         if (payload is Log log)
         {
             PrintLogWithoutFile(log);
-            content = SerializeToMultipartFormDataContent(log);
-            DebugMultipartFormDataContent(content as MultipartFormDataContent);
+            var multipartFormDataContent = SerializeToMultipartFormDataContent(log);
+            content = multipartFormDataContent;
+
+        }
+        else if (payload is LogBatch logBatch)
+        {
+            var multipartFormDataContent = SerializeToMultipartFormDataContent(logBatch);
+            content = multipartFormDataContent;
         }
         else
         {
@@ -82,140 +251,32 @@ internal class APIService : IAPIService
         }
         return content;
     }
-    
+
     [Conditional("DEBUG")]
     private static void PrintLogWithoutFile(Log log)
     {
-        log.file = "_FILE_";
         var data = JsonConvert.SerializeObject(log);
         Debug.WriteLine($"data:{data}");
     }
 
     private static HttpContent SerializeToJSONStringContent(object payload)
     {
-        var options = new JsonSerializerSettings() 
+        var options = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
         };
-        var data = JsonConvert.SerializeObject(payload,options);
+        var data = JsonConvert.SerializeObject(payload, options);
         Debug.WriteLine($"data:{data}");
         var content = new StringContent(data, Encoding.UTF8, "application/json");
         return content;
     }
-    
-    private HttpContent SerializeToMultipartFormDataContent(object payload)
+
+    private MultipartFormDataContent SerializeToMultipartFormDataContent(object payload)
     {
+        Debug.WriteLine("SerializeToMultipartFormDataContent");
         var formData = new MultipartFormDataContent();
-
-        if (payload == null)
-            return null;
-
-        object logTypeValue = null;
-        string logTypeJsonValue = null;
-        
-        foreach (var prop in payload.GetType().GetProperties())
-        {
-            var jsonPropAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
-            var propName = jsonPropAttr?.PropertyName ?? prop.Name;
-
-            if (propName == "type")
-            {
-                logTypeValue = prop.GetValue(payload);
-                var actualType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                if (actualType.IsEnum)
-                {
-                    var enumVal = Enum.Parse(actualType, logTypeValue.ToString());
-                    var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
-                    var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                    logTypeJsonValue = enumAttr?.Value ?? enumVal.ToString();
-                }
-            }
-        }
-
-        foreach (var property in payload.GetType().GetProperties())
-        {
-            var jsonIgnoreAttribute = property.GetCustomAttribute<JsonIgnoreAttribute>();
-            if (jsonIgnoreAttribute != null)
-                continue;
-            
-            var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>();
-            var propertyName = jsonPropertyAttribute?.PropertyName ?? property.Name;
-            var propertyValue = property.GetValue(payload);
-            
-            if (propertyName == "file")
-            {
-                if (logTypeJsonValue != "crash")
-                    continue;
-
-                var dateFormat = "yyyy-MM-ddTHH_mm_ss_fffZ";
-                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(dateFormat)}.txt";
-                var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
-                var encodedBytes = Encoding.ASCII.GetBytes(propertyValue as string ?? "");
-                var fileContent = new ByteArrayContent(encodedBytes);
-                formData.Add(fileContent, "file", Path.GetFileName(filePath));
-                continue;
-            }
-            
-            if (propertyName == "context" && propertyValue is Dictionary<string,string> contextDict)
-            {
-                int count = 0;
-                foreach (var kvp in contextDict)
-                {
-                    var key = kvp.Key;
-                    var value = kvp.Value?.ToString() ?? "";
-                    var contextKey = $"context[{count++}].{key}";
-                    formData.Add(new StringContent(value), contextKey);
-                }
-                continue;
-            }
-            
-            var type = property.PropertyType;
-            var isNullable = Nullable.GetUnderlyingType(type) != null;
-            var actualType = isNullable ? Nullable.GetUnderlyingType(type) : type;
-
-            if (actualType != null && actualType.IsEnum && propertyValue != null)
-            {
-                var enumVal = Enum.Parse(actualType, propertyValue.ToString());
-                var enumMember = actualType.GetMember(enumVal.ToString()).FirstOrDefault();
-                var enumAttr = enumMember?.GetCustomAttribute<EnumMemberAttribute>();
-                var enumValueStr = enumAttr?.Value ?? enumVal.ToString();
-                formData.Add(new StringContent(enumValueStr), propertyName);
-                continue;
-            }
-            
-            if (propertyValue != null)
-            {
-                var stringValue = propertyValue.ToString();
-                formData.Add(new StringContent(stringValue), propertyName);
-            }
-        }
-
+        formData.AddObjectToMultipartFormDataContent(payload);
         return formData;
-    }
-    
-    [Conditional("DEBUG")]
-    private async void DebugMultipartFormDataContent(MultipartFormDataContent formData)
-    {
-        foreach (var content in formData)
-        {
-            Debug.WriteLine("Headers:");
-            foreach (var header in content.Headers)
-            {
-                if (header.Key == "file")
-                {
-                    Debug.WriteLine($"{header.Key}: FILE");
-                    continue;
-                }
-                
-                Debug.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
-            }
-
-            var body = await content.ReadAsStringAsync();
-            Debug.WriteLine("Body:");
-            Debug.WriteLine("----------------------------");
-            Debug.WriteLine(body);
-            Debug.WriteLine("----------------------------");
-        }
     }
 
     private string SerializeStringPayload(object payload)
@@ -259,7 +320,7 @@ internal class APIService : IAPIService
                     break;
                 case HttpMethodEnum.Post:
                     var payloadJson = await SerializePayload(payload, endpoint);
-                    result = await client.PostAsync(url,payloadJson );
+                    result = await client.PostAsync(url, payloadJson);
                     break;
                 case HttpMethodEnum.Patch:
                     var requestMessage = new HttpRequestMessage(new HttpMethod("PATCH"), url)
@@ -284,14 +345,8 @@ internal class APIService : IAPIService
         }
         return result;
     }
-    
-    public string? GetToken()
-    {
-        return _token;
-    }
-    
-    public void SetToken( string? token)
-    {
-        _token = token;
-    }
+
+    private bool HasInternetConnection() =>
+        Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+
 }

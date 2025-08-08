@@ -19,7 +19,6 @@ internal class StorageService : IStorageService
         {
             return;
         }
-
         Debug.WriteLine($"DatabasePath: {AppConstants.DatabasePath}");
         _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
         await _database.CreateTableAsync<AppSecrets>();
@@ -113,9 +112,29 @@ internal class StorageService : IStorageService
         await _database.InsertAsync(analyticsLog);
     }
 
-    public async Task<List<Log>> GetAllLogsAsync()
+    public async Task<List<LogEntity>> GetAllLogsAsync()
     {
-        return await _database.Table<Log>().ToListAsync();
+        return await _database.Table<LogEntity>().ToListAsync();
+    }
+
+    public async Task<List<LogEntity>> GetOldest100LogsAsync()
+    {
+        return await _database.Table<LogEntity>()
+            .OrderBy(log => log.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task DeleteLogList(List<LogEntity> logs)
+    {
+        var ids = logs.Select(log => log.Id).ToList();
+        await _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM LogEntity WHERE Id = ?", id);
+            }
+        });
     }
 
     public async Task<List<EventEntity>> GetAllAnalyticsAsync()
@@ -126,5 +145,25 @@ internal class StorageService : IStorageService
     public async Task DeleteAllLogs()
     {
         await _database.DeleteAllAsync<Log>();
+    }
+    
+    public async Task<List<EventEntity>> GetOldest100EventsAsync()
+    {
+        return await _database.Table<EventEntity>()
+            .OrderBy(log => log.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task DeleteEventList(List<EventEntity> logs)
+    {
+        var ids = logs.Select(log => log.Id).ToList();
+        await _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM EventEntity WHERE Id = ?", id);
+            }
+        });
     }
 }

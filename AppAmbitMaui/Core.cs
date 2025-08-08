@@ -1,24 +1,17 @@
-﻿using System.Net.Http.Headers;
-using AppAmbit.Models.Analytics;
-using AppAmbit.Models.App;
-using AppAmbit.Models.Logs;
-using AppAmbit.Models.Responses;
+﻿using System.Diagnostics;
 using AppAmbit.Services;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AppAmbit;
 
 public static class Core
 {
-    private static bool _initialized;
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
+    private static bool _hasStartedSession = false;
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -26,131 +19,141 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) =>
-                {
-                    Start(appKey);
-                });
-                android.OnResume(activity =>
-                {
-                    if (_initialized)
-                        OnResume();
-                });
-                android.OnPause(activity =>
-                {
-                    OnSleep();
-                });
+                android.OnCreate((activity, state) => { OnStart(appKey); });
+                android.OnPause(activity => { OnSleep(); });
+                android.OnResume(activity => { OnResume(); });
+                android.OnStop(activity => { OnSleep(); });
+                android.OnRestart(activity => { OnResume(); });
+                android.OnDestroy(activity => { OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
             {
                 ios.FinishedLaunching((application, options) =>
                 {
-                    Start(appKey);
+                    OnStart(appKey);
                     return true;
                 });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
+                ios.DidEnterBackground(application => { OnSleep(); });
+                ios.WillEnterForeground(application => { OnResume(); });
+                ios.WillTerminate(application => { OnEnd(); });
             });
 #endif
         });
 
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.ConnectivityChanged += OnConnectivityChanged;
+        Crashes.OnCrashException -= exception => { OnEnd(); };
+        Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
-    private static async Task Start(string appKey)
+
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+            return;
+
+        await InitializeServices();
+
+        if (!TokenIsValid())
+            await apiService?.GetNewToken();
+
+
+        await Crashes.LoadCrashFileIfExists();
+
+        await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
+        await SessionManager.SendBatchSessions();
+    }
+
+    private static async Task OnStart(string appKey)
     {
         await InitializeServices();
 
         await InitializeConsumer(appKey);
+        _hasStartedSession = true;
 
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.StartSession();
-        }
+        await Crashes.LoadCrashFileIfExists();
 
-        Crashes.LoadCrashFileIfExists();
-        
-        _initialized = true;
+        await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
+        await SessionManager.SendBatchSessions();
     }
 
     private static async Task OnResume()
     {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-        
-        if (!Analytics._isManualSessionEnabled)
+        if (!TokenIsValid())
+            await apiService?.GetNewToken();
+
+
+        if (!Analytics._isManualSessionEnabled && _hasStartedSession)
         {
-            await Analytics.StartSession();
+            await SessionManager.RemoveSavedEndSession();
         }
+
+        await Crashes.SendBatchLogs();
+        await Analytics.SendBatchEvents();
     }
-    
-    public static async Task OnSleep()
+
+    private static void OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.EndSession();
+            SessionManager.SaveEndSession();
         }
     }
 
-    private static async Task InitializeConsumer(string appKey = "")
+    private static void OnEnd()
     {
-        var appId = await storageService.GetAppId();
-        var deviceId = await storageService.GetDeviceId();
-        var userId = await storageService.GetUserId();
-        var userEmail = await storageService.GetUserEmail();
-
-        if (appId == null)
+        if (!Analytics._isManualSessionEnabled)
         {
-            await storageService.SetAppId(appKey);
+            SessionManager.SaveEndSession();
         }
-
-        if (deviceId == null)
-        {
-            deviceId = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(deviceId);
-        }
-
-        if (userId == null)
-        {
-            userId = Guid.NewGuid().ToString();
-            await storageService.SetUserId(userId);
-        }
-
-        var consumer = new Consumer
-        {
-            AppKey = appKey,
-            DeviceId = deviceId,
-            DeviceModel = appInfoService.DeviceModel,
-            UserId = userId,
-            UserEmail = userEmail,
-            OS = appInfoService.OS,
-            Country = appInfoService.Country,
-            Language = appInfoService.Language,
-        };
-        var registerEndpoint = new RegisterEndpoint(consumer);
-        var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-
-        apiService.SetToken(remoteToken?.Token);
     }
-    
+
+    private static async Task InitializeConsumer(string appKey)
+    {
+        await apiService?.GetNewToken(appKey);
+
+        if (Analytics._isManualSessionEnabled)
+        {
+            return;
+        }
+
+        await SessionManager.SendEndSessionIfExists();
+        await SessionManager.StartSession();
+    }
+
+
     private static async Task InitializeServices()
     {
-        apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-        appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
-        storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+        apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
+        appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
+        storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
         await storageService?.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        SessionManager.Initialize(apiService);
+        Crashes.Initialize(apiService, storageService, deviceId);
+        Analytics.Initialize(apiService, storageService);
+        ConsumerService.Initialize(storageService, appInfoService);
     }
+
+    private static bool TokenIsValid()
+    {
+        var token = apiService?.GetToken();
+        if (!string.IsNullOrEmpty(token))
+            return true;
+        return false;
+    }
+
 }

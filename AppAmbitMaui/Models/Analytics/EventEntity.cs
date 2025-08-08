@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using AppAmbit.Utils;
 using Newtonsoft.Json;
 using SQLite;
 
@@ -6,6 +6,7 @@ namespace AppAmbit.Models.Analytics;
 
 public class EventEntity : Event
 {
+    [JsonIgnore]
     [PrimaryKey]
     public Guid Id { get; set; }
 
@@ -20,4 +21,8 @@ public class EventEntity : Event
     // internal field for storing on Sqlite
     [JsonIgnore]
     public string DataJson { get; set; } = "{}";
+    
+    [JsonProperty("created_at")]
+    [JsonConverter(typeof(CustomDateTimeConverter))]
+    public DateTime CreatedAt { get; set; }
 }
