@@ -5,7 +5,6 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
-using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -100,7 +99,7 @@ public static class Analytics
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
                 Data = data,
-                CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow,
+                CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
             };
 
             if (storageService != null)

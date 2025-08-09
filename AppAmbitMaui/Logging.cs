@@ -2,7 +2,6 @@ using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
-using Shared.Utils;
 using System.Diagnostics;
 
 namespace AppAmbit;

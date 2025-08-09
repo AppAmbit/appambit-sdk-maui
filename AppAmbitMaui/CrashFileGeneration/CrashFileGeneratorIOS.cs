@@ -1,7 +1,7 @@
 #if IOS
 using System.Runtime.InteropServices;
 using System.Text;
-using Shared.Utils;
+using AppAmbit;
 using UIKit;
 
 internal partial class CrashFileGeneratorIOS
@@ -33,7 +33,7 @@ internal partial class CrashFileGeneratorIOS
         log.AppendLine($"Manufacturer: Apple");
         log.AppendLine($"Model: {DeviceInfo.Model}");
         log.AppendLine($"Device Id: {deviceId}");
-        log.AppendLine($"Date: {DateUtils.GetUtcNow:O}");
+        log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
     
     public static void AddThreads(StringBuilder log)

@@ -1,6 +1,5 @@
 
 #if ANDROID
-using Shared.Utils;
 using System.Diagnostics;
 using Java.Lang;
 using Exception = System.Exception;
@@ -23,7 +22,7 @@ internal static class CrashFileGeneratorAndroid
         log.AppendLine($"Manufacturer: {Build.Manufacturer}");
         log.AppendLine($"Model: {Build.Model}");
         log.AppendLine($"Device Id: {deviceId}");
-        log.AppendLine($"Date: {DateUtils.GetUtcNow:O}");
+        log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
     public static void AddThreads(StringBuilder log)
     {

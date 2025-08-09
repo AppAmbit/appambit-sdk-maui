@@ -4,7 +4,6 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Models.Analytics;
 using static AppAmbit.FileUtils;
-using Shared.Utils;
 using AppAmbit.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -31,7 +30,7 @@ internal class SessionManager
         if (_isSessionActive)
             return;
 
-        DateTime dateUtc = DateUtils.GetUtcNow;
+        DateTime dateUtc = DateTime.UtcNow;
         var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc))!;
 
         if (apiResponse?.ErrorType != ApiErrorType.None)
@@ -54,7 +53,7 @@ internal class SessionManager
             return;
         }
 
-        DateTime dateUtc = DateUtils.GetUtcNow;
+        DateTime dateUtc = DateTime.UtcNow;
 
         SessionData? endSession = new SessionData
         {
@@ -86,7 +85,7 @@ internal class SessionManager
             {
                 Id = Guid.NewGuid().ToString(),
                 SessionId = _sessionId,
-                Timestamp = DateUtils.GetUtcNow,
+                Timestamp = DateTime.UtcNow,
                 SessionType = SessionType.End
             };
 
