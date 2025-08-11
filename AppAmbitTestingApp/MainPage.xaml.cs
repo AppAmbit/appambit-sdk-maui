@@ -151,7 +151,7 @@ public partial class MainPage : ContentPage
 
         foreach (int index in Range(start: 1, count: 30))
         {
-            var errorsDate = DateTime.UtcNow.AddDays(-(30 - index));
+            var errorsDate = DateUtils.GetUtcNow.AddDays(-(30 - index));
             Debug.WriteLine($"DEBUG TIME ERROR: {errorsDate} : Index: {index}");
             await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
             await Task.Delay(500);
@@ -173,7 +173,7 @@ public partial class MainPage : ContentPage
         foreach (int index in Range(start: 1, count: 30))
         {
             var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
-            var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
+            var crashDate = DateUtils.GetUtcNow.AddDays(-(30 - index));
             info.CreatedAt = crashDate;
             info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss") + "_" + index;
 

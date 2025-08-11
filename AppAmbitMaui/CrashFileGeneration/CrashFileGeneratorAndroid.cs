@@ -22,7 +22,7 @@ internal static class CrashFileGeneratorAndroid
         log.AppendLine($"Manufacturer: {Build.Manufacturer}");
         log.AppendLine($"Model: {Build.Model}");
         log.AppendLine($"Device Id: {deviceId}");
-        log.AppendLine($"Date: {DateTime.UtcNow:O}");
+        log.AppendLine($"Date: {DateUtils.GetUtcNow:O}");
     }
     public static void AddThreads(StringBuilder log)
     {

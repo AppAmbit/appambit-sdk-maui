@@ -224,7 +224,7 @@ public static class Crashes
                 logEntity.Id = Guid.NewGuid();
                 if (crash.CreatedAt == default)
                 {
-                    logEntity.CreatedAt = DateTime.UtcNow;
+                    logEntity.CreatedAt = DateUtils.GetUtcNow;
                 }
                 else
                 {

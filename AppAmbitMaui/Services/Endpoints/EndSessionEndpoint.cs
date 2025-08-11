@@ -13,7 +13,7 @@ internal class EndSessionEndpoint : BaseEndpoint
         Payload = new SessionData()
         {
             SessionId = sessionId,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateUtils.GetUtcNow
         };
     }
     

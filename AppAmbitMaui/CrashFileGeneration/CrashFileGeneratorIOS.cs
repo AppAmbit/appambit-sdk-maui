@@ -33,7 +33,7 @@ internal partial class CrashFileGeneratorIOS
         log.AppendLine($"Manufacturer: Apple");
         log.AppendLine($"Model: {DeviceInfo.Model}");
         log.AppendLine($"Device Id: {deviceId}");
-        log.AppendLine($"Date: {DateTime.UtcNow:O}");
+        log.AppendLine($"Date: {DateUtils.GetUtcNow:O}");
     }
     
     public static void AddThreads(StringBuilder log)

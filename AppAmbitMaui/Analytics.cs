@@ -99,7 +99,7 @@ public static class Analytics
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
                 Data = data,
-                CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+                CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow,
             };
 
             if (storageService != null)
