@@ -6,7 +6,6 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
-using Shared.Utils;
 
 namespace AppAmbit;
 
@@ -225,7 +224,7 @@ public static class Crashes
                 logEntity.Id = Guid.NewGuid();
                 if (crash.CreatedAt == default)
                 {
-                    logEntity.CreatedAt = DateUtils.GetUtcNow;
+                    logEntity.CreatedAt = DateTime.UtcNow;
                 }
                 else
                 {
