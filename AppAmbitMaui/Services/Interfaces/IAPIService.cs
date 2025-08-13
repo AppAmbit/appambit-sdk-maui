@@ -10,6 +10,7 @@ internal interface IAPIService
     void SetToken(string? token);
 
     string? GetToken();
+
+    Task<ApiErrorType> GetNewToken();
     
-    Task<ApiErrorType> GetNewToken(string appKey = "");
 }
