@@ -30,7 +30,7 @@ internal class SessionManager
         if (_isSessionActive)
             return;
 
-        DateTime dateUtc = DateUtils.GetUtcNow;
+        DateTime dateUtc = DateTime.UtcNow;
         var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc))!;
 
         if (apiResponse?.ErrorType != ApiErrorType.None)
@@ -53,7 +53,7 @@ internal class SessionManager
             return;
         }
 
-        DateTime dateUtc = DateUtils.GetUtcNow;
+        DateTime dateUtc = DateTime.UtcNow;
 
         SessionData? endSession = new SessionData
         {
@@ -85,7 +85,7 @@ internal class SessionManager
             {
                 Id = Guid.NewGuid().ToString(),
                 SessionId = _sessionId,
-                Timestamp = DateUtils.GetUtcNow,
+                Timestamp = DateTime.UtcNow,
                 SessionType = SessionType.End
             };
 

@@ -126,7 +126,7 @@ public partial class AnalyticsPage : ContentPage
         }
         foreach (int index in Range(start: 0, count: 30))
         {
-            var date = DateUtils.GetUtcNow.AddDays(-index);
+            var date = DateTime.UtcNow.AddDays(-index);
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
         }
         await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
@@ -146,7 +146,7 @@ public partial class AnalyticsPage : ContentPage
     private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
         var random = new Random();
-        DateTime startDate = DateUtils.GetUtcNow.AddDays(-30);
+        DateTime startDate = DateTime.UtcNow.AddDays(-30);
         var offlineSessions = new List<SessionData>();
 
 

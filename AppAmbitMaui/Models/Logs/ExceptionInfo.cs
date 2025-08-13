@@ -31,7 +31,7 @@ public class ExceptionInfo
             FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
             CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId),
-            CreatedAt = DateUtils.GetUtcNow
+            CreatedAt = DateTime.UtcNow
         };
     }
 }

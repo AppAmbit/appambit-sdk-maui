@@ -42,7 +42,7 @@ internal static class Logging
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt = createdAt != null ? createdAt.Value : DateUtils.GetUtcNow,
+            CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
         };
         await SendOrSaveLogEventAsync(log);
     }
