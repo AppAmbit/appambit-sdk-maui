@@ -4,6 +4,7 @@ using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using AppAmbit.Enums;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace AppAmbit.Services;
 
@@ -21,7 +22,7 @@ internal class ConsumerService
         _apiService = apiService;
     }
 
-    public static async Task<RegisterEndpoint> BuildRegisterEndpoint(string? appKey)
+    public static async Task<RegisterEndpoint> BuildRegisterEndpoint()
     {
         string? appId = null;
         string? deviceId = "", userId = "", userEmail = null;
@@ -35,24 +36,7 @@ internal class ConsumerService
             deviceId = await _storageService.GetDeviceId();
             userId = await _storageService.GetUserId();
             userEmail = await _storageService.GetUserEmail();
-            var storedAppKey = await _storageService.GetAppId();
-
-
-            if (storedAppKey != appKey)
-            {
-                await _storageService.SetConsumerId("");
-            }
-
-            if (!string.IsNullOrWhiteSpace(appKey))
-            {
-                appId = appKey;
-                await _storageService.SetAppId(appKey);
-            }
-
-            if (string.IsNullOrWhiteSpace(appKey))
-            {
-                appId = storedAppKey ?? "";
-            }
+            appId = await _storageService.GetAppId();
 
             if (string.IsNullOrWhiteSpace(deviceId))
             {
@@ -84,7 +68,7 @@ internal class ConsumerService
         });
     }
 
-    public static async Task<ApiErrorType> CreateConsumer(string appKey)
+    public static async Task<ApiErrorType> CreateConsumer()
     {
         try
         {
@@ -93,7 +77,7 @@ internal class ConsumerService
                 return ApiErrorType.Unknown;
             }
 
-            var registerEndpoint = await BuildRegisterEndpoint(appKey);
+            var registerEndpoint = await BuildRegisterEndpoint();
             var tokenResponse = await _apiService.ExecuteRequest<TokenResponse>(registerEndpoint);
 
             if (tokenResponse == null)
@@ -124,4 +108,30 @@ internal class ConsumerService
             return ApiErrorType.Unknown;
         }
     }
+
+    public static async Task UpdateAppKeyIfNeeded(string appKey)
+    {
+        if (_storageService == null)
+        {
+            Console.WriteLine("UpdateAppKeyIfNeeded: _storageService is null, skipping.");
+            return;
+        }
+
+        string newKey = (appKey ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(newKey))
+        {
+            return;
+        }
+
+        string? storedKey = await _storageService.GetAppId();
+        if (string.Equals(storedKey, newKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await _storageService.SetConsumerId(string.Empty);
+        await _storageService.SetAppId(newKey);
+    }
+
 }

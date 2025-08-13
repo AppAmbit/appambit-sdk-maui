@@ -172,7 +172,7 @@ public static class Core
             {
                 return;
             }
-
+            await ConsumerService.UpdateAppKeyIfNeeded(appKey);
             var consumerId = await storageService.GetConsumerId();
             if (!string.IsNullOrWhiteSpace(consumerId))
             {
@@ -183,7 +183,7 @@ public static class Core
             else
             {
                 Debug.WriteLine("[Core] There is no consumerId, creating a new one...");
-                var result = await ConsumerService.CreateConsumer(appKey ?? "");
+                var result = await ConsumerService.CreateConsumer();
                 Debug.WriteLine($"[Core] CreateConsumer result: {result}");
             }
         }
