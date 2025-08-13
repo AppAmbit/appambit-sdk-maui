@@ -44,8 +44,4 @@
         <None Include="readme.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="../Shared/Shared.csproj" />
-    </ItemGroup>
-
 </Project>
