@@ -1,7 +1,6 @@
 using AppAmbit.Models.Analytics;
 using AppAmbit.Services.Endpoints.Base;
 using AppAmbit.Services.Interfaces;
-using Shared.Utils;
 
 namespace AppAmbit.Services.Endpoints;
 
