@@ -4,3 +4,4 @@ bin/
 .vs/
 *.user
 launch.json
+Shared/
