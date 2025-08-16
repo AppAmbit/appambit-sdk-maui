@@ -1,10 +1,7 @@
 name: Build and Publish NuGet Package
 
 on:
-  push:
-    branches:
-      - main
-      - feature/Nuget_CICD
+  workflow_dispatch:
 
 env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
@@ -155,3 +152,6 @@ jobs:
             ---
             **Build**: #${{ github.run_number }} | **Workflow**: ${{ github.workflow }}
           prerelease: ${{ steps.version.outputs.is_prerelease }}
+
+      - name: Push to NuGet to create a release
+        run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/*.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
