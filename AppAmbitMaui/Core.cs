@@ -11,6 +11,8 @@ public static class Core
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
     private static bool _hasStartedSession = false;
+    private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
+
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
@@ -66,9 +68,10 @@ public static class Core
         await InitializeServices();
 
         if (!TokenIsValid())
-            await apiService?.GetNewToken();
-
-
+        {
+            await GetNewToken(null);
+        }
+        
         await Crashes.LoadCrashFileIfExists();
 
         await Crashes.SendBatchLogs();
@@ -93,7 +96,9 @@ public static class Core
     private static async Task OnResume()
     {
         if (!TokenIsValid())
-            await apiService?.GetNewToken();
+        {
+            await GetNewToken(null);            
+        }
 
 
         if (!Analytics._isManualSessionEnabled && _hasStartedSession)
@@ -123,15 +128,17 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey)
     {
-        await apiService?.GetNewToken(appKey);
+        await GetNewToken(appKey);
 
         if (Analytics._isManualSessionEnabled)
         {
             return;
         }
 
-        await SessionManager.SendEndSessionIfExists();
-        await SessionManager.StartSession();
+        var endSessionTask = SessionManager.SendEndSessionIfExists();
+        var startSessionTask = SessionManager.StartSession();
+
+        await Task.WhenAll(endSessionTask, startSessionTask);
     }
 
 
@@ -140,12 +147,54 @@ public static class Core
         apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
         appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
         storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
-        await storageService?.InitializeAsync();
+        TokenService.Initialize(storageService);
+        await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
         SessionManager.Initialize(apiService);
-        Crashes.Initialize(apiService, storageService, deviceId);
+        Crashes.Initialize(apiService, storageService, deviceId ?? "");
         Analytics.Initialize(apiService, storageService);
-        ConsumerService.Initialize(storageService, appInfoService);
+        ConsumerService.Initialize(storageService, appInfoService, apiService);
+    }
+
+    private static async Task GetNewToken(string? appKey)
+    {
+        Debug.WriteLine($"[Core] Trying to get the token...");
+        await consumerSemaphore.WaitAsync();
+        try
+        {
+            if (TokenIsValid())
+            {
+                return;
+            }
+            
+            Debug.WriteLine($"[Core] Obtaining the token");
+            if (storageService == null)
+            {
+                return;
+            }
+            await ConsumerService.UpdateAppKeyIfNeeded(appKey);
+            var consumerId = await storageService.GetConsumerId();
+            if (!string.IsNullOrWhiteSpace(consumerId))
+            {
+                Debug.WriteLine($"[Core] Consumer ID exists ({consumerId}), renewing token...");
+                var result = await apiService?.GetNewToken()!;
+                Debug.WriteLine($"[Core] Token renewal result: {result}");
+            }
+            else
+            {
+                Debug.WriteLine("[Core] There is no consumerId, creating a new one...");
+                var result = await ConsumerService.CreateConsumer();
+                Debug.WriteLine($"[Core] CreateConsumer result: {result}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Core] Exception during token operation: {ex}");
+        }
+        finally
+        {
+            consumerSemaphore.Release();
+        }
     }
 
     private static bool TokenIsValid()
@@ -155,5 +204,4 @@ public static class Core
             return true;
         return false;
     }
-
 }

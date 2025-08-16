@@ -60,7 +60,8 @@ internal static class FileUtils
             if (entry is not null && !list.Any(x => x.Id == entry.Id))
             {
                 list.Add(entry);
-                await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(list, settings));
+                var listSorted = list.OrderBy(x => x.Timestamp).ToList();
+                await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(listSorted, settings));
             }
 
             return list;

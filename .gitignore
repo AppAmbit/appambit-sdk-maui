@@ -4,4 +4,4 @@ bin/
 .vs/
 *.user
 launch.json
-AppAmbitTestingApp/LocalPackages/AppAmbitNet.1.2.0.nupkg
+Shared/
