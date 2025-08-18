@@ -1,5 +1,6 @@
 name: Build and Publish NuGet Package
 
+# The main branch is develop
 on:
   workflow_dispatch:
 
@@ -128,29 +129,7 @@ jobs:
           name: "${{ steps.version.outputs.new_tag }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
-          body: |
-            ## AppAmbit ${{ steps.version.outputs.new_version }}
-            
-            - **Previous Version**: v${{ steps.version.outputs.current_version }}
-            - **New Version**: ${{ steps.version.outputs.new_tag }}
-            - **Increment Type**: ${{ steps.version.outputs.increment_type }}
-            - **Branch**: `${{ github.ref_name }}`
-            - **Commit**: `${{ github.sha }}`
-            
-            ```bash
-            dotnet add package AppAmbit --version ${{ steps.version.outputs.new_version }}
-            ```
-            
-            This release was automatically versioned based on:
-            - **[major]** or **BREAKING CHANGE** in commit → Major version bump
-            - **[minor]** or **feat** in commit → Minor version bump  
-            - **Default** → Patch version bump
-            
-            - AppAmbit NuGet package for analytics, crash tracking, and usage monitoring
-            - Compatible with mobile and desktop applications
-            
-            ---
-            **Build**: #${{ github.run_number }} | **Workflow**: ${{ github.workflow }}
+          body_path: CHANGELOG.md
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
       - name: Push to NuGet to create a release
