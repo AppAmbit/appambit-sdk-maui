@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AppAmbit.Enums;
 using AppAmbit.Models;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
@@ -24,6 +25,7 @@ internal class StorageService : IStorageService
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<EventEntity>();
+        await _database.CreateTableAsync<SessionBatch>();
     }
 
     public async Task SetDeviceId(string? deviceId)
@@ -180,6 +182,70 @@ internal class StorageService : IStorageService
     public async Task LogAnalyticsEventAsync(EventEntity analyticsLog)
     {
         await _database.InsertAsync(analyticsLog);
+    }
+
+    public async Task SessionBatchAsync(SessionData sessionData)
+    {
+        switch (sessionData.SessionType)
+        {
+            case SessionType.Start:
+
+                var id = await _database.ExecuteScalarAsync<string>(
+                    "SELECT id FROM SessionBatch WHERE ended_at IS NULL ORDER BY started_at LIMIT 1");
+
+                if (id != null)
+                {
+                    await _database.ExecuteAsync(
+                        "UPDATE SessionBatch SET ended_at = ? WHERE id = ?", sessionData.Timestamp, id);
+
+                    Debug.WriteLine("Session start updated");
+                }
+                
+                var sessionBatch = new SessionBatch
+                {
+                    Id = sessionData.Id,
+                    SessionId = sessionData.SessionId,
+                    StartedAt = sessionData.Timestamp
+                };
+                await _database.InsertAsync(sessionBatch);
+                break;
+            case SessionType.End:
+                var existingSession = await _database.Table<SessionBatch>()
+                    .Where(sb => sb.EndedAt == null)
+                    .FirstOrDefaultAsync();
+
+                if (existingSession != null)
+                {
+                    existingSession.EndedAt = sessionData.Timestamp;
+                    await _database.UpdateAsync(existingSession);
+                    Debug.WriteLine("Session end updated");
+                }
+                else
+                {
+                    var sessionEnd = new SessionBatch
+                    {
+                        Id = sessionData.Id,
+                        SessionId = sessionData.SessionId,
+                        EndedAt = sessionData.Timestamp
+                    };
+                    await _database.InsertAsync(sessionEnd);
+                    Debug.WriteLine("Session end created");
+                }
+                break;
+            default:
+                Debug.WriteLine("Unknown session type");
+                break;
+        }
+    }
+
+    public async Task<List<SessionBatch>> GetAllSessionsAsync()
+    {
+        return await _database.Table<SessionBatch>()
+            .OrderBy(session => session.StartedAt)
+            .Where(session => session.SessionId != null)
+            .Where(session => session.StartedAt != null || session.EndedAt != null)
+            .Take(100)
+            .ToListAsync();
     }
 
     public async Task<List<LogEntity>> GetAllLogsAsync()

@@ -11,6 +11,12 @@ public class SessionsPayload
 
 public class SessionBatch
 {
+    [JsonProperty("id")]
+    public string? Id { get; set; }
+    
+    [JsonProperty("session_id")]
+    public string? SessionId { get; set; }
+    
     [JsonProperty("started_at")]
     public DateTime? StartedAt { get; set; }
 

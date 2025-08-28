@@ -43,6 +43,7 @@ internal static class Logging
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
             CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+            SessionId = exception?.SessionId ?? SessionManager.GetSessionId()
         };
         await SendOrSaveLogEventAsync(log);
     }

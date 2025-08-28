@@ -13,6 +13,9 @@ internal interface IStorageService
 
     Task LogAnalyticsEventAsync(EventEntity analyticsLog);
 
+    Task SessionBatchAsync(SessionData sessionData);
+
+    Task<List<SessionBatch>> GetAllSessionsAsync();
     Task<List<LogEntity>> GetAllLogsAsync();
     
     Task<List<EventEntity>> GetAllAnalyticsAsync();

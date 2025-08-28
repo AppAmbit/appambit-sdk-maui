@@ -150,7 +150,7 @@ public static class Core
         TokenService.Initialize(storageService);
         await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        SessionManager.Initialize(apiService);
+        SessionManager.Initialize(apiService, storageService);
         Crashes.Initialize(apiService, storageService, deviceId ?? "");
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(storageService, appInfoService, apiService);

@@ -14,14 +14,17 @@ namespace AppAmbit;
 internal class SessionManager
 {
     private static IAPIService? _apiService;
-    private static string? _sessionId = null;
+    private static IStorageService? _storageService;
+    private static string? _sessionId { set; get; } = null;
+    public static string? GetSessionId() => _sessionId;
     private static bool _isSessionActive = false;
     public static bool IsSessionActive { get => _isSessionActive; }
     private const string OfflineSessionsFile = "OfflineSessions";
 
-    internal static void Initialize(IAPIService? apiService)
+    internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
     {
         _apiService = apiService;
+        _storageService = storageService;
     }
 
     public static async Task StartSession()
