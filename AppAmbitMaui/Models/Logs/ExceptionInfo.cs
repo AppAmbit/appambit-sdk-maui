@@ -32,7 +32,7 @@ public class ExceptionInfo
             FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
             CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId),
-            SessionId = SessionManager.GetSessionId(),
+            SessionId = SessionManager.SessionId,
             CreatedAt = DateTime.UtcNow
         };
     }

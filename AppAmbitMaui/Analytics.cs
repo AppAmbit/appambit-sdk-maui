@@ -100,6 +100,7 @@ public static class Analytics
                 Name = eventTitle,
                 Data = data,
                 CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+                SessionId = SessionManager.SessionId
             };
 
             if (storageService != null)

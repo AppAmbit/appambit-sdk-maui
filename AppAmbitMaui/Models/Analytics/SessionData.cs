@@ -10,7 +10,7 @@ public class SessionData : IIdentifiable
     /// Unique identifier for the session data.
     /// </summary>
     [JsonProperty("id")]
-    public string Id { get; set; } = string.Empty;
+    public string? Id { get; set; }
 
     /// <summary>
     /// Unique identifier for the end session.
@@ -28,5 +28,5 @@ public class SessionData : IIdentifiable
     /// Session type, indicating whether it is session end or start to identify the timestamps.
     /// </summary>
     [JsonProperty("session_type")]
-    public SessionType SessionType { get; set; }
+    public SessionType? SessionType { get; set; }
 }

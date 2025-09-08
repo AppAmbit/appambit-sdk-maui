@@ -6,6 +6,7 @@ using AppAmbit.Models.Analytics;
 using AppAmbit.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using AppAmbitTestingApp.Utils;
 
 
 namespace AppAmbitTestingApp;
@@ -29,6 +30,37 @@ public partial class AnalyticsPage : ContentPage
         ButtonStartSession.FontSize = 12;
         ButtonStartSession.Text = $"Start Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
+
+    private void OnTestToken(object? sender, EventArgs eventArgs)
+    {
+        Analytics.ClearToken();
+    }
+
+ private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
+    {
+        LoggingHandler.ResetTotalSize();
+        Analytics.ClearToken();
+        var logsTask = Range(0, 5).Select(
+            _ => Task.Run(() =>
+            {
+                Crashes.LogError("Sending 5 errors after an invalid token");
+            }));
+
+        var eventsTask = Range(0, 5).Select(
+            _ => Task.Run(() =>
+            {
+                Analytics.TrackEvent("Sending 5 events after an invalid token",
+                new Dictionary<string, string>
+                {{"Test Token", "5 events sent"}});
+            }));
+        await Task.WhenAll(logsTask);
+        Analytics.ClearToken();
+        await Task.WhenAll(eventsTask);
+        await DisplayAlert("Info", "5 events and errors sent", "Ok");
+        ButtonRefreshTest.Padding = 10;
+        ButtonRefreshTest.FontSize = 12;
+        ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
+    }        
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
     {
@@ -127,7 +159,11 @@ public partial class AnalyticsPage : ContentPage
         foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateTime.UtcNow.AddDays(-index);
+            await StorableApp.Shared.PutSessionData(date, "start");
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
+            await StorableApp.Shared.UpdateEventsWithCurrentSessionId();
+            await StorableApp.Shared.PutSessionData(date.AddSeconds(2), "end");
+            await Task.Delay(500);
         }
         await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
     }

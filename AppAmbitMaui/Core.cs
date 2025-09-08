@@ -71,12 +71,14 @@ public static class Core
         {
             await GetNewToken(null);
         }
-        
-        await Crashes.LoadCrashFileIfExists();
 
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
+        await SessionManager.SendBatchSessions();
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
-        await SessionManager.SendBatchSessions();
+        
     }
 
     private static async Task OnStart(string appKey)
@@ -88,9 +90,10 @@ public static class Core
 
         await Crashes.LoadCrashFileIfExists();
 
+        await SessionManager.SendBatchSessions();
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
-        await SessionManager.SendBatchSessions();
+
     }
 
     private static async Task OnResume()
@@ -100,14 +103,15 @@ public static class Core
             await GetNewToken(null);            
         }
 
-
         if (!Analytics._isManualSessionEnabled && _hasStartedSession)
         {
             await SessionManager.RemoveSavedEndSession();
         }
 
+        await SessionManager.SendBatchSessions();
         await Crashes.SendBatchLogs();
         await Analytics.SendBatchEvents();
+        
     }
 
     private static void OnSleep()
@@ -128,6 +132,11 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey)
     {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await SessionManager.SaveSessionEndToDatabaseIfExist();
+        }
+
         await GetNewToken(appKey);
 
         if (Analytics._isManualSessionEnabled)
@@ -135,10 +144,9 @@ public static class Core
             return;
         }
 
-        var endSessionTask = SessionManager.SendEndSessionIfExists();
-        var startSessionTask = SessionManager.StartSession();
-
-        await Task.WhenAll(endSessionTask, startSessionTask);
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendEndSessionFromFile();    
+        await SessionManager.StartSession();
     }
 
 

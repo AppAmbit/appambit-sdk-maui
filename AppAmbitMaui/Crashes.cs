@@ -15,7 +15,7 @@ public static class Crashes
     private static IStorageService? _storageService;
     private static IAPIService? _apiService;
     private static string _deviceId;
-    private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1,1);
+    private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
 
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
     {
@@ -80,7 +80,7 @@ public static class Crashes
                     exceptionInfos.Add(exceptionInfo);
                 }
             }
-            
+
             if (crashFileCount == 1)
             {
                 Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
@@ -125,12 +125,32 @@ public static class Crashes
 
     private static async void UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            SessionManager.SaveEndSession();
+        }
+
+        if (!SessionManager.IsSessionActive)
+        {
+            return;
+        }
+
         var exception = ExceptionInfo.FromException(e?.Exception);
         await LogError(exception);
     }
 
     private static async void OnUnhandledException(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs)
     {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            SessionManager.SaveEndSession();
+        }
+
+        if (!SessionManager.IsSessionActive)
+        {
+            return;
+        }
+        
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
 
@@ -139,7 +159,7 @@ public static class Crashes
 
         SaveCrashToFile(json);
 
-    OnCrashException?.Invoke(ex);
+        OnCrashException?.Invoke(ex);
     }
     private static void SaveCrashToFile(string json)
     {
@@ -188,7 +208,7 @@ public static class Crashes
 
     public static async Task SendBatchLogs()
     {
-      Debug.WriteLine("SendBatchLogs");
+        Debug.WriteLine("SendBatchLogs");
         var logEntityList = await _storageService.GetOldest100LogsAsync();
         if (logEntityList?.Count == 0)
         {
@@ -236,7 +256,7 @@ public static class Crashes
                 }
                 await _storageService.LogEventAsync(logEntity);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug.WriteLine("Debug exception: " + e);
             }
@@ -259,6 +279,7 @@ public static class Crashes
         var file = exception?.CrashLogFile;
         return new LogEntity
         {
+            SessionId = exception?.SessionId,
             AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
             ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
             FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
@@ -271,7 +292,7 @@ public static class Crashes
             { "InnerException", exception?.InnerException ?? "" }
         },
             Type = logType,
-            File = (logType == LogType.Crash && exception != null ? file : null),
+            File = logType == LogType.Crash && exception != null ? file : null,
             CreatedAt = exception.CreatedAt
         };
     }

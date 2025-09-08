@@ -1,19 +1,12 @@
-using System;
 using Newtonsoft.Json;
 using SQLite;
 
-namespace AppAmbit.Models.Analytics;
+namespace AppAmbitTestingApp.Models;
 
-public class SessionsPayload
-{
-    [JsonProperty("sessions")]
-    public List<SessionBatch> Sessions { get; set; }
-}
 
 [Table("SessionEntity")]
-public class SessionBatch
+public class SessionModel
 {
-    [JsonIgnore]
     [PrimaryKey]
     [JsonProperty("id")]
     public string? Id { get; set; }

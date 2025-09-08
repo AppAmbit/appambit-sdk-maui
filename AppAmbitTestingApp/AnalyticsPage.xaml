@@ -8,6 +8,12 @@
             <VerticalStackLayout Padding="30.0"
                      Spacing="25"
                      VerticalOptions="Center">
+                    <Button
+                        Text="Invalidate Token" 
+                        Clicked="OnTestToken" />
+                    <Button x:Name="ButtonRefreshTest"
+                        Text="Token refresh test"
+                        Clicked="OnTokenRefreshTest" />                     
                     <Button x:Name="ButtonStartSession"
                         Text="Start Session"
                         Clicked="Button_OnStartSession"/>
@@ -26,6 +32,8 @@
                     <Button x:Name="ButtonMax20PropertiesEvent"
                         Text="Send Max-20-Properties Event"
                         Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
+                    <Button Text="Send 30 Daily Events"
+                        Clicked="OnSend30DailyEvents" />                        
                     <Button x:Name="Button220BatchEvents"
                         Text="Send Batch of 220 Events" 
                         Clicked="OnGenerateBatchEvents" />

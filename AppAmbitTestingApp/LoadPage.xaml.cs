@@ -61,57 +61,24 @@ public partial class LoadPage : ContentPage
         await DisplayAlert("Info", "500 Logs generated", "Ok");
     }
 
-    private async void OnSend500StartSession(object sender, EventArgs e)
+    private async void OnSend500Sessions(object sender, EventArgs e)
     {
-        bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        startSessionLabel.IsVisible = true;
-        for(int i = 0; i < 500; i++)
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.None)
         {
-            Analytics.ValidateOrInvaliteSession(false);
-            await Analytics.StartSession();
-            Debug.WriteLine($"Request StartSession: {i+1}");
-            startSessionLabel.Text = $"Sending StartSession: {i+1} of 500";
-            if (isOnline) {
-                await Task.Delay(500);
-            }
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
         }
-        startSessionLabel.IsVisible = false;
-        await DisplayAlert("Info", "500 StartSessions requested", "Ok");
-    }
-
-    private async void OnSend500EndSession(object sender, EventArgs e)
-    {
-        bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        endSessionLabel.IsVisible = true;
+        sessionsLabel.IsVisible = true;
         for (int i = 0; i < 500; i++)
         {
+            await Analytics.StartSession();
             Analytics.ValidateOrInvaliteSession(true);
             await Analytics.EndSession();
-            Debug.WriteLine($"Request EndSession: {i+1}");
-            endSessionLabel.Text = $"Sending EndSession: {i+1} of 500";
-            if (isOnline)
-            {
-                await Task.Delay(500);
-            }
+            await Task.Delay(1000);
+            sessionsLabel.Text = $"Sending Session: {i+1} of 500";
+            await Task.Delay(1000);
         }
-        endSessionLabel.IsVisible = false;
-        await DisplayAlert("Info", "500 EndSessions requested", "Ok");
-    }
-    private async void OnSend500Tokens(object sender, EventArgs e)
-    {
-        bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        tokenLabel.IsVisible = true;
-        for (int i = 0; i < 500; i++)
-        {
-            await Analytics.RequestToken();
-            Debug.WriteLine($"Request Token: {i+1}");
-            tokenLabel.Text = $"Sending Token: {i+1} of 500";
-            if (isOnline)
-            {
-                await Task.Delay(500);
-            }
-        }
-        tokenLabel.IsVisible = false;
-        await DisplayAlert("Info", "500 Tokens requested", "Ok");
+        sessionsLabel.IsVisible = false;
+        await DisplayAlert("Info", "500 Sessions requested", "Ok");
     }
 }

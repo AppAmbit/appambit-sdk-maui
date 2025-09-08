@@ -10,12 +10,11 @@ internal static class FileUtils
     {
         try
         {
-            var filePath = GetFilePath(GetFileName(typeof(T)));
-            Debug.WriteLine($"filePath {typeof(T).Name}: {filePath}");
+            var filePath = GetFilePath(GetFileName(typeof(T)));            
             if (File.Exists(filePath))
             {
+                Debug.WriteLine($"Get File {typeof(T).Name}: {filePath}");
                 var fileText = await File.ReadAllTextAsync(filePath);
-                File.Delete(filePath);
                 return JsonConvert.DeserializeObject<T>(fileText);
             }
             return null as T;
@@ -26,6 +25,25 @@ internal static class FileUtils
             return null as T;
         }
     }
+
+    internal static async Task DeleteSingleObject<T>() where T : class
+    {
+        try
+        {
+            var filePath = GetFilePath(GetFileName(typeof(T)));            
+            if (File.Exists(filePath))
+            {
+                Debug.WriteLine($"Delete File: {typeof(T).Name}: {filePath}");
+                var fileText = await File.ReadAllTextAsync(filePath);
+                File.Delete(filePath);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"File Exception: {e.Message}");
+        }
+    }
+
     internal static string GetFilePath(string fileName)
     {
         var path = Path.Combine(FileSystem.AppDataDirectory, fileName);

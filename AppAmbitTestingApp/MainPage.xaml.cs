@@ -1,15 +1,18 @@
-﻿using System.Diagnostics;
-using AppAmbit;
-using AppAmbit.Models.Logs;
+﻿using AppAmbit;
+using System.Diagnostics;
 using AppAmbit.Services;
 using Newtonsoft.Json;
 using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
+using AppAmbitTestingApp.Utils;
+using AppAmbitTestingApp.Models;
 
 namespace AppAmbitTestingApp;
 
 public partial class MainPage : ContentPage
 {
+    private bool _inited;
+
     private string _logMessage = "Test Log Message";
     public string LogMessage
     {
@@ -59,6 +62,22 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_inited) return;
+        _inited = true;
+
+        try
+        {
+            await StorableApp.Shared.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[StorableApp] init error: {ex}");
+        }
     }
 
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
@@ -152,15 +171,24 @@ public partial class MainPage : ContentPage
         foreach (int index in Range(start: 1, count: 30))
         {
             var errorsDate = DateTime.UtcNow.AddDays(-(30 - index));
-            Debug.WriteLine($"DEBUG TIME ERROR: {errorsDate} : Index: {index}");
+
+            await StorableApp.Shared.PutSessionData(errorsDate, "start");
+
             await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
+
+            await StorableApp.Shared.UpdateLogsWithCurrentSessionId();
+
+            await StorableApp.Shared.PutSessionData(errorsDate.AddSeconds(2), "end");
+
             await Task.Delay(500);
         }
+
         await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
         ButtonLast30DailyErrors.Padding = 10;
         ButtonLast30DailyErrors.FontSize = 12;
         ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
+
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
     {
@@ -172,8 +200,14 @@ public partial class MainPage : ContentPage
         var ex = new NullReferenceException();
         foreach (int index in Range(start: 1, count: 30))
         {
-            var info = ExceptionInfo.FromException(ex, deviceId: "iPhone 16 PRO MAX");
             var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
+
+             await StorableApp.Shared.PutSessionData(crashDate, "start");
+
+             var sessionId = await StorableApp.Shared.GetCurrentOpenSessionIdUnsafeAsync();
+
+            var info = ExceptionModelApp.FromException(ex, deviceId: "iPhone 16 PRO MAX", sessionId);
+
             info.CreatedAt = crashDate;
             info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss") + "_" + index;
 
@@ -185,6 +219,7 @@ public partial class MainPage : ContentPage
             string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
 
             Debug.WriteLine($"Crash file saved to: {crashFile}");
+            await StorableApp.Shared.PutSessionData(crashDate.AddSeconds(2), "end");
             await Task.Delay(100);
             File.WriteAllText(crashFile, json);
         }
@@ -215,34 +250,5 @@ public partial class MainPage : ContentPage
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         _logMessage = e.NewTextValue;
-    }
-
-    private void OnTestToken(object? sender, EventArgs eventArgs)
-    {
-        Analytics.ClearToken();
-    }
-
-    private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
-    {
-        LoggingHandler.ResetTotalSize();
-        Analytics.ClearToken();
-        var logsTask = Range(0, 5).Select(
-            _ => Task.Run(() => {
-                Crashes.LogError("Sending 5 errors after an invalid token");
-            }));
-
-        var eventsTask = Range(0, 5).Select(
-            _ => Task.Run(() => {
-                Analytics.TrackEvent("Sending 5 events after an invalid token",
-                new Dictionary<string, string>
-                {{"Test Token", "5 events sent"}});
-            }));
-        await Task.WhenAll(logsTask);
-        Analytics.ClearToken();
-        await Task.WhenAll(eventsTask);
-        await DisplayAlert("Info", "5 events and errors sent", "Ok");
-        ButtonRefreshTest.Padding = 10;
-        ButtonRefreshTest.FontSize = 12;
-        ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
-    }
+    }   
 }
