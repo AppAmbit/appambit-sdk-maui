@@ -15,8 +15,6 @@ permissions:
 jobs:
   build:
     name: Build
-    env:
-      INITIAL_VERSION: "0.0.0"
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -31,84 +29,35 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Calculate Next Version
-        id: version
-        shell: pwsh
+      - name: Extract latest changelog entry
+        id: changelog
         run: |
-          $tags = git tag -l "v*.*.*" | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } | Sort-Object {[System.Version]($_ -replace '^v', '')} -Descending
+          LATEST_CHANGELOG=$(awk '/^## Version /{if (p) exit; p=1} p' CHANGELOG.md | sed '1d')
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$LATEST_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Show changelog
+        run: |
+          echo "Last changes:"
+          echo "${{ steps.changelog.outputs.changelog }}"
+
+      - name: Read version from csproj
+        id: version
+        run: |
+          VERSION_NAME=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" ${{ env.PROJECT_PATH }})
           
-          if ($tags.Count -eq 0) {
-            $CURRENT_VERSION = $env:INITIAL_VERSION
-            Write-Host "No previous tags found. Using initial version: $CURRENT_VERSION"
-          } else {
-            $LATEST_TAG = $tags[0]
-            $CURRENT_VERSION = $LATEST_TAG -replace '^v', ''
-            Write-Host "Latest tag found: $LATEST_TAG (version: $CURRENT_VERSION)"
-          }
-          
-          $versionParts = $CURRENT_VERSION.Split('.')
-          $major = [int]$versionParts[0]
-          $minor = [int]$versionParts[1]
-          $patch = [int]$versionParts[2]
-          
-          $INCREMENT_TYPE = "patch"
-          
-          $COMMIT_MESSAGE = git log -1 --pretty=%B
-          Write-Host "Commit message: $COMMIT_MESSAGE"
-          
-          if ($COMMIT_MESSAGE -match '\[major\]|\bBREAKING CHANGE\b|\bbreaking\b') {
-            $INCREMENT_TYPE = "major"
-          } elseif ($COMMIT_MESSAGE -match '\[minor\]|\bfeat\b|\bfeature\b') {
-            $INCREMENT_TYPE = "minor"
-          }
-          
-          switch ($INCREMENT_TYPE) {
-            "major" {
-              $major++
-              $minor = 0
-              $patch = 0
-            }
-            "minor" {
-              $minor++
-              $patch = 0
-            }
-            "patch" {
-              $patch++
-            }
-          }
-          
-          $NEW_VERSION = "$major.$minor.$patch"
-          $NEW_TAG = "v$NEW_VERSION"
-          
-          $tagExists = git tag -l $NEW_TAG
-          if ($tagExists) {
-            Write-Host "Tag $NEW_TAG already exists. Incrementing patch version."
-            $patch++
-            $NEW_VERSION = "$major.$minor.$patch"
-            $NEW_TAG = "v$NEW_VERSION"
-          }
-          
-          $IS_PRERELEASE = $env:GITHUB_REF_NAME -ne "main" -and $env:GITHUB_REF_NAME -ne "master"
-          
-          if ($IS_PRERELEASE) {
-            $BRANCH_NAME = $env:GITHUB_REF_NAME -replace '[^a-zA-Z0-9]', '-'
-            $BUILD_NUMBER = $env:GITHUB_RUN_NUMBER
-            $NEW_TAG = "v$NEW_VERSION"
-          }
-          
-          echo "current_version=$CURRENT_VERSION" >> $env:GITHUB_OUTPUT
-          echo "new_version=$NEW_VERSION" >> $env:GITHUB_OUTPUT
-          echo "new_tag=$NEW_TAG" >> $env:GITHUB_OUTPUT
-          echo "increment_type=$INCREMENT_TYPE" >> $env:GITHUB_OUTPUT
-          echo "is_prerelease=$IS_PRERELEASE" >> $env:GITHUB_OUTPUT
-          
-          Write-Host "=== VERSION CALCULATION ==="
-          Write-Host "Current Version: $CURRENT_VERSION"
-          Write-Host "Increment Type: $INCREMENT_TYPE"
-          Write-Host "New Version: $NEW_VERSION"
-          Write-Host "New Tag: $NEW_TAG"
-          Write-Host "Is Prerelease: $IS_PRERELEASE"
-          
+          echo "VERSION_NAME=$VERSION_NAME"
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "new_tag=v$VERSION_NAME" >> $GITHUB_OUTPUT
+
+          # Detect if it's a pre-release version (ej: contains -rc, -beta, etc.)
+          if [[ "$VERSION_NAME" =~ "-" ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
@@ -129,7 +78,7 @@ jobs:
           name: "${{ steps.version.outputs.new_tag }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           files: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
-          body_path: CHANGELOG.md
+          body: ${{ steps.changelog.outputs.changelog }}
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
       - name: Push to NuGet to create a release

@@ -16,14 +16,15 @@
         <OutputType>Library</OutputType>
 
         <!-- NuGet Metadata -->
-        <PackageTags>AppAmbit, MAUI, .NET</PackageTags>
-        <PackageId>AppAmbitMaui</PackageId>
+        <PackageTags>AppAmbit, MAUI, .NET, dotnet</PackageTags>
+        <PackageId>AppAmbit</PackageId>
         <Version>1.0.0</Version>
         <Authors>AppAmbit</Authors>
         <Company>AppAmbit</Company>
         <Description>AppAmbit - Crashes and Analytics library to track sessions, collect device properties, events, and crash reports for your application</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <RepositoryUrl>https://github.com/AppAmbit/appambit-sdk-maui</RepositoryUrl>
         
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
