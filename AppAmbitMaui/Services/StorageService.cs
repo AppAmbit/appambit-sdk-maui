@@ -344,7 +344,6 @@ internal class StorageService : IStorageService
 
         await _database.RunInTransactionAsync(tran =>
         {
-            // Deduplicamos pares old->new (ya normalizados) para no ejecutar updates repetidos
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var s in sessions)
@@ -358,7 +357,6 @@ internal class StorageService : IStorageService
                 if (string.Equals(oldRaw, newRaw, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                // Clave compacta para deduplicar (old␟new). Usamos OrdinalIgnoreCase arriba.
                 var key = $"{oldRaw}\u001F{newRaw}";
                 if (!seen.Add(key)) continue;
 

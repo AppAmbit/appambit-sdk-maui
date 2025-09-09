@@ -327,8 +327,4 @@ internal class SessionManager
         };
     }
 
-    public static void ValidateOrInvalidateSession(bool value)
-    {
-        _isSessionActive = value;
-    }
 }

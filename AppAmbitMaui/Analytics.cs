@@ -149,9 +149,4 @@ public static class Analytics
     {
         await _apiService?.GetNewToken();
     }
-
-    public static void ValidateOrInvaliteSession(bool value)
-    {
-        SessionManager.ValidateOrInvalidateSession(value);
-    }
 }

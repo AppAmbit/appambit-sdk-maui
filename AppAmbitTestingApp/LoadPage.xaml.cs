@@ -35,8 +35,13 @@ public partial class LoadPage : ContentPage
             await Analytics.TrackEvent(_title, new Dictionary<string, string> { { "Test500", "Events" } });
             Debug.WriteLine($"Request Event: {i+1}");
             eventsLabel.Text = $"Sending event: {i+1} of 500";
-            if (isOnline) {
-                await Task.Delay(500);
+            if (isOnline)
+            {
+                await Task.Delay(1000);
+            }
+            else
+            {
+                 await Task.Delay(120);
             }
         }
         eventsLabel.IsVisible = false;
@@ -54,7 +59,11 @@ public partial class LoadPage : ContentPage
             logsLabel.Text = $"Sending Error: {i+1} of 500";
             if (isOnline)
             {
-                await Task.Delay(500);
+                await Task.Delay(1000);
+            }
+            else
+            {
+                await Task.Delay(120);
             }
         }
         logsLabel.IsVisible = false;
@@ -71,12 +80,13 @@ public partial class LoadPage : ContentPage
         sessionsLabel.IsVisible = true;
         for (int i = 0; i < 500; i++)
         {
+            bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+
             await Analytics.StartSession();
-            Analytics.ValidateOrInvaliteSession(true);
+            await Task.Delay(isOnline ? 1000 : 120 );
             await Analytics.EndSession();
-            await Task.Delay(1000);
             sessionsLabel.Text = $"Sending Session: {i+1} of 500";
-            await Task.Delay(1000);
+            await Task.Delay(isOnline ? 1000 : 120);
         }
         sessionsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Sessions requested", "Ok");
