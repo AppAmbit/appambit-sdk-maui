@@ -1,6 +1,5 @@
 name: Build and Publish NuGet Package
 
-# The main branch is develop
 on:
   workflow_dispatch:
 
@@ -29,19 +28,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Extract latest changelog entry
-        id: changelog
-        run: |
-          LATEST_CHANGELOG=$(awk '/^## Version /{if (p) exit; p=1} p' CHANGELOG.md | sed '1d')
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$LATEST_CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Show changelog
-        run: |
-          echo "Last changes:"
-          echo "${{ steps.changelog.outputs.changelog }}"
-
       - name: Read version from csproj
         id: version
         shell: pwsh
@@ -57,6 +43,36 @@ jobs:
           } else {
             echo "is_prerelease=false" >> $env:GITHUB_OUTPUT
           }
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG=${{ steps.version.outputs.new_tag }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping build and publish."
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if tag exists
+        if: steps.check_tag.outputs.skip_build == 'true'
+        run: |
+          echo "Build skipped because version tag already exists."
+          exit 0
+
+      - name: Extract latest changelog entry
+        id: changelog
+        run: |
+          LATEST_CHANGELOG=$(awk '/^## Version /{if (p) exit; p=1} p' CHANGELOG.md | sed '1d')
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$LATEST_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Show changelog
+        run: |
+          echo "Last changes:"
+          echo "${{ steps.changelog.outputs.changelog }}"
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT_PATH }}
@@ -82,4 +98,5 @@ jobs:
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
       - name: Push to NuGet to create a release
+        if: steps.version.outputs.is_prerelease == 'false'
         run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/*.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
