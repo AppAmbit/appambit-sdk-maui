@@ -1,9 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using SQLite;
 using SQLitePCL;
 
@@ -13,7 +8,6 @@ namespace AppAmbitTestingApp.Utils
     {
         private const string SessionsTable = "SessionEntity";
         private const string LogsTable = "LogEntity";
-
         private const string EventsTable = "EventEntity";
 
         private static readonly Lazy<StorableApp> _lazy = new(() => new StorableApp());
@@ -35,14 +29,17 @@ namespace AppAmbitTestingApp.Utils
 
             Batteries_V2.Init();
 
-            var databasePath = Path.Combine(FileSystem.AppDataDirectory, "AppAbmit.db3");
+            var databasePath = Path.Combine(FileSystem.AppDataDirectory, "AppAmbit.db3");
             var flags =
                 SQLiteOpenFlags.ReadWrite |
                 SQLiteOpenFlags.Create |
-                SQLiteOpenFlags.SharedCache |
                 SQLiteOpenFlags.FullMutex;
 
             _db = new SQLiteAsyncConnection(databasePath, flags, storeDateTimeAsTicks: false);
+
+            // PRAGMAs for multi-connection coexistence
+            _ = await _db.ExecuteScalarAsync<string>("PRAGMA journal_mode=WAL;").ConfigureAwait(false);
+            await _db.ExecuteAsync("PRAGMA synchronous=NORMAL;").ConfigureAwait(false);
 
             await ExecRetryAsync("PRAGMA foreign_keys=ON;");
             await ExecRetryAsync("PRAGMA busy_timeout=15000;");
@@ -169,7 +166,7 @@ namespace AppAmbitTestingApp.Utils
             }
             finally { _mutex.Release(); }
         }
-      
+
         public async Task UpdateEventsWithCurrentSessionId()
         {
             await EnsureDb();
@@ -216,7 +213,7 @@ namespace AppAmbitTestingApp.Utils
                 });
             }
             finally { _mutex.Release(); }
-        }        
+        }
 
         private async Task EnsureDb()
         {
@@ -227,7 +224,7 @@ namespace AppAmbitTestingApp.Utils
 
         private async Task InTransactionAsync(Func<Task> body)
         {
-            await ExecRetryAsync("BEGIN IMMEDIATE;");
+            await ExecRetryAsync("BEGIN;");
             try
             {
                 await body().ConfigureAwait(false);

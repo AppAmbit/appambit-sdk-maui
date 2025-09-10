@@ -36,7 +36,7 @@ public partial class AnalyticsPage : ContentPage
         Analytics.ClearToken();
     }
 
- private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
+    private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
     {
         LoggingHandler.ResetTotalSize();
         Analytics.ClearToken();
@@ -60,7 +60,7 @@ public partial class AnalyticsPage : ContentPage
         ButtonRefreshTest.Padding = 10;
         ButtonRefreshTest.FontSize = 12;
         ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
-    }        
+    }
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
     {
@@ -181,49 +181,26 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
+        await StorableApp.Shared.InitializeAsync();
+
         var random = new Random();
         DateTime startDate = DateTime.UtcNow.AddDays(-30);
-        var offlineSessions = new List<SessionData>();
 
-
-        foreach (var index in Range(1, 30))
+        foreach (var index in System.Linq.Enumerable.Range(1, 30))
         {
             DateTime dateStartSession = startDate.AddDays(index);
-            dateStartSession = dateStartSession.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
+            dateStartSession = dateStartSession.Date
+                .AddHours(random.Next(0, 24))
+                .AddMinutes(random.Next(0, 60));
 
-            offlineSessions.Add(new SessionData
-            {
-                Id = Guid.NewGuid().ToString(),
-                SessionId = null,
-                Timestamp = dateStartSession,
-                SessionType = SessionType.Start
-            });
+            await StorableApp.Shared.PutSessionData(dateStartSession, "start");
 
             var durationEnd = TimeSpan.FromMinutes(random.Next(1, 24 * 60));
             DateTime dateEndSession = dateStartSession.Add(durationEnd);
 
-            offlineSessions.Add(new SessionData
-            {
-                Id = Guid.NewGuid().ToString(),
-                SessionId = null,
-                Timestamp = dateEndSession,
-                SessionType = SessionType.End
-            });
-
+            await StorableApp.Shared.PutSessionData(dateEndSession, "end");
         }
 
-        var settings = new JsonSerializerSettings
-        {
-            Converters = [new StringEnumConverter()],
-            Formatting = Formatting.Indented
-        };
-        
-         var json = JsonConvert.SerializeObject(offlineSessions, settings);
-
-        var filePath = Path.Combine(FileSystem.AppDataDirectory, OfflineSessionsFile);
-        File.WriteAllText(filePath, json);
-
-        await DisplayAlert("Info", $"Turn off and Turn on internet to send the sessions.", "Ok");
+        await DisplayAlert("Info", "30-day sessions generated in DB.", "Ok");
     }
-
 }
