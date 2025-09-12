@@ -2,10 +2,6 @@ using AppAmbit;
 using AppAmbit.Services;
 using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
-using AppAmbit.Models.Analytics;
-using AppAmbit.Enums;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using AppAmbitTestingApp.Utils;
 
 
@@ -181,8 +177,6 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
-        await StorableApp.Shared.InitializeAsync();
-
         var random = new Random();
         DateTime startDate = DateTime.UtcNow.AddDays(-30);
 

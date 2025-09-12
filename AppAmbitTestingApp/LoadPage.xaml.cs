@@ -39,10 +39,6 @@ public partial class LoadPage : ContentPage
             {
                 await Task.Delay(1000);
             }
-            else
-            {
-                 await Task.Delay(120);
-            }
         }
         eventsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Events generated", "Ok");
@@ -61,10 +57,6 @@ public partial class LoadPage : ContentPage
             {
                 await Task.Delay(1000);
             }
-            else
-            {
-                await Task.Delay(120);
-            }
         }
         logsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Logs generated", "Ok");
@@ -77,16 +69,17 @@ public partial class LoadPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
+        
         sessionsLabel.IsVisible = true;
         for (int i = 0; i < 500; i++)
         {
             bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
 
             await Analytics.StartSession();
-            await Task.Delay(isOnline ? 1000 : 120 );
+            await Task.Delay(1000);
             await Analytics.EndSession();
             sessionsLabel.Text = $"Sending Session: {i+1} of 500";
-            await Task.Delay(isOnline ? 1000 : 120);
+            await Task.Delay(1000);
         }
         sessionsLabel.IsVisible = false;
         await DisplayAlert("Info", "500 Sessions requested", "Ok");

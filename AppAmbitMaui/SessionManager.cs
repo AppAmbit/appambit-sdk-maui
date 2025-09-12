@@ -20,7 +20,6 @@ internal class SessionManager
     private static bool _isSessionActive = false;
     public static bool IsSessionActive { get => _isSessionActive; }
 
-
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
     {
         _apiService = apiService;
@@ -219,7 +218,7 @@ internal class SessionManager
 
     public static async Task SendBatchSessions()
     {
-        Debug.WriteLine("Send Sessions...");
+        Debug.WriteLine(" Send Batch Sessions");
 
         var sessions = await _storageService.GetOldest100SessionsAsync();
         if (sessions.Count == 0) return;
@@ -231,6 +230,10 @@ internal class SessionManager
             await _storageService.UpdateLogsAndEventsSessionIds(resolved);
             await _storageService.DeleteSessionsList(resolved);
         }
+
+        Debug.WriteLine("Finished Batch Sessions");
+
+
     }
 
     private static async Task<List<SessionBatch>> SendBatchAsync(List<SessionBatch> batches)

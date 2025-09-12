@@ -150,7 +150,7 @@ public static class Crashes
         {
             return;
         }
-        
+
         if (unhandledExceptionEventArgs.ExceptionObject is not Exception ex)
             return;
 
@@ -208,28 +208,26 @@ public static class Crashes
 
     public static async Task SendBatchLogs()
     {
-        Debug.WriteLine("SendBatchLogs");
+
+        Debug.WriteLine("Send Batch Logs");
         var logEntityList = await _storageService.GetOldest100LogsAsync();
         if (logEntityList?.Count == 0)
         {
-            Debug.WriteLine("No logs to send");
+            Debug.WriteLine($"No logs to send");
             return;
         }
 
-        Debug.WriteLine($"Debug EntityList Content: {logEntityList}");
-
-        Debug.WriteLine("Sending logs in batch");
         var logBatch = new LogBatch() { Logs = logEntityList };
         var endpoint = new LogBatchEndpoint(logBatch);
         var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint);
         if (logResponse?.ErrorType != ApiErrorType.None)
         {
-            Debug.WriteLine($"Batch of unsent logs");
+            Debug.WriteLine("Batch of unsent logs");
             return;
         }
 
         await _storageService.DeleteLogList(logEntityList);
-        Debug.WriteLine("Logs batch sent");
+        Debug.WriteLine("Finished Logs Batch");
     }
 
     public static async Task StoreBatchCrashesLog(List<ExceptionInfo> crashList)

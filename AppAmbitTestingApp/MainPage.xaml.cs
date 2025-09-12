@@ -62,22 +62,8 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
-    }
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        if (_inited) return;
-        _inited = true;
 
-        try
-        {
-            await StorableApp.Shared.InitializeAsync();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[StorableApp] init error: {ex}");
-        }
     }
 
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
@@ -204,7 +190,7 @@ public partial class MainPage : ContentPage
 
              await StorableApp.Shared.PutSessionData(crashDate, "start");
 
-             var sessionId = await StorableApp.Shared.GetCurrentOpenSessionIdUnsafeAsync();
+            var sessionId = await StorableApp.Shared.GetCurrentOpenSession();
 
             var info = ExceptionModelApp.FromException(ex, deviceId: "iPhone 16 PRO MAX", sessionId);
 

@@ -12,6 +12,8 @@ public static class Core
     private static IAppInfoService? appInfoService;
     private static bool _hasStartedSession = false;
     private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
+
 
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
@@ -75,9 +77,7 @@ public static class Core
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
         await Crashes.LoadCrashFileIfExists();
-        await SessionManager.SendBatchSessions();
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
+        await SendDataPending();
         
     }
 
@@ -90,9 +90,7 @@ public static class Core
 
         await Crashes.LoadCrashFileIfExists();
 
-        await SessionManager.SendBatchSessions();
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
+        await SendDataPending();
 
     }
 
@@ -108,9 +106,7 @@ public static class Core
             await SessionManager.RemoveSavedEndSession();
         }
 
-        await SessionManager.SendBatchSessions();
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
+        await SendDataPending();
         
     }
 
@@ -147,6 +143,23 @@ public static class Core
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendEndSessionFromFile();    
         await SessionManager.StartSession();
+    }
+
+    private static async Task SendDataPending()
+    {
+        await _ensureBatchLocked.WaitAsync();
+        try
+        {
+            Debug.WriteLine("Sending pending data...");
+            await SessionManager.SendBatchSessions();
+            await Crashes.SendBatchLogs();
+            await Analytics.SendBatchEvents();
+            Debug.WriteLine("Finish pending data...");
+        }
+        finally
+        {
+            _ensureBatchLocked.Release();
+        }    
     }
 
 
