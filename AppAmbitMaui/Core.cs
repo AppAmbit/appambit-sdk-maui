@@ -60,14 +60,12 @@ public static class Core
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+        Debug.WriteLine($"NetworkAccess:{e}");
 
         var access = e.NetworkAccess;
 
         if (access != NetworkAccess.Internet)
             return;
-
-        await InitializeServices();
 
         if (!TokenIsValid())
         {
@@ -89,7 +87,6 @@ public static class Core
         _hasStartedSession = true;
 
         await Crashes.LoadCrashFileIfExists();
-
         await SendDataPending();
 
     }
@@ -106,6 +103,7 @@ public static class Core
             await SessionManager.RemoveSavedEndSession();
         }
 
+        await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
         
     }
@@ -141,7 +139,7 @@ public static class Core
         }
 
         await SessionManager.SendEndSessionFromDatabase();
-        await SessionManager.SendEndSessionFromFile();    
+        await SessionManager.SendEndSessionFromFile();
         await SessionManager.StartSession();
     }
 
@@ -149,9 +147,9 @@ public static class Core
     {
         await _ensureBatchLocked.WaitAsync();
         try
-        {
-            Debug.WriteLine("Sending pending data...");
-            await SessionManager.SendBatchSessions();
+        {            
+            Debug.WriteLine("Sending pending data...");         
+            await SessionManager.SendBatchSessions();      
             await Crashes.SendBatchLogs();
             await Analytics.SendBatchEvents();
             Debug.WriteLine("Finish pending data...");
