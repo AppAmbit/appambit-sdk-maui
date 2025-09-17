@@ -92,7 +92,7 @@ jobs:
         run: dotnet pack --output ./${{ env.FOLDER_OUTPUT }} --configuration ${{ env.RELEASE_TYPE }} -p:PackageVersion=${{ steps.version.outputs.version_name }} ${{ env.PROJECT_PATH }}
 
       - name: Create Release and Upload Assets
-        if: github.ref_name == 'main' || github.ref_name == 'master'
+        #if: github.ref_name == 'main' || github.ref_name == 'master'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
@@ -104,4 +104,4 @@ jobs:
 
       - name: Push to NuGet to create a release
         if: steps.version.outputs.is_prerelease == 'false'
-        run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/*.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/AppAmbit.${{ steps.version.outputs.version_name }}.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
