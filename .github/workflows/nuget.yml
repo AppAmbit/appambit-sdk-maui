@@ -1,7 +1,10 @@
 name: Build and Publish NuGet Package
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+       - feature/add-nuget-package-library
 
 env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
