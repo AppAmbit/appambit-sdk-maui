@@ -57,6 +57,7 @@ jobs:
           else
             echo "skip_build=false" >> $GITHUB_OUTPUT
           fi
+        shell: bash
 
       - name: Stop if tag exists
         if: steps.check_tag.outputs.skip_build == 'true'
@@ -66,6 +67,7 @@ jobs:
 
       - name: Extract latest changelog entry
         id: changelog
+        shell: bash
         run: |
           LATEST_CHANGELOG=$(awk '/^## Version /{if (p) exit; p=1} p' CHANGELOG.md | sed '1d')
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
