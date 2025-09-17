@@ -104,4 +104,4 @@ jobs:
 
       - name: Push to NuGet to create a release
         if: steps.version.outputs.is_prerelease == 'false'
-        run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/AppAmbit.${{ steps.version.outputs.version_name }}.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./${{ env.FOLDER_OUTPUT }}/com.AppAmbit.SDK.${{ steps.version.outputs.version_name }}.nupkg --api-key ${{ secrets.NUGET_APPKEY_SECRET }} --source https://api.nuget.org/v3/index.json
