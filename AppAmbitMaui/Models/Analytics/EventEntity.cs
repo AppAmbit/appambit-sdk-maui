@@ -18,6 +18,8 @@ public class EventEntity : Event
         set => DataJson = JsonConvert.SerializeObject(value);
     }
 
+    public string SessionId { get; set; } = string.Empty;
+
     // internal field for storing on Sqlite
     [JsonIgnore]
     public string DataJson { get; set; } = "{}";

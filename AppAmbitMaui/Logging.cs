@@ -44,6 +44,9 @@ internal static class Logging
             File = (logType == LogType.Crash && exception != null) ? file : null,
             CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
         };
+
+        log.SessionId = string.IsNullOrEmpty(exception?.SessionId) ? SessionManager.SessionId : exception?.SessionId;
+
         await SendOrSaveLogEventAsync(log);
     }
 

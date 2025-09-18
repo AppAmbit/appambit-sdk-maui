@@ -14,73 +14,72 @@ namespace AppAmbit;
 internal class SessionManager
 {
     private static IAPIService? _apiService;
-    private static string? _sessionId = null;
+    private static IStorageService? _storageService;
+    private static string? _sessionId { set; get; } = null;
+    public static string? SessionId { get => _sessionId; }
     private static bool _isSessionActive = false;
     public static bool IsSessionActive { get => _isSessionActive; }
-    private const string OfflineSessionsFile = "OfflineSessions";
+    private static readonly SemaphoreSlim _batchLock = new(1, 1);
 
-    internal static void Initialize(IAPIService? apiService)
+
+    internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
     {
         _apiService = apiService;
+        _storageService = storageService;
     }
 
     public static async Task StartSession()
     {
         Debug.WriteLine("StartSession called");
         if (_isSessionActive)
-            return;
-
-        DateTime dateUtc = DateTime.UtcNow;
-        await SaveLocalStartSession(dateUtc);
-        var apiResponse = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(dateUtc))!;
-
-        if (apiResponse?.ErrorType != ApiErrorType.None)
         {
-            Debug.WriteLine("StartSession failed - saving locally");
-            _isSessionActive = true;
+            Debug.WriteLine("There is already an active session");
             return;
         }
 
-        await UpdateOfflineSessionsFile([new SessionData() {
-            Id = Guid.NewGuid().ToString(),
-            SessionType = SessionType.Start,
-            Timestamp = dateUtc
-         }]);
-
-        var response = apiResponse?.Data;
-        _sessionId = response?.SessionId;
         _isSessionActive = true;
+        var sessionLocalId = Guid.NewGuid().ToString();
+        _sessionId = sessionLocalId;
+
+        var sessionData = new SessionData()
+        {
+            Id = sessionLocalId,
+            SessionId = sessionLocalId,
+            SessionType = SessionType.Start,
+            Timestamp = DateTime.UtcNow,
+        };
+
+        await SendSession(sessionData);
     }
 
     public static async Task EndSession()
     {
         if (!_isSessionActive)
         {
+            Console.WriteLine("There is no active session to end");
             return;
         }
 
-        DateTime dateUtc = DateTime.UtcNow;
+        _isSessionActive = false;
 
-        SessionData? endSession = new SessionData
+        SessionData? endSession = new()
         {
             Id = Guid.NewGuid().ToString(),
             SessionType = SessionType.End,
             SessionId = _sessionId,
-            Timestamp = dateUtc
+            Timestamp = DateTime.UtcNow
         };
 
-        await EndSessionASync(endSession);
+        _sessionId = null;
+
+        await SendSessionEndOrSaveLocally(endSession);
     }
 
-    public static async Task SendEndSessionIfExists()
+    public static async Task SendSessionEndOrSaveLocally(SessionData sessionData)
     {
-        var file = GetFilePath(GetFileName(typeof(SessionData)));
-        Debug.WriteLine($"EndSession: {file}");
-        var endSession = await GetSavedSingleObject<SessionData>();
-        if (endSession == null)
-            return;
+        sessionData.SessionId = sessionData.SessionId.IsUIntNumber() ? sessionData.SessionId : null;
 
-        await EndSessionASync(endSession: endSession);
+        await SendSession(sessionData);
     }
 
     public static void SaveEndSession()
@@ -90,7 +89,7 @@ internal class SessionManager
             var endSession = new SessionData()
             {
                 Id = Guid.NewGuid().ToString(),
-                SessionId = _sessionId,
+                SessionId = _sessionId.IsUIntNumber() ? _sessionId : null,
                 Timestamp = DateTime.UtcNow,
                 SessionType = SessionType.End
             };
@@ -111,145 +110,240 @@ internal class SessionManager
 
     public static async Task RemoveSavedEndSession()
     {
-        _ = await GetSavedSingleObject<SessionData>();
+        await DeleteSingleObject<SessionData>();
     }
 
-    private static async Task EndSessionASync(SessionData endSession)
+    public static async Task SaveSessionEndToDatabaseIfExist()
     {
-        await SaveLocalEndSession(endSession);
-        var result = await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
-        if (result?.ErrorType == ApiErrorType.None)
+        var endSession = await GetSavedSingleObject<SessionData>();
+
+        if (endSession is null)
+            return;
+
+        await _storageService.SessionData(endSession);
+        await DeleteSingleObject<SessionData>();
+    }
+
+
+    public static async Task SendStartSessionIfExist()
+    {
+        var startSession = await _storageService.GetUnpairedSessionStart();
+
+        if (startSession == null)
         {
-            await UpdateOfflineSessionsFile([endSession]);
+            return;
         }
-        _sessionId = null;
-        _isSessionActive = false;
-    }
 
-    internal static async Task SaveLocalStartSession(DateTime dateUtc)
-    {
-        var startSession = new SessionData()
+        var resultStart = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(startSession.Timestamp))!;
+
+        if (resultStart?.ErrorType != ApiErrorType.None)
         {
-            SessionType = SessionType.Start,
-            Id = Guid.NewGuid().ToString(),
-            Timestamp = dateUtc
+            Debug.WriteLine("The StartSession could not be sent");
+            return;
+        }
+        _sessionId = resultStart.Data?.SessionId;
+        Debug.WriteLine("StartSession sent successfully");
+
+        var session = new List<SessionBatch>
+        {
+            new() {
+                Id = startSession.Id,
+                SessionId = _sessionId,
+                StartedAt = startSession.Timestamp,
+                EndedAt = null
+            }
         };
 
-        _ = await GetSaveJsonArrayAsync(OfflineSessionsFile, startSession);
+        await _storageService.UpdateLogsAndEventsSessionIds(session);
+        await _storageService.DeleteSessionsList(session);
     }
 
-    private static async Task SaveLocalEndSession(SessionData endSession)
+    public static async Task SendEndSessionFromFile()
     {
-        _ = await GetSaveJsonArrayAsync(OfflineSessionsFile, endSession);
+        var endSession = await GetSavedSingleObject<SessionData>();
+
+        if (endSession == null)
+        {
+            return;
+        }
+
+        var resultEnd = await _apiService!.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
+        if (resultEnd?.ErrorType == ApiErrorType.None)
+        {
+            await DeleteSingleObject<SessionData>();
+        }
+    }
+
+    public static async Task SendEndSessionFromDatabase()
+    {
+        var endSession = await _storageService.GetUnpairedSessionEnd();
+
+        if (endSession == null)
+        {
+            return;
+        }
+
+        var resultEnd = await _apiService!.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(endSession));
+        if (resultEnd?.ErrorType == ApiErrorType.None)
+        {
+            await _storageService.DeleteSessionById(endSession?.Id ?? "");
+            Debug.WriteLine("EndSession sent successfully");
+        }
+    }
+
+    private static async Task SendSession(SessionData sessionData)
+    {
+        if (sessionData.SessionType == SessionType.Start)
+        {
+            var resultStart = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(sessionData.Timestamp))!;
+
+            if (resultStart?.ErrorType != ApiErrorType.None)
+            {
+                sessionData.SessionId = _sessionId.IsUIntNumber() ? _sessionId : null;
+                await _storageService.SessionData(sessionData);
+                return;
+            }
+
+            Debug.WriteLine("StartSession sent successfully");
+            _sessionId = resultStart.Data?.SessionId;
+        }
+        else
+        {
+            var resultEnd = await _apiService!.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionData));
+            if (resultEnd?.ErrorType != ApiErrorType.None)
+            {
+                await _storageService.SessionData(sessionData);
+                Debug.WriteLine("EndSession sent successfully");
+            }
+        }
     }
 
     public static async Task SendBatchSessions()
     {
-        Debug.WriteLine("Send Sessions...");
-
-        var sessionsUnSorted = await GetSaveJsonArrayAsync<SessionData>(OfflineSessionsFile, null) ?? [];
-
-        var sessions = sessionsUnSorted.OrderBy(x => x.Timestamp).ToList();
-        if (sessions.Count == 0)
-        {
+        if (!await _batchLock.WaitAsync(0))
             return;
-        }
 
-        if (sessions.Count == 1)
+        try
         {
-            await SaveOrSendStartEndSession(sessions[0]);
-        }
-        else
-        {
-            var batches = BuildSessionBatches(sessions);
+            Debug.WriteLine("SendBatchSessions started");
 
-            if (batches.Count == 0)
-            {
+            var sessions = await _storageService.GetOldest100SessionsAsync();
+            if (sessions.Count == 0)
                 return;
+
+            var resolved = await SendBatchAsync(sessions);
+
+            if (resolved.Count > 0)
+            {
+                await _storageService.UpdateLogsAndEventsSessionIds(resolved);
+                await _storageService.DeleteSessionsList(resolved);
             }
 
-            var success = await SendBatchAsync(batches);
-
-            if (!success)
-            {
-                Debug.WriteLine("Unset sessions");
-                return;
-            }
-
-            Debug.WriteLine($"Sessions sent: {batches.Count}");
-            await UpdateOfflineSessionsFile(sessions);
+            Debug.WriteLine("SendBatchSessions finished");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("SendBatchSessions error: " + ex);
+        }
+        finally
+        {
+            _batchLock.Release();
         }
     }
 
-    private static async Task SaveOrSendStartEndSession(SessionData session)
+
+    private static async Task<List<SessionBatch>> SendBatchAsync(List<SessionBatch> batches)
     {
         if (_apiService == null)
         {
-            return;
-        }
-
-        if (session.SessionType == SessionType.Start)
-        {
-            var responseStart = await _apiService.ExecuteRequest<SessionResponse>(new StartSessionEndpoint(session.Timestamp))!;
-
-            if (responseStart?.ErrorType == ApiErrorType.None)
-            {
-                await UpdateOfflineSessionsFile([session]);
-            }
-        }
-        else
-        {
-            var responseEnd = await _apiService.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(session));
-
-            if (responseEnd?.ErrorType == ApiErrorType.None)
-            {
-                await UpdateOfflineSessionsFile([session]);
-            }
-        }
-    }
-
-    private static async Task<bool> SendBatchAsync(List<SessionBatch> batches)
-    {
-        if (_apiService == null)
-        {
-            return false;
+            return [];
         }
 
         var endpoint = new SessionsPayload { Sessions = batches.ToList() };
-
-        var endpointResult = await _apiService.ExecuteRequest<SessionsPayload>(new SessionBatchEndpoint(endpoint));
+        var endpointResult = await _apiService.ExecuteRequest<List<SessionBatch>>(new SessionBatchEndpoint(endpoint));
 
         if (endpointResult?.ErrorType != ApiErrorType.None)
         {
-            return false;
+            return [];
         }
 
-        return true;
+        var serverSessions = endpointResult.Data ?? [];
+
+        var resolved = ResolveSessions(batches, serverSessions);
+
+        return resolved!;
     }
 
-    private static List<SessionBatch> BuildSessionBatches(List<SessionData> sessions)
+    public static List<SessionBatch?> ResolveSessions(List<SessionBatch> localSessions, List<SessionBatch> serverSessions)
     {
-        var batchSessions = sessions.OrderBy(d => d.Timestamp).Take(200);
-        var starts = batchSessions.Where(s => s.SessionType == SessionType.Start).Select(x => x.Timestamp);
-        var ends = batchSessions.Where(s => s.SessionType == SessionType.End).Select(x => x.Timestamp);
+        var localIndex = localSessions
+            .Select(local => new
+            {
+                Finger = FingerPrint(local.StartedAt, local.EndedAt),
+                local.Id
+            })
+            .Where(x => !string.IsNullOrWhiteSpace(x.Finger) && !string.IsNullOrWhiteSpace(x.Id))
+            .GroupBy(x => x.Finger!, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First().Id!, StringComparer.Ordinal);
 
-        return starts.Zip(ends, (start, end) => new SessionBatch
+
+        var resolved = serverSessions
+            .Where(r => !string.IsNullOrWhiteSpace(r.SessionId) &&
+                        r.StartedAt != null &&
+                        r.EndedAt != null)
+            .Select(r =>
+            {
+                var key = FingerPrint(r.StartedAt, r.EndedAt);
+
+                return localIndex.TryGetValue(key, out var idLocal)
+                    ? new SessionBatch
+                    {
+                        Id = idLocal,
+                        SessionId = r.SessionId,
+                        StartedAt = r.StartedAt,
+                        EndedAt = r.EndedAt
+                    }
+                    : null;
+            })
+            .Where(x => x != null)
+            .ToList()!;
+
+        return resolved ?? [];
+    }
+
+    public static string FingerPrint(DateTime? startedAt, DateTime? endedAt)
+    {
+        if (startedAt == null || endedAt == null) return "";
+
+        // Forzamos UTC sin doble conversión y truncamos a segundos
+        var a = UtcIsoFormatString(NormalizeToUtcSecond(startedAt.Value));
+        var b = UtcIsoFormatString(NormalizeToUtcSecond(endedAt.Value));
+
+        return $"{a}-{b}";
+    }
+
+    public static DateTime NormalizeToUtcSecond(DateTime date)
+    {
+        var utc = AsUtcNoDoubleConvert(date);
+        return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
+    }
+
+    public static string UtcIsoFormatString(DateTime date)
+    {
+        var utc = AsUtcNoDoubleConvert(date);
+        var trimmed = new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second, DateTimeKind.Utc);
+        return trimmed.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static DateTime AsUtcNoDoubleConvert(DateTime dt)
+    {
+        return dt.Kind switch
         {
-            StartedAt = start,
-            EndedAt = end
-        }).ToList();
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+            _ => dt
+        };
     }
 
-    private static async Task UpdateOfflineSessionsFile(List<SessionData> sessions)
-    {
-        var remaining = sessions.Skip(200);
-        var sortedSession = remaining.OrderBy(x => x.Timestamp);
-
-        await UpdateJsonArrayAsync(OfflineSessionsFile, sortedSession);
-    }
-
-    public static void ValidateOrInvalidateSession(bool value)
-    {
-        _isSessionActive = value;
-    }
 }

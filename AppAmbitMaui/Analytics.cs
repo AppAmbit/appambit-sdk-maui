@@ -100,6 +100,7 @@ public static class Analytics
                 Name = eventTitle,
                 Data = data,
                 CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+                SessionId = SessionManager.SessionId
             };
 
             if (storageService != null)
@@ -117,26 +118,24 @@ public static class Analytics
 
     public static async Task SendBatchEvents()
     {
-        Debug.WriteLine("SendBatchEvents");
+        Debug.WriteLine("Send Batch Events");
         var eventEntityList = await _storageService.GetOldest100EventsAsync();
         if (eventEntityList?.Count == 0)
         {
-            Debug.WriteLine("No events to send");
+            Debug.WriteLine($"No events to send");
             return;
         }
 
-        Debug.WriteLine("Sending events in batch");
         var endpoint = new EventBatchEndpoint(eventEntityList);
         var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
         if (eventsBatchResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
         {
-            Debug.WriteLine($"Batch of unsent events");
+            Debug.WriteLine("Batch of unsent events");
             return;
         }
 
-        Debug.WriteLine($"eventsBatchResponse:{eventsBatchResponse}");
         await _storageService.DeleteEventList(eventEntityList);
-        Debug.WriteLine("Events batch sent");
+        Debug.WriteLine("Finished Events Batch");
     }
 
     public static void ClearToken()
@@ -147,10 +146,5 @@ public static class Analytics
     public async static Task RequestToken()
     {
         await _apiService?.GetNewToken();
-    }
-
-    public static void ValidateOrInvaliteSession(bool value)
-    {
-        SessionManager.ValidateOrInvalidateSession(value);
     }
 }

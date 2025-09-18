@@ -2,10 +2,7 @@ using AppAmbit;
 using AppAmbit.Services;
 using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
-using AppAmbit.Models.Analytics;
-using AppAmbit.Enums;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using AppAmbitTestingApp.Utils;
 
 
 namespace AppAmbitTestingApp;
@@ -28,6 +25,37 @@ public partial class AnalyticsPage : ContentPage
         ButtonStartSession.Padding = 10;
         ButtonStartSession.FontSize = 12;
         ButtonStartSession.Text = $"Start Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
+    }
+
+    private void OnTestToken(object? sender, EventArgs eventArgs)
+    {
+        Analytics.ClearToken();
+    }
+
+    private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
+    {
+        LoggingHandler.ResetTotalSize();
+        Analytics.ClearToken();
+        var logsTask = Range(0, 5).Select(
+            _ => Task.Run(() =>
+            {
+                Crashes.LogError("Sending 5 errors after an invalid token");
+            }));
+
+        var eventsTask = Range(0, 5).Select(
+            _ => Task.Run(() =>
+            {
+                Analytics.TrackEvent("Sending 5 events after an invalid token",
+                new Dictionary<string, string>
+                {{"Test Token", "5 events sent"}});
+            }));
+        await Task.WhenAll(logsTask);
+        Analytics.ClearToken();
+        await Task.WhenAll(eventsTask);
+        await DisplayAlert("Info", "5 events and errors sent", "Ok");
+        ButtonRefreshTest.Padding = 10;
+        ButtonRefreshTest.FontSize = 12;
+        ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
@@ -124,10 +152,17 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
+
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
+
         foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateTime.UtcNow.AddDays(-index);
+            await StorableApp.Shared.PutSessionData(date, "start");
             await Analytics.TrackEvent("30 Daily events", new Dictionary<string, string> { { "30 Daily events", "Event" } }, date);
+            await StorableApp.Shared.UpdateEventsWithCurrentSessionId();
+            await StorableApp.Shared.PutSessionData(date.AddSeconds(2), "end");
+            await Task.Delay(500);
         }
         await DisplayAlert("Info", "Events generated, turn on internet", "Ok");
     }
@@ -147,47 +182,23 @@ public partial class AnalyticsPage : ContentPage
     {
         var random = new Random();
         DateTime startDate = DateTime.UtcNow.AddDays(-30);
-        var offlineSessions = new List<SessionData>();
 
-
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
         foreach (var index in Range(1, 30))
         {
             DateTime dateStartSession = startDate.AddDays(index);
-            dateStartSession = dateStartSession.Date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 59));
+            dateStartSession = dateStartSession.Date
+                .AddHours(random.Next(0, 24))
+                .AddMinutes(random.Next(0, 60));
 
-            offlineSessions.Add(new SessionData
-            {
-                Id = Guid.NewGuid().ToString(),
-                SessionId = null,
-                Timestamp = dateStartSession,
-                SessionType = SessionType.Start
-            });
+            await StorableApp.Shared.PutSessionData(dateStartSession, "start");
 
             var durationEnd = TimeSpan.FromMinutes(random.Next(1, 24 * 60));
             DateTime dateEndSession = dateStartSession.Add(durationEnd);
 
-            offlineSessions.Add(new SessionData
-            {
-                Id = Guid.NewGuid().ToString(),
-                SessionId = null,
-                Timestamp = dateEndSession,
-                SessionType = SessionType.End
-            });
-
+            await StorableApp.Shared.PutSessionData(dateEndSession, "end");
         }
 
-        var settings = new JsonSerializerSettings
-        {
-            Converters = [new StringEnumConverter()],
-            Formatting = Formatting.Indented
-        };
-        
-         var json = JsonConvert.SerializeObject(offlineSessions, settings);
-
-        var filePath = Path.Combine(FileSystem.AppDataDirectory, OfflineSessionsFile);
-        File.WriteAllText(filePath, json);
-
-        await DisplayAlert("Info", $"Turn off and Turn on internet to send the sessions.", "Ok");
+        await DisplayAlert("Info", "30-day sessions generated in DB.", "Ok");
     }
-
 }
