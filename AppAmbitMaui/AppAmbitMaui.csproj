@@ -16,8 +16,8 @@
         <OutputType>Library</OutputType>
 
         <!-- NuGet Metadata -->
-        <PackageTags>AppAmbit, MAUI, .NET, dotnet</PackageTags>
         <PackageId>com.AppAmbit.SDK</PackageId>
+        <PackageTags>AppAmbit, MAUI, .NET, dotnet</PackageTags>
         <Version>0.0.1</Version>
         <Authors>AppAmbit</Authors>
         <Company>AppAmbit</Company>
