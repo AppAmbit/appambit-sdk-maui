@@ -92,7 +92,7 @@ jobs:
         run: mkdir ${{ env.FOLDER_OUTPUT }}
 
       - name: Package NuGet
-        run: dotnet pack --output ./${{ env.FOLDER_OUTPUT }} --configuration ${{ env.RELEASE_TYPE }} -p:NuspecFile=${{ env.PROJECT_DIR }}/${{ env.NUSPEC_FILE }} -p:PackageVersion=${{ steps.version.outputs.version_name }}
+        run: dotnet pack --output ./${{ env.FOLDER_OUTPUT }} --configuration ${{ env.RELEASE_TYPE }} -p:NuspecFile=${{ env.PROJECT_DIR }}/${{ env.NUSPEC_FILE }} -p:PackageVersion=${{ steps.version.outputs.version_name }} ${{ env.PROJECT_PATH }}
 
       - name: Create Release and Upload Assets
         #if: github.ref_name == 'main' || github.ref_name == 'master'
