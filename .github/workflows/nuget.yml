@@ -88,13 +88,13 @@ jobs:
         if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration ${{ env.RELEASE_TYPE }}
 
+      - name: Create artifacts directory
+        run: mkdir ${{ env.FOLDER_OUTPUT }}
+
       - name: Pack
         if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet pack -c ${{ env.RELEASE_TYPE }} -o "${{ env.FOLDER_OUTPUT }}" \
             -p:PackageVersion=${{ steps.version.outputs.version_name }} ${{ env.PROJECT_PATH }}
-
-      - name: Create artifacts directory
-        run: mkdir ${{ env.FOLDER_OUTPUT }}
 
       - name: Create Release and Upload Assets
         #if: github.ref_name == 'main' || github.ref_name == 'master'
