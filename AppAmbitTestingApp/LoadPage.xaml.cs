@@ -73,8 +73,6 @@ public partial class LoadPage : ContentPage
         sessionsLabel.IsVisible = true;
         for (int i = 0; i < 500; i++)
         {
-            bool isOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-
             await Analytics.StartSession();
             await Task.Delay(1000);
             await Analytics.EndSession();

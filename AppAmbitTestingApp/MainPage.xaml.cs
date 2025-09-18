@@ -154,6 +154,7 @@ public partial class MainPage : ContentPage
 
         LoggingHandler.ResetTotalSize();
 
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
         foreach (int index in Range(start: 1, count: 30))
         {
             var errorsDate = DateTime.UtcNow.AddDays(-(30 - index));
@@ -183,6 +184,8 @@ public partial class MainPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
+
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
         var ex = new NullReferenceException();
         foreach (int index in Range(start: 1, count: 30))
         {

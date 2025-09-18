@@ -152,6 +152,9 @@ public partial class AnalyticsPage : ContentPage
             await DisplayAlert("Info", "Turn off internet and try again", "Ok");
             return;
         }
+
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
+
         foreach (int index in Range(start: 0, count: 30))
         {
             var date = DateTime.UtcNow.AddDays(-index);
@@ -180,7 +183,8 @@ public partial class AnalyticsPage : ContentPage
         var random = new Random();
         DateTime startDate = DateTime.UtcNow.AddDays(-30);
 
-        foreach (var index in System.Linq.Enumerable.Range(1, 30))
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
+        foreach (var index in Range(1, 30))
         {
             DateTime dateStartSession = startDate.AddDays(index);
             dateStartSession = dateStartSession.Date

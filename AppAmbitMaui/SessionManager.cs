@@ -19,6 +19,8 @@ internal class SessionManager
     public static string? SessionId { get => _sessionId; }
     private static bool _isSessionActive = false;
     public static bool IsSessionActive { get => _isSessionActive; }
+    private static readonly SemaphoreSlim _batchLock = new(1, 1);
+
 
     internal static void Initialize(IAPIService? apiService, IStorageService? storageService)
     {
@@ -218,23 +220,37 @@ internal class SessionManager
 
     public static async Task SendBatchSessions()
     {
-        Debug.WriteLine(" Send Batch Sessions");
+        if (!await _batchLock.WaitAsync(0))
+            return;
 
-        var sessions = await _storageService.GetOldest100SessionsAsync();
-        if (sessions.Count == 0) return;
-
-        var resolved = await SendBatchAsync(sessions);
-
-        if (resolved.Count > 0)
+        try
         {
-            await _storageService.UpdateLogsAndEventsSessionIds(resolved);
-            await _storageService.DeleteSessionsList(resolved);
+            Debug.WriteLine("SendBatchSessions started");
+
+            var sessions = await _storageService.GetOldest100SessionsAsync();
+            if (sessions.Count == 0)
+                return;
+
+            var resolved = await SendBatchAsync(sessions);
+
+            if (resolved.Count > 0)
+            {
+                await _storageService.UpdateLogsAndEventsSessionIds(resolved);
+                await _storageService.DeleteSessionsList(resolved);
+            }
+
+            Debug.WriteLine("SendBatchSessions finished");
         }
-
-        Debug.WriteLine("Finished Batch Sessions");
-
-
+        catch (Exception ex)
+        {
+            Debug.WriteLine("SendBatchSessions error: " + ex);
+        }
+        finally
+        {
+            _batchLock.Release();
+        }
     }
+
 
     private static async Task<List<SessionBatch>> SendBatchAsync(List<SessionBatch> batches)
     {
