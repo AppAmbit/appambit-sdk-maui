@@ -12,6 +12,8 @@ public static class Core
     private static IAppInfoService? appInfoService;
     private static bool _hasStartedSession = false;
     private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
+
 
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
@@ -58,25 +60,23 @@ public static class Core
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+        Debug.WriteLine($"NetworkAccess:{e}");
 
         var access = e.NetworkAccess;
 
         if (access != NetworkAccess.Internet)
             return;
 
-        await InitializeServices();
-
         if (!TokenIsValid())
         {
             await GetNewToken(null);
         }
-        
-        await Crashes.LoadCrashFileIfExists();
 
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
-        await SessionManager.SendBatchSessions();
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
     }
 
     private static async Task OnStart(string appKey)
@@ -87,10 +87,8 @@ public static class Core
         _hasStartedSession = true;
 
         await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
 
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
-        await SessionManager.SendBatchSessions();
     }
 
     private static async Task OnResume()
@@ -100,14 +98,14 @@ public static class Core
             await GetNewToken(null);            
         }
 
-
         if (!Analytics._isManualSessionEnabled && _hasStartedSession)
         {
             await SessionManager.RemoveSavedEndSession();
         }
 
-        await Crashes.SendBatchLogs();
-        await Analytics.SendBatchEvents();
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
     }
 
     private static void OnSleep()
@@ -128,6 +126,11 @@ public static class Core
 
     private static async Task InitializeConsumer(string appKey)
     {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await SessionManager.SaveSessionEndToDatabaseIfExist();
+        }
+
         await GetNewToken(appKey);
 
         if (Analytics._isManualSessionEnabled)
@@ -135,10 +138,26 @@ public static class Core
             return;
         }
 
-        var endSessionTask = SessionManager.SendEndSessionIfExists();
-        var startSessionTask = SessionManager.StartSession();
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendEndSessionFromFile();
+        await SessionManager.StartSession();
+    }
 
-        await Task.WhenAll(endSessionTask, startSessionTask);
+    private static async Task SendDataPending()
+    {
+        await _ensureBatchLocked.WaitAsync();
+        try
+        {            
+            Debug.WriteLine("Sending pending data...");         
+            await SessionManager.SendBatchSessions();      
+            await Crashes.SendBatchLogs();
+            await Analytics.SendBatchEvents();
+            Debug.WriteLine("Finish pending data...");
+        }
+        finally
+        {
+            _ensureBatchLocked.Release();
+        }    
     }
 
 
@@ -150,7 +169,7 @@ public static class Core
         TokenService.Initialize(storageService);
         await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        SessionManager.Initialize(apiService);
+        SessionManager.Initialize(apiService, storageService);
         Crashes.Initialize(apiService, storageService, deviceId ?? "");
         Analytics.Initialize(apiService, storageService);
         ConsumerService.Initialize(storageService, appInfoService, apiService);

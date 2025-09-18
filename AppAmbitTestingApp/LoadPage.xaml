@@ -33,22 +33,12 @@
                         Text=""
                         IsVisible="false"/>
                     <Button
-                        Text="Send 500 Start Sessions"
-                        Clicked="OnSend500StartSession" />
+                        Text="Send 500 Sessions"
+                        Clicked="OnSend500Sessions" />
                     <Label
-                        x:Name="endSessionLabel"
+                        x:Name="sessionsLabel"
                         Text=""
                         IsVisible="false"/>
-                    <Button
-                        Text="Send 500 End Sessions"
-                        Clicked="OnSend500EndSession" />
-                    <Label
-                        x:Name="tokenLabel"
-                        Text=""
-                        IsVisible="false"/>
-                    <Button
-                        Text="Send 500 Token"
-                        Clicked="OnSend500Tokens" />
                 </VerticalStackLayout>
             </Frame>
 

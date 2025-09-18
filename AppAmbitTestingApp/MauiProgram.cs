@@ -1,5 +1,5 @@
 ﻿using AppAmbit;
-using Microsoft.Extensions.Logging;
+using AppAmbitTestingApp.Utils;
 
 namespace AppAmbitTestingApp;
 
@@ -12,7 +12,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseAppAmbit("382d34e3-40d7-49d1-b9ac-d834d4823c45");
+            .UseAppAmbit("API_KEY");
         
         return builder.Build();
     }

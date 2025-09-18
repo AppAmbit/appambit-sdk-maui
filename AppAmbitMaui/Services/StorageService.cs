@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using AppAmbit.Enums;
 using AppAmbit.Models;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
@@ -19,11 +20,13 @@ internal class StorageService : IStorageService
         {
             return;
         }
+
         Debug.WriteLine($"DatabasePath: {AppConstants.DatabasePath}");
-        _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags);
+        _database = new SQLiteAsyncConnection(AppConstants.DatabasePath, AppConstants.Flags, storeDateTimeAsTicks: false);
         await _database.CreateTableAsync<AppSecrets>();
         await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<EventEntity>();
+        await _database.CreateTableAsync<SessionBatch>();
     }
 
     public async Task SetDeviceId(string? deviceId)
@@ -120,32 +123,6 @@ internal class StorageService : IStorageService
         return appSecrets?.UserEmail;
     }
 
-    public async Task SetSessionId(string sessionId)
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-
-        if (appSecrets != null)
-        {
-            appSecrets.SessionId = sessionId;
-            await _database.UpdateAsync(appSecrets);
-        }
-        else
-        {
-            appSecrets = new AppSecrets()
-            {
-                SessionId = sessionId,
-            };
-
-            await _database.InsertAsync(appSecrets);
-        }
-    }
-
-    public async Task<string?> GetSessionId()
-    {
-        var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
-        return appSecrets?.SessionId;
-    }
-
     public async Task<string?> GetConsumerId()
     {
         var appSecrets = await _database.Table<AppSecrets>().FirstOrDefaultAsync();
@@ -182,17 +159,15 @@ internal class StorageService : IStorageService
         await _database.InsertAsync(analyticsLog);
     }
 
-    public async Task<List<LogEntity>> GetAllLogsAsync()
-    {
-        return await _database.Table<LogEntity>().ToListAsync();
-    }
-
     public async Task<List<LogEntity>> GetOldest100LogsAsync()
     {
-        return await _database.Table<LogEntity>()
-            .OrderBy(log => log.CreatedAt)
-            .Take(100)
-            .ToListAsync();
+        return await _database.QueryAsync<LogEntity>(
+            @"SELECT * FROM LogEntity
+                WHERE SessionId IS NOT NULL
+                    AND TRIM(SessionId) <> ''
+                    AND SessionId GLOB '[1-9][0-9]*'
+                ORDER BY CreatedAt
+                LIMIT 100;");
     }
 
     public async Task DeleteLogList(List<LogEntity> logs)
@@ -207,11 +182,6 @@ internal class StorageService : IStorageService
         });
     }
 
-    public async Task<List<EventEntity>> GetAllAnalyticsAsync()
-    {
-        return await _database.Table<EventEntity>().ToListAsync();
-    }
-
     public async Task DeleteAllLogs()
     {
         await _database.DeleteAllAsync<Log>();
@@ -219,10 +189,13 @@ internal class StorageService : IStorageService
 
     public async Task<List<EventEntity>> GetOldest100EventsAsync()
     {
-        return await _database.Table<EventEntity>()
-            .OrderBy(log => log.CreatedAt)
-            .Take(100)
-            .ToListAsync();
+        return await _database.QueryAsync<EventEntity>(
+            @"SELECT * FROM EventEntity
+            WHERE SessionId IS NOT NULL
+                AND TRIM(SessionId) <> ''
+                AND SessionId GLOB '[1-9][0-9]*'
+            ORDER BY CreatedAt
+            LIMIT 100;");
     }
 
     public async Task DeleteEventList(List<EventEntity> logs)
@@ -233,6 +206,162 @@ internal class StorageService : IStorageService
             foreach (var id in ids)
             {
                 tran.Execute("DELETE FROM EventEntity WHERE Id = ?", id);
+            }
+        });
+    }
+
+    public async Task SessionData(SessionData sessionData)
+    {
+        var endSession = await _database.Table<SessionBatch>()
+                .Where(sb => sb.EndedAt == null)
+                .FirstOrDefaultAsync();
+
+        if (endSession != null)
+        {
+            try
+            {
+                endSession.EndedAt = sessionData.Timestamp;
+                await _database.UpdateAsync(endSession);
+                Debug.WriteLine("Session end updated");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"{ex.Message}");
+            }
+        }
+
+        if (sessionData?.SessionType == SessionType.Start)
+        {
+            var sessionBatch = new SessionBatch
+            {
+                Id = sessionData.Id,
+                SessionId = sessionData.SessionId,
+                StartedAt = sessionData.Timestamp
+            };
+
+            await _database.InsertAsync(sessionBatch);
+            Debug.WriteLine("Session start created");
+            return;
+        }
+
+
+        if (endSession == null)
+        {
+            var sessionEnd = new SessionBatch
+            {
+                Id = sessionData.Id,
+                SessionId = sessionData.SessionId,
+                EndedAt = sessionData.Timestamp
+            };
+
+            await _database.InsertAsync(sessionEnd);
+            Debug.WriteLine("Session end created");
+        }
+    }
+
+    public async Task<List<SessionBatch>> GetOldest100SessionsAsync()
+    {
+        return await _database.Table<SessionBatch>()
+            .Where(session => session.StartedAt != null && session.EndedAt != null)
+            .OrderBy(session => session.StartedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task DeleteSessionsList(List<SessionBatch> sessions)
+    {
+        var ids = sessions.Select(session => session.Id).ToList();
+
+        await _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM SessionEntity WHERE Id = ?", id);
+            }
+        });
+    }
+
+    public async Task<SessionData?> GetUnpairedSessionStart()
+    {
+        var session = await _database.Table<SessionBatch>()
+        .Where(s => s.StartedAt != null && s.EndedAt == null)
+        .FirstOrDefaultAsync();
+
+        if (session == null)
+        {
+            return null;
+        }
+
+        return new SessionData
+        {
+            Id = session.Id!,
+            SessionId = session.SessionId,
+            SessionType = SessionType.Start,
+            Timestamp = session.StartedAt!.Value,
+        };
+    }
+
+    public async Task<SessionData?> GetUnpairedSessionEnd()
+    {
+        var session = await _database.Table<SessionBatch>()
+        .Where(s => s.StartedAt == null && s.EndedAt != null)
+        .FirstOrDefaultAsync();
+
+        if (session == null)
+        {
+            return null;
+        }
+
+        return new SessionData
+        {
+            Id = session.Id!,
+            SessionId = session.SessionId,
+            SessionType = SessionType.End,
+            Timestamp = session.EndedAt!.Value,
+        };
+
+    }
+
+    public async Task DeleteSessionById(string id)
+    {
+        await _database.Table<SessionBatch>()
+            .Where(s => s.Id == id)
+            .DeleteAsync();
+    }
+    public async Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions)
+    {
+        if (sessions == null || sessions.Count == 0) return;
+
+        const string sqlLogs = @"
+        UPDATE LogEntity
+        SET sessionId = TRIM(?)
+        WHERE TRIM(sessionId) = TRIM(?) COLLATE NOCASE;";
+
+        const string sqlEvents = @"
+        UPDATE EventEntity
+        SET sessionId = TRIM(?)
+        WHERE TRIM(sessionId) = TRIM(?) COLLATE NOCASE;";
+
+        await _database.RunInTransactionAsync(tran =>
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var s in sessions)
+            {
+                var oldRaw = (s.Id ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(oldRaw)) continue;
+
+                var newRaw = (s.SessionId ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(newRaw)) continue;
+
+                if (string.Equals(oldRaw, newRaw, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var key = $"{oldRaw}\u001F{newRaw}";
+                if (!seen.Add(key)) continue;
+
+                tran.Execute(sqlLogs, newRaw, oldRaw);
+                tran.Execute(sqlEvents, newRaw, oldRaw);
             }
         });
     }

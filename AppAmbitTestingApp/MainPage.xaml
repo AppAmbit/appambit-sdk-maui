@@ -59,12 +59,6 @@
                 </VerticalStackLayout>
             </Frame>
 
-            <Button
-                Text="Invalidate Token" 
-                Clicked="OnTestToken" />
-            <Button x:Name="ButtonRefreshTest"
-                Text="Token refresh test"
-                Clicked="OnTokenRefreshTest" />
             <Button x:Name="ButtonDefaultLogError"
                 Text="Send Default LogError" 
                 Clicked="OnSendTestLog" />
