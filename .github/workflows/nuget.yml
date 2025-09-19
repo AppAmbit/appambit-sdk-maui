@@ -9,7 +9,6 @@ env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
   FOLDER_OUTPUT: artifacts
   RELEASE_TYPE: Release
-  PACKAGE_ID: com.AppAmbit.SDK
 
 permissions:
   contents: write
