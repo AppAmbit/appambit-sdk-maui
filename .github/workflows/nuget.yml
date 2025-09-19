@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - feature/add-nuget-package-library
-      
+
 env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
   FOLDER_OUTPUT: artifacts
