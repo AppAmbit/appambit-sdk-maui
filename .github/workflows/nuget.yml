@@ -93,7 +93,7 @@ jobs:
 
       - name: Pack
         if: steps.check_tag.outputs.skip_build != 'true'
-        run: dotnet pack -c ${{ env.RELEASE_TYPE }} -o "${{ env.FOLDER_OUTPUT }}" \
+        run: dotnet pack --configuration ${{ env.RELEASE_TYPE }} --output ./${{ env.FOLDER_OUTPUT }} \
             -p:PackageVersion=${{ steps.version.outputs.version_name }} ${{ env.PROJECT_PATH }}
 
       - name: Create Release and Upload Assets
