@@ -3,7 +3,6 @@ name: Build and Publish NuGet Package
 on:
   push:
     branches:
-      - main
       - feature/add-nuget-package-library
 
 env:
