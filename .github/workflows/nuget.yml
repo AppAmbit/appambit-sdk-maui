@@ -9,7 +9,7 @@ env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
   FOLDER_OUTPUT: artifacts
   RELEASE_TYPE: Release
-
+  
 permissions:
   contents: write
 
