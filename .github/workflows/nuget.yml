@@ -1,21 +1,20 @@
 name: Build and Publish NuGet Package
 
 on:
-  push:
-    branches:
-      - feature/add-nuget-package-library
+  workflow_dispatch:
 
 env:
   PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
   FOLDER_OUTPUT: artifacts
   RELEASE_TYPE: Release
-  
+
 permissions:
   contents: write
 
 jobs:
   build:
     name: Build
+    if: github.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -94,7 +93,7 @@ jobs:
         run: dotnet pack "${{ env.PROJECT_PATH }}" --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Create Release and Upload Assets
-        #if: github.ref_name == 'main' || github.ref_name == 'master'
+        if: github.ref_name == 'main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
@@ -105,7 +104,7 @@ jobs:
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
       - name: Push to NuGet
-        if: steps.check_tag.outputs.skip_build != 'true' && steps.version.outputs.is_prerelease == 'false'
+        if: steps.check_tag.outputs.skip_build != 'true' && steps.version.outputs.is_prerelease == 'false' && github.ref_name == 'main'
         shell: pwsh
         run: |
           $pkg = Get-ChildItem -Path "${{ env.FOLDER_OUTPUT }}" -Filter "*.nupkg" | Select-Object -First 1

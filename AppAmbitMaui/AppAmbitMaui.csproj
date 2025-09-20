@@ -18,7 +18,7 @@
         <!-- NuGet Metadata -->
         <PackageId>com.AppAmbit.Sdk</PackageId>
         <PackageTags>AppAmbit, MAUI, .NET, dotnet</PackageTags>
-        <Version>0.0.1</Version>
+        <Version>0.0.2</Version>
         <Authors>AppAmbit</Authors>
         <Company>AppAmbit</Company>
         <Description>AppAmbit - Crashes and Analytics library to track sessions, collect device properties, events, and crash reports for your application</Description>
