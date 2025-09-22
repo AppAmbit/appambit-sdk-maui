@@ -12,6 +12,6 @@
     <description>$description$</description>
     <releaseNotes>First publish</releaseNotes>
     <copyright>$copyright$</copyright>
-    <tags>Tag1 Tag2</tags>
+    <tags>appambit; sdk; telemetry; logging; analytics; crashes; debug; distribution; ci; cd; maui; xamarin; mobile; apps; diagnostics; monitoring</tags>
   </metadata>
 </package>
