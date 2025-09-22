@@ -1,17 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 25.0.1705.4
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitMaui", "AppAmbitMaui\AppAmbitMaui.csproj", "{6EC45FF2-5E9E-410A-990C-0E49D3938708}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitTestingApp", "AppAmbitTestingApp\AppAmbitTestingApp.csproj", "{2C2156BD-D604-457B-BF6D-00F422A8C804}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{07BBEA13-F606-49F2-8496-E9906ECD337E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iOSAppAmbit", "iOSAppAmbit\iOSAppAmbit.csproj", "{2C6520F0-755E-4B91-92F5-325038B6A60D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iOSAppAmbitTestingApp", "iOSAppAmbitTestingApp\iOSAppAmbitTestingApp.csproj", "{50698158-7E2B-4247-A371-6552EAC7C69F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,20 +19,9 @@ Global
 		{6EC45FF2-5E9E-410A-990C-0E49D3938708}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07BBEA13-F606-49F2-8496-E9906ECD337E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07BBEA13-F606-49F2-8496-E9906ECD337E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07BBEA13-F606-49F2-8496-E9906ECD337E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07BBEA13-F606-49F2-8496-E9906ECD337E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2C6520F0-755E-4B91-92F5-325038B6A60D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C6520F0-755E-4B91-92F5-325038B6A60D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2C6520F0-755E-4B91-92F5-325038B6A60D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2C6520F0-755E-4B91-92F5-325038B6A60D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{50698158-7E2B-4247-A371-6552EAC7C69F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{50698158-7E2B-4247-A371-6552EAC7C69F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{50698158-7E2B-4247-A371-6552EAC7C69F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{50698158-7E2B-4247-A371-6552EAC7C69F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

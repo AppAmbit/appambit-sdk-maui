@@ -5,47 +5,60 @@ namespace AppAmbit.Services.Interfaces;
 
 internal interface IStorageService
 {
-    #region Logs
-
     Task InitializeAsync();
 
-    Task LogEventAsync(LogEntity logEntity);
+    #region  Sessions
+    Task SessionData(SessionData sessionData);
 
-    Task LogAnalyticsEventAsync(EventEntity analyticsLog);
+    Task<List<SessionBatch>> GetOldest100SessionsAsync();
 
-    Task<List<LogEntity>> GetAllLogsAsync();
-    
-    Task<List<EventEntity>> GetAllAnalyticsAsync();
-    
-    Task DeleteAllLogs();
+    Task DeleteSessionsList(List<SessionBatch> sessions);
+
+    Task<SessionData?> GetUnpairedSessionStart();
+
+    Task<SessionData?> GetUnpairedSessionEnd();
+
+    Task DeleteSessionById(string id);
+
+    Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions);
     
     #endregion
 
-    #region Sensetive data
-    
-    Task SetDeviceId(string? token);
+    #region AppSecrets
+    Task SetDeviceId(string? deviceId);
 
     Task<string?> GetDeviceId();
-    
-    Task SetUserId(string? token);
+
+    Task SetUserId(string userId);
 
     Task<string?> GetUserId();
-    
-    Task SetUserEmail(string? token);
+
+    Task SetUserEmail(string? email);
 
     Task<string?> GetUserEmail();
 
     Task SetAppId(string? appId);
 
     Task<string?> GetAppId();
-    
-    Task SetSessionId(string sessionId);
-    
-    Task<string?> GetSessionId();
 
+    Task<string?> GetConsumerId();
+
+    Task SetConsumerId(string consumerId);
+    #endregion
+
+    #region Logs
     Task<List<LogEntity>> GetOldest100LogsAsync();
 
-    Task DeleteLogList(List<LogEntity> logs);
+    Task LogEventAsync(LogEntity logEntity);
 
-    #endregion"
+    Task DeleteLogList(List<LogEntity> logs);
+    #endregion
+
+    #region "Events"
+    Task LogAnalyticsEventAsync(EventEntity analyticsLog);
+
+    Task<List<EventEntity>> GetOldest100EventsAsync();
+
+    Task DeleteEventList(List<EventEntity> logs);    
+    #endregion
 }

@@ -8,12 +8,16 @@
        Title="AppAmbitTestingApp">
 
     <TabBar>
-        <ShellContent Title="Home"
+        <ShellContent Title="Crashes"
                       ContentTemplate="{DataTemplate local:MainPage}"
                       Route="MainPage" />
     
         <ShellContent Title="Analytics"
                       ContentTemplate="{DataTemplate local:AnalyticsPage}"
                       Route="Analytics Page" />
+
+        <ShellContent Title="Load"
+              ContentTemplate="{DataTemplate local:LoadPage}"
+              Route="LoadPage" />
     </TabBar>
 </Shell>

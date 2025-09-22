@@ -1,0 +1,153 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pr: none
+
+pool:
+  vmImage: 'macos-latest'
+
+variables:
+  - group: iOS VARIABLES
+  - name: buildConfiguration
+    value: 'Release'
+  - name: dotnetVersion
+    value: '8.0.x'
+  - name: projectPath
+    value: 'AppAmbitTestingApp/AppAmbitTestingApp.csproj'
+  - name: outputPath
+    value: 'publish-ios'
+  - name: ipaName
+    value: 'appamabit_test'
+
+jobs:
+- job: BuildiOSIPA
+  displayName: 'Build iOS IPA'
+  timeoutInMinutes: 20
+
+  steps:
+    - checkout: self
+
+    - task: Bash@3
+      displayName: 'Validate and extract release type from branch name'
+      inputs:
+        targetType: 'inline'
+        script: |
+          FULL_REF="$(Build.SourceBranch)"
+          echo "Full ref: $FULL_REF"
+          
+          FULL_BRANCH="${FULL_REF#refs/heads/}"
+          echo "Branch name: $FULL_BRANCH"
+          
+          if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+            TYPE_RELEASE="${FULL_BRANCH%%/*}"
+            echo "##vso[task.setvariable variable=typeRelease]$TYPE_RELEASE"
+            echo "Valid release type: $TYPE_RELEASE"
+          else
+            echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+            exit 1
+          fi
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET SDK'
+      inputs:
+        packageType: sdk
+        version: '$(dotnetVersion)'
+
+    - script: |
+        if [ -d "/Applications/Xcode_16.2.app" ]; then
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+        else
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        fi
+        sudo xcodebuild -license accept
+        echo "Xcode path: $(xcode-select -p)"
+        xcodebuild -version
+      displayName: 'Select and confirm Xcode version'
+
+    - script: |
+        if [ ! -d "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform" ]; then
+          echo "Downloading iOS Platform SDK..."
+          sudo xcodebuild -downloadPlatform iOS
+        else
+          echo "iOS Platform SDK already present, skipping download"
+        fi
+
+        if ! xcode-select -p &>/dev/null; then
+          echo "Installing Xcode CLI tools..."
+          sudo xcode-select --install
+        else
+          echo "Xcode CLI tools already installed"
+        fi
+
+        which actool || echo "actool not found"
+      displayName: 'Ensure iOS SDK and Xcode CLI tools'
+
+    - script: |
+        if ! dotnet workload list | grep -q ios; then
+          dotnet workload install maui ios
+        fi
+      displayName: 'Ensure MAUI iOS Workload installed'
+
+    - script: |
+        security delete-keychain build.keychain || true
+        security create-keychain -p "" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "" build.keychain
+        security set-keychain-settings -t 3600 -l build.keychain
+      displayName: 'Reset Keychain'
+
+    - task: DownloadSecureFile@1
+      name: DownloadCertificate
+      inputs:
+        secureFile: '$(IOS_P12_CERTIFICATE)'
+      displayName: 'Download P12 Certificate'
+
+    - script: |
+        security import "$(DownloadCertificate.secureFilePath)" -k build.keychain -P "$(IOS_APPLE_P12_PASSWORD)" -A
+        security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+      displayName: 'Install P12 Certificate'
+
+    - task: DownloadSecureFile@1
+      name: DownloadProvision
+      inputs:
+        secureFile: '$(IOS_PROVISIONING_PROFILE)'
+      displayName: 'Download Provisioning Profile'
+
+    - script: |
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        UUID=$(security cms -D -i "$(DownloadProvision.secureFilePath)" | plutil -extract UUID xml1 -o - - | xmllint --xpath "string(//string)" -)
+        cp "$(DownloadProvision.secureFilePath)" ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+        echo "##vso[task.setvariable variable=ProvisioningUUID]$UUID"
+      displayName: 'Install Provisioning Profile'
+
+    - script: |
+        dotnet restore "$(projectPath)"
+      displayName: 'Restore Dependencies'
+
+    - script: |
+        export DEVELOPER_DIR=$(xcode-select -p)
+        set -x
+        dotnet publish "$(projectPath)" \
+          -c $(buildConfiguration) -f net8.0-ios \
+          -p:ArchiveOnBuild=true \
+          -p:BuildIpa=true \
+          -p:EnableAssemblyILStripping=false \
+          -p:CodesignProvision=$(ProvisioningUUID) \
+          -p:SdkRoot=$DEVELOPER_DIR/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk \
+          -o $(outputPath)
+      displayName: 'Build IPA (Release)'
+
+    - script: |
+        IPA_PATH=$(find "$(outputPath)" -name "*.ipa" | head -n 1)
+        mv "$IPA_PATH" "$(outputPath)/$(ipaName)_$(typeRelease).ipa"
+        find "$(outputPath)" ! -name "$(ipaName)_$(typeRelease).ipa" -type f -delete
+      displayName: 'Keep only IPA in outputPath and rename'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload IPA Artifact'
+      inputs:
+        PathtoPublish: '$(outputPath)'
+        ArtifactName: 'ios-ipa'
+        publishLocation: 'Container'

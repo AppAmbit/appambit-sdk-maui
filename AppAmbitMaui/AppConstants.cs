@@ -2,7 +2,7 @@ namespace AppAmbit;
 
 internal class AppConstants
 {
-    private const string DatabaseFileName = "AppAbmit.db3";
+    private const string DatabaseFileName = "AppAmbit.db3";
 
     internal const SQLite.SQLiteOpenFlags Flags = SQLite.SQLiteOpenFlags.ReadWrite | SQLite.SQLiteOpenFlags.Create | SQLite.SQLiteOpenFlags.SharedCache;
 

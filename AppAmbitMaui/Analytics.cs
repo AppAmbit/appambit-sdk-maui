@@ -1,11 +1,9 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using AppAmbit.Models.Analytics;
-using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using Newtonsoft.Json;
+using AppAmbit.Enums;
 using static AppAmbit.AppConstants;
 
 namespace AppAmbit;
@@ -13,7 +11,6 @@ namespace AppAmbit;
 public static class Analytics
 {
     internal static bool _isManualSessionEnabled = false;
-    private static bool _isSessionActive = false;
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;
 
@@ -22,7 +19,7 @@ public static class Analytics
         _apiService = apiService;
         _storageService = storageService;
     }
-    
+
     public static void EnableManualSession()
     {
         _isManualSessionEnabled = true;
@@ -31,28 +28,12 @@ public static class Analytics
 
     public static async Task StartSession()
     {
-        Debug.WriteLine("StartSession called");
-        if (_isSessionActive)
-        {
-            return;
-        }
-
-        var response = await _apiService?.ExecuteRequest<SessionResponse>(new StartSessionEndpoint());
-        _storageService?.SetSessionId(response.SessionId);
-        _isSessionActive = true;
+        await SessionManager.StartSession();
     }
 
     public static async Task EndSession()
     {
-        Debug.WriteLine("EndSession called");
-        if (!_isSessionActive)
-        {
-            Debug.WriteLine("Session didn't started");
-            return;
-        }
-        var sessionId = await _storageService?.GetSessionId();
-        await _apiService?.ExecuteRequest<EndSessionResponse>(new EndSessionEndpoint(sessionId));
-        _isSessionActive = false;
+        await SessionManager.EndSession();
     }
 
     public static async void SetUserId(string userId)
@@ -83,43 +64,49 @@ public static class Analytics
         });
     }
 
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, string> data = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
     {
-        await SendOrSaveEvent(eventTitle, data);
+        await SendOrSaveEvent(eventTitle, data, createdAt);
     }
 
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string> data = null)
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
     {
-        var hasInternet = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
-        
-        data = data
+        data = (data ?? new Dictionary<string, string>())
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
             g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
             g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
+
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
-        if (hasInternet)
+
+        var eventRequest = new Event()
         {
-            var _event = new Event()
-            {
-                Name = eventTitle,
-                Data = data
-            };
-            await _apiService.ExecuteRequest<object>(new SendEventEndpoint(_event));
-        }
-        else
+            Name = eventTitle,
+            Data = data
+        };
+
+        var response = _apiService != null
+            ? await _apiService.ExecuteRequest<object>(new SendEventEndpoint(eventRequest))
+            : null;
+
+        if (response?.ErrorType != ApiErrorType.None)
         {
             var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
             var eventEntity = new EventEntity()
             {
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
-                Data = data
+                Data = data,
+                CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+                SessionId = SessionManager.SessionId
             };
 
-            await storageService?.LogAnalyticsEventAsync(eventEntity);
+            if (storageService != null)
+            {
+                await storageService.LogAnalyticsEventAsync(eventEntity);
+            }
         }
     }
 
@@ -127,5 +114,37 @@ public static class Analytics
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+    }
+
+    public static async Task SendBatchEvents()
+    {
+        Debug.WriteLine("Send Batch Events");
+        var eventEntityList = await _storageService.GetOldest100EventsAsync();
+        if (eventEntityList?.Count == 0)
+        {
+            Debug.WriteLine($"No events to send");
+            return;
+        }
+
+        var endpoint = new EventBatchEndpoint(eventEntityList);
+        var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
+        if (eventsBatchResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+        {
+            Debug.WriteLine("Batch of unsent events");
+            return;
+        }
+
+        await _storageService.DeleteEventList(eventEntityList);
+        Debug.WriteLine("Finished Events Batch");
+    }
+
+    public static void ClearToken()
+    {
+        _apiService?.SetToken("");
+    }
+
+    public async static Task RequestToken()
+    {
+        await _apiService?.GetNewToken();
     }
 }

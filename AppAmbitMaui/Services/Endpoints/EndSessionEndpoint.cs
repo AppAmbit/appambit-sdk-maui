@@ -1,4 +1,4 @@
-using AppAmbit.Models.App;
+using AppAmbit.Models.Analytics;
 using AppAmbit.Services.Endpoints.Base;
 using AppAmbit.Services.Interfaces;
 
@@ -10,10 +10,17 @@ internal class EndSessionEndpoint : BaseEndpoint
     {
         Url = "/session/end";
         Method = HttpMethodEnum.Post;
-        Payload = new
+        Payload = new SessionData()
         {
-            session_id = sessionId,
-            timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+            SessionId = sessionId,
+            Timestamp = DateTime.UtcNow
         };
+    }
+    
+    public EndSessionEndpoint(SessionData endSession)
+    {
+        Url = "/session/end";
+        Method = HttpMethodEnum.Post;
+        Payload = endSession;
     }
 }

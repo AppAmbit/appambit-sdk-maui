@@ -3,3 +3,5 @@ bin/
 .idea/
 .vs/
 *.user
+launch.json
+Shared/

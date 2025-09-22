@@ -1,0 +1,185 @@
+pipelines:
+  branches:
+    develop:
+      - step:
+          name: Build Android APK
+          image: mcr.microsoft.com/dotnet/sdk:8.0
+          max-time: 10
+          caches:
+            - dotnetcore
+          script:
+            - |
+              export FULL_BRANCH="${BITBUCKET_BRANCH}"
+              echo "Current branch: $FULL_BRANCH"
+
+              if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+                export TYPE_RELEASE="${FULL_BRANCH%%/*}"
+                echo "TYPE_RELEASE=$TYPE_RELEASE"
+              else
+                echo "Branch '$FULL_BRANCH' must start with alpha/, beta/ or production/. Exiting..."
+                exit 1
+              fi
+            - apt-get update && apt-get install -y wget unzip zip openjdk-17-jdk
+            - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+            - chmod +x dotnet-install.sh
+            - ./dotnet-install.sh --version 8.0.100
+            - export DOTNET_ROOT=$HOME/.dotnet
+            - export PATH=$PATH:$HOME/.dotnet
+            - export ANDROID_SDK_ROOT=$HOME/android-sdk
+            - mkdir -p $ANDROID_SDK_ROOT
+            - cd $ANDROID_SDK_ROOT
+            - wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+            - unzip cmdline-tools.zip -d temp-cmdline
+            - mkdir -p cmdline-tools/latest
+            - mv temp-cmdline/cmdline-tools/* cmdline-tools/latest/
+            - rm -rf temp-cmdline
+            - export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+            - export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
+            - yes | sdkmanager --licenses
+            - sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+            - echo "$ANDROID_KEYSTORE_FILE" | base64 -d > "$KEYSTORE_FILE"
+            - dotnet workload install maui-android
+            - chmod -R 777 ~/.nuget
+            - cd /opt/atlassian/pipelines/agent/build/"$PROJECT_DIR"
+            - dotnet restore -p:TargetFramework="$BUILD_FRAMEWORK-android"
+            - |
+              dotnet build -c Release -f "$BUILD_FRAMEWORK-android" \
+                -p:AndroidSigningKeyStore=../"$KEYSTORE_FILE" \
+                -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
+                -p:AndroidSigningKeyPass="$ANDROID_KEYSTORE_PASSWORD" \
+                -p:AndroidSigningStorePass="$ANDROID_KEYSTORE_PASSWORD_ALIAS" \
+                -p:AndroidSdkDirectory="$ANDROID_SDK_ROOT" \
+                --no-restore
+
+            - APK_FILE=$(find . -name "*.apk" -type f | head -1)
+            - echo "$APK_FILE"
+            - COMMIT_SHORT=${BITBUCKET_COMMIT:0:7}
+            - APK_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.apk"
+            - mkdir -p ../artifacts
+            - cp "$APK_FILE" "../artifacts/$APK_NAME"
+            - zip -j "../artifacts/${APP_NAME_BASE}_${TYPE_RELEASE}.zip" "../artifacts/$APK_NAME"
+            - cd ..
+
+          artifacts:
+            - artifacts/*.zip
+
+      - step:
+          name: Upload APK
+          max-time: 5
+          image: atlassian/default-image:4
+          script:
+            - APK_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.apk"
+            - pipe: atlassian/bitbucket-upload-file:0.7.4
+              variables:
+                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME: "artifacts/*.zip"
+
+      - step:
+          name: Build iOS IPA
+          max-time: 10
+          runs-on:
+            - self.hosted
+            - macos
+          caches:
+            - dotnetcore
+          script:
+            - |
+              export FULL_BRANCH="${BITBUCKET_BRANCH}"
+              echo "Current branch: $FULL_BRANCH"
+
+              if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+                export TYPE_RELEASE="${FULL_BRANCH%%/*}"
+                echo "TYPE_RELEASE=$TYPE_RELEASE"
+              else
+                echo "Branch '$FULL_BRANCH' must start with alpha/, beta/ or production/. Exiting..."
+                exit 1
+              fi
+            - echo "Configuring Xcode"
+            - sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+            - export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+            - xcrun --sdk iphoneos --show-sdk-version
+            - xcrun --sdk iphoneos --show-sdk-path
+
+            - echo "Downloading iOS platform"
+            - sudo xcodebuild -downloadPlatform iOS
+
+            - echo "Installing MAUI workloads"
+            - sudo dotnet workload install maui ios
+            - sudo chmod -R 777 ~/.nuget
+
+            - echo "Restoring packages"
+            - dotnet restore "$PROJECT_PATH" -p:TargetFramework=${BUILD_FRAMEWORK}-ios
+
+            - echo "Installing certificate and provisioning profile"
+            - |
+                export HOME=/var/root
+                mkdir -p "$HOME/Library/Keychains"
+                mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+                KC="$HOME/Library/Keychains/build.keychain"
+
+                echo "$IOS_P12_CERTIFICATE_BASE64" | tr -d '\n' | base64 --decode > cert.p12
+                echo "$IOS_PROVISIONING_PROFILE_BASE64"  | tr -d '\n' | base64 --decode > profile.mobileprovision
+
+                security delete-keychain "$KC" || true
+                security create-keychain -p "" "$KC"
+                security list-keychains -s "$KC" "$HOME/Library/Keychains/login.keychain-db"
+                security default-keychain -s "$KC"
+                security unlock-keychain -p "" "$KC"
+                security set-keychain-settings -t 3600 -l "$KC"
+
+                security import cert.p12 \
+                  -k "$KC" \
+                  -P "$IOS_APPLE_P12_PASSWORD" \
+                  -T /usr/bin/codesign \
+                  -A
+
+                security set-key-partition-list \
+                  -S apple-tool:,apple: \
+                  -s \
+                  -k "" \
+                  "$KC"
+
+                mv profile.mobileprovision \
+                  "$HOME/Library/MobileDevice/Provisioning Profiles/profile.mobileprovision"
+
+                echo "Code-signing identities in keychain:"
+                security find-identity -v -p codesigning "$KC"
+
+            - echo "Publishing signed IPA"
+            - |
+                dotnet publish "$PROJECT_PATH" \
+                  -f ${BUILD_FRAMEWORK}-ios \
+                  -c Release \
+                  -p:RuntimeIdentifier=ios-arm64 \
+                  -p:ArchiveOnBuild=true \
+                  -p:BuildIpa=true \
+                  -p:Platform=iOS \
+                  -p:MtouchLink=Full \
+                  -p:SupportedOSPlatformVersion=11.0 \
+                  -p:CodesignProvision=profile \
+                  -p:CodesignKey="$IOS_CODESIGN_KEY" \
+                  -o publish-ios
+
+            - echo "Packaging artifacts"
+            - mkdir -p artifacts
+            - IPA_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.ipa"
+            - cp publish-ios/*.ipa "artifacts/$IPA_NAME"
+            - zip -j "artifacts/${APP_NAME_BASE}_${TYPE_RELEASE}.zip" "artifacts/$IPA_NAME"
+          artifacts:
+            - artifacts/*.zip
+
+      - step:
+          name: Upload IPA
+          max-time: 10
+          image: atlassian/default-image:4
+          script:
+            - IPA_NAME="${APP_NAME_BASE}_${TYPE_RELEASE}.ipa"
+            - pipe: atlassian/bitbucket-upload-file:0.7.4
+              variables:
+                BITBUCKET_USERNAME:     $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME:               "artifacts/*.zip"
+          artifacts:
+            - artifacts/*.zip

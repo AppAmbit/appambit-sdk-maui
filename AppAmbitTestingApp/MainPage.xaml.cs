@@ -1,14 +1,19 @@
-﻿using System.ComponentModel;
-using AppAmbit;
-using AppAmbit.Models.Logs;
+﻿using AppAmbit;
+using System.Diagnostics;
+using AppAmbit.Services;
+using Newtonsoft.Json;
+using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
+using AppAmbitTestingApp.Utils;
+using AppAmbitTestingApp.Models;
 
 namespace AppAmbitTestingApp;
 
 public partial class MainPage : ContentPage
 {
-    private string _logMessage = "Test Log Message";
+    private bool _inited;
 
+    private string _logMessage = "Test Log Message";
     public string LogMessage
     {
         get => _logMessage;
@@ -51,23 +56,31 @@ public partial class MainPage : ContentPage
             }
         }
     }
-    
+
     public MainPage()
     {
         InitializeComponent();
         this.BindingContext = this;
         UserId = Guid.NewGuid().ToString();
+
+
     }
-    
+
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
     {
+        LoggingHandler.ResetTotalSize();
+
         await DisplayAlert("Info", "Turn off internet", "Ok");
-        foreach (int index in Range( 1, 220 ))
+        foreach (int index in Range(1, 220))
         {
             await Crashes.LogError("Test Batch LogError");
         }
         await DisplayAlert("Info", "Logs generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
+
+        ButtonBatchUpload.Padding = 10;
+        ButtonBatchUpload.FontSize = 12;
+        ButtonBatchUpload.Text = $"Generate Logs for Batch upload ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
@@ -85,19 +98,23 @@ public partial class MainPage : ContentPage
     private async void OnChangeUserId(object? sender, EventArgs e)
     {
         Analytics.SetUserId(UserId);
-        await DisplayAlert("Info", "LogError Sent", "Ok");
+        await DisplayAlert("Info", "User id changed", "Ok");
     }
 
     private async void OnChangeUserEmail(object? sender, EventArgs e)
     {
         Analytics.SetUserEmail(UserEmail);
-        await DisplayAlert("Info", "LogError Sent", "Ok");
+        await DisplayAlert("Info", "User email changed", "Ok");
     }
 
     private async void OnSendTestLog(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}});
+        LoggingHandler.ResetTotalSize();
+        await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
         await DisplayAlert("Info", "LogError Sent", "Ok");
+        ButtonDefaultLogError.Padding = 10;
+        ButtonDefaultLogError.FontSize = 12;
+        ButtonDefaultLogError.Text = $"Send Default LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnSendTestException(object sender, EventArgs e)
@@ -108,28 +125,111 @@ public partial class MainPage : ContentPage
         }
         catch (Exception exception)
         {
-            await Crashes.LogError(exception,new Dictionary<string,string>(){{"user_id","1"}});
+            LoggingHandler.ResetTotalSize();
+            await Crashes.LogError(exception, new Dictionary<string, string>() { { "user_id", "1" } });
             await DisplayAlert("Info", "LogError Sent", "Ok");
+            ButtonSendTestException.Padding = 10;
+            ButtonSendTestException.FontSize = 12;
+            ButtonSendTestException.Text = $"Send Exception LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
-        await Crashes.LogError("Test Log Error",new Dictionary<string,string>(){{"user_id","1"}}, this.GetType().FullName);
+        LoggingHandler.ResetTotalSize();
+        await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } }, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
+        ButtonTestLogWithClassFQN.Padding = 10;
+        ButtonTestLogWithClassFQN.FontSize = 12;
+        ButtonTestLogWithClassFQN.Text = $"Send ClassInfo LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
+    }
+
+    private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
+    {
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+        {
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
+        }
+
+        LoggingHandler.ResetTotalSize();
+
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
+        foreach (int index in Range(start: 1, count: 30))
+        {
+            var errorsDate = DateTime.UtcNow.AddDays(-(30 - index));
+
+            await StorableApp.Shared.PutSessionData(errorsDate, "start");
+
+            await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
+
+            await StorableApp.Shared.UpdateLogsWithCurrentSessionId();
+
+            await StorableApp.Shared.PutSessionData(errorsDate.AddSeconds(2), "end");
+
+            await Task.Delay(500);
+        }
+
+        await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
+        ButtonLast30DailyErrors.Padding = 10;
+        ButtonLast30DailyErrors.FontSize = 12;
+        ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({FormatSize(LoggingHandler.TotalRequestSize)})";
+    }
+
+
+    private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
+    {
+        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
+        {
+            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
+            return;
+        }
+
+        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
+        var ex = new NullReferenceException();
+        foreach (int index in Range(start: 1, count: 30))
+        {
+            var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
+
+             await StorableApp.Shared.PutSessionData(crashDate, "start");
+
+            var sessionId = await StorableApp.Shared.GetCurrentOpenSession();
+
+            var info = ExceptionModelApp.FromException(ex, deviceId: "iPhone 16 PRO MAX", sessionId);
+
+            info.CreatedAt = crashDate;
+            info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss") + "_" + index;
+
+            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+            string timestamp = crashDate.ToString("yyyyMMdd_HHmmss");
+            string fileName = $"crash_{timestamp}_{index}.json";
+
+            string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
+
+            Debug.WriteLine($"Crash file saved to: {crashFile}");
+            await StorableApp.Shared.PutSessionData(crashDate.AddSeconds(2), "end");
+            await Task.Delay(100);
+            File.WriteAllText(crashFile, json);
+        }
+        await DisplayAlert("Info", "Crashes generated, turn on internet", "Ok");
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
     {
         throw new NullReferenceException();
     }
-    
+
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        await Crashes.LogError( LogMessage);
+        LoggingHandler.ResetTotalSize();
+        await Crashes.LogError(LogMessage);
         await DisplayAlert("Info", "LogError Sent", "Ok");
+        ButtonCustomLogError.Padding = 10;
+        ButtonCustomLogError.FontSize = 12;
+        ButtonCustomLogError.Text = $"Send Custom LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
-    
+
     private async void OnGenerateTestCrash(object sender, EventArgs e)
     {
         await Crashes.GenerateTestCrash();
@@ -139,5 +239,5 @@ public partial class MainPage : ContentPage
     private void MessageInputView_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         _logMessage = e.NewTextValue;
-    }
+    }   
 }

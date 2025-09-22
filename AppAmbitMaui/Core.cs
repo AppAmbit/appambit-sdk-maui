@@ -1,15 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using AppAmbit.Models.Analytics;
-using AppAmbit.Models.App;
-using AppAmbit.Models.Logs;
-using AppAmbit.Models.Responses;
 using AppAmbit.Services;
-using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace AppAmbit;
 
@@ -18,7 +10,12 @@ public static class Core
     private static IAPIService? apiService;
     private static IStorageService? storageService;
     private static IAppInfoService? appInfoService;
-    
+    private static bool _hasStartedSession = false;
+    private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
+
+
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         builder.ConfigureLifecycleEvents(events =>
@@ -26,140 +23,204 @@ public static class Core
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) => { Start(appKey); });
-                android.OnResume(activity =>
-                {
-                    OnResume();
-                });
+                android.OnCreate((activity, state) => { OnStart(appKey); });
                 android.OnPause(activity => { OnSleep(); });
+                android.OnResume(activity => { OnResume(); });
+                android.OnStop(activity => { OnSleep(); });
+                android.OnRestart(activity => { OnResume(); });
+                android.OnDestroy(activity => { OnEnd(); });
             });
 #elif IOS
             events.AddiOS(ios =>
             {
                 ios.FinishedLaunching((application, options) =>
                 {
-                    Start(appKey);
+                    OnStart(appKey);
                     return true;
                 });
-                ios.WillEnterForeground(application =>
-                {
-                    OnResume();
-                });
-                ios.DidEnterBackground(application =>
-                {
-                    OnSleep();
-                });
+                ios.DidEnterBackground(application => { OnSleep(); });
+                ios.WillEnterForeground(application => { OnResume(); });
+                ios.WillTerminate(application => { OnEnd(); });
             });
 #endif
         });
 
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
+        Crashes.OnCrashException -= exception => { OnEnd(); };
+        Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
         builder.Services.AddSingleton<IStorageService, StorageService>();
         builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-        
+
         return builder;
     }
 
-    private static async Task Start(string appKey)
-    {
-        await InitializeServices();
-
-        await InitializeConsumer(appKey);
-
-        if (!Analytics._isManualSessionEnabled)
-        {
-            await Analytics.StartSession();
-        }
-
-        Crashes.LoadCrashFileIfExists();
-        
-        await Crashes.SendBatchLogs();
-    }
 
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e.ToString()}");
+        Debug.WriteLine($"NetworkAccess:{e}");
 
         var access = e.NetworkAccess;
 
         if (access != NetworkAccess.Internet)
             return;
 
-        await Crashes.SendBatchLogs();
+        if (!TokenIsValid())
+        {
+            await GetNewToken(null);
+        }
+
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
     }
-    
+
+    private static async Task OnStart(string appKey)
+    {
+        await InitializeServices();
+
+        await InitializeConsumer(appKey);
+        _hasStartedSession = true;
+
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+
+    }
+
     private static async Task OnResume()
     {
-        var appKey = await storageService?.GetAppId();
-        await InitializeConsumer(appKey);
-
-        if (!Analytics._isManualSessionEnabled)
+        if (!TokenIsValid())
         {
-            await Analytics.StartSession();
+            await GetNewToken(null);            
         }
 
-        await Crashes.SendBatchLogs();
+        if (!Analytics._isManualSessionEnabled && _hasStartedSession)
+        {
+            await SessionManager.RemoveSavedEndSession();
+        }
+
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
     }
-    
-    public static async Task OnSleep()
+
+    private static void OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await Analytics.EndSession();
+            SessionManager.SaveEndSession();
         }
     }
 
-    private static async Task InitializeConsumer(string appKey = "")
+    private static void OnEnd()
     {
-        var appId = await storageService.GetAppId();
-        var deviceId = await storageService.GetDeviceId();
-        var userId = await storageService.GetUserId();
-        var userEmail = await storageService.GetUserEmail();
-
-        if (appId == null)
+        if (!Analytics._isManualSessionEnabled)
         {
-            await storageService.SetAppId(appKey);
+            SessionManager.SaveEndSession();
         }
-
-        if (deviceId == null)
-        {
-            deviceId = Guid.NewGuid().ToString();
-            await storageService.SetDeviceId(deviceId);
-        }
-
-        if (userId == null)
-        {
-            userId = Guid.NewGuid().ToString();
-            await storageService.SetUserId(userId);
-        }
-
-        var consumer = new Consumer
-        {
-            AppKey = appKey,
-            DeviceId = deviceId,
-            DeviceModel = appInfoService.DeviceModel,
-            UserId = userId,
-            UserEmail = userEmail,
-            OS = appInfoService.OS,
-            Country = appInfoService.Country,
-            Language = appInfoService.Language,
-        };
-        var registerEndpoint = new RegisterEndpoint(consumer);
-        var remoteToken = await apiService?.ExecuteRequest<TokenResponse>(registerEndpoint);
-        apiService.SetToken(remoteToken?.Token);
     }
+
+    private static async Task InitializeConsumer(string appKey)
+    {
+        if (!Analytics._isManualSessionEnabled)
+        {
+            await SessionManager.SaveSessionEndToDatabaseIfExist();
+        }
+
+        await GetNewToken(appKey);
+
+        if (Analytics._isManualSessionEnabled)
+        {
+            return;
+        }
+
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendEndSessionFromFile();
+        await SessionManager.StartSession();
+    }
+
+    private static async Task SendDataPending()
+    {
+        await _ensureBatchLocked.WaitAsync();
+        try
+        {            
+            Debug.WriteLine("Sending pending data...");         
+            await SessionManager.SendBatchSessions();      
+            await Crashes.SendBatchLogs();
+            await Analytics.SendBatchEvents();
+            Debug.WriteLine("Finish pending data...");
+        }
+        finally
+        {
+            _ensureBatchLocked.Release();
+        }    
+    }
+
 
     private static async Task InitializeServices()
     {
-        apiService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>();
-        appInfoService = Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>();
-        storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
-        await storageService?.InitializeAsync();
+        apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
+        appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
+        storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
+        TokenService.Initialize(storageService);
+        await storageService!.InitializeAsync();
         var deviceId = await storageService.GetDeviceId();
-        Crashes.Initialize(apiService,storageService,deviceId);
-        Analytics.Initialize(apiService,storageService);
+        SessionManager.Initialize(apiService, storageService);
+        Crashes.Initialize(apiService, storageService, deviceId ?? "");
+        Analytics.Initialize(apiService, storageService);
+        ConsumerService.Initialize(storageService, appInfoService, apiService);
+    }
+
+    private static async Task GetNewToken(string? appKey)
+    {
+        Debug.WriteLine($"[Core] Trying to get the token...");
+        await consumerSemaphore.WaitAsync();
+        try
+        {
+            if (TokenIsValid())
+            {
+                return;
+            }
+            
+            Debug.WriteLine($"[Core] Obtaining the token");
+            if (storageService == null)
+            {
+                return;
+            }
+            await ConsumerService.UpdateAppKeyIfNeeded(appKey);
+            var consumerId = await storageService.GetConsumerId();
+            if (!string.IsNullOrWhiteSpace(consumerId))
+            {
+                Debug.WriteLine($"[Core] Consumer ID exists ({consumerId}), renewing token...");
+                var result = await apiService?.GetNewToken()!;
+                Debug.WriteLine($"[Core] Token renewal result: {result}");
+            }
+            else
+            {
+                Debug.WriteLine("[Core] There is no consumerId, creating a new one...");
+                var result = await ConsumerService.CreateConsumer();
+                Debug.WriteLine($"[Core] CreateConsumer result: {result}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Core] Exception during token operation: {ex}");
+        }
+        finally
+        {
+            consumerSemaphore.Release();
+        }
+    }
+
+    private static bool TokenIsValid()
+    {
+        var token = apiService?.GetToken();
+        if (!string.IsNullOrEmpty(token))
+            return true;
+        return false;
     }
 }

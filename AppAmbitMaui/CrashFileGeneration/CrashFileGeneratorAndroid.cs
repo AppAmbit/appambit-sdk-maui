@@ -1,3 +1,4 @@
+
 #if ANDROID
 using System.Diagnostics;
 using Java.Lang;
@@ -6,13 +7,13 @@ using Process = System.Diagnostics.Process;
 using StringBuilder = System.Text.StringBuilder;
 using Android.OS;
 using System.Runtime.InteropServices;
-
 namespace AppAmbit;
+
 
 internal static class CrashFileGeneratorAndroid
 {
     public static void AddHeader(StringBuilder log, string deviceId)
-    {
+    {    
         log.AppendLine($"Package: {AppInfo.PackageName}");
         log.AppendLine($"Version Code: {AppInfo.BuildString}");
         log.AppendLine($"Version Name: {AppInfo.VersionString}");

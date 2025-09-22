@@ -1,0 +1,139 @@
+name: Build .NET MAUI Android app
+
+variables:
+  buildConfiguration: 'Release'
+  outputDirectory: '$(Build.ArtifactStagingDirectory)'
+  devToolsDir: '$(HOME)/DevTools'
+  jdkVersion: '11.0.7'
+  androidSdkToolsVersion: '6609375'
+  androidApiLevel: '34'
+  javaHome: '$(HOME)/DevTools/openjdk-11.0.7+10'
+  androidSdkRoot: '$(HOME)/DevTools/android-sdk'
+  androidSdkCmdlineTools: '$(HOME)/DevTools/android-sdk/cmdline-tools/tools/bin'
+  androidKeyAlias: 'kavaup'
+  apkName: 'appambit_android'
+
+jobs:
+- job: BuildAndroidApp
+  displayName: 'Build Android App'
+  timeoutInMinutes: 10 
+
+  steps:
+
+  - task: Bash@3
+    displayName: 'Validate and extract release type from branch name'
+    inputs:
+      targetType: 'inline'
+      script: |
+        FULL_REF="$(Build.SourceBranch)"
+        echo "Full ref: $FULL_REF"
+        
+        FULL_BRANCH="${FULL_REF#refs/heads/}"
+        echo "Branch name: $FULL_BRANCH"
+        
+        if [[ "$FULL_BRANCH" == alpha/* || "$FULL_BRANCH" == beta/* || "$FULL_BRANCH" == production/* ]]; then
+          TYPE_RELEASE="${FULL_BRANCH%%/*}"
+          echo "##vso[task.setvariable variable=typeRelease]$TYPE_RELEASE"
+          echo "Valid release type: $TYPE_RELEASE"
+        else
+          echo "Branch '$FULL_BRANCH' does not start with alpha/, beta/ or production/. Exiting..."
+          exit 1
+        fi
+
+  - task: UseDotNet@2
+    displayName: Use dotnet 8.0
+    inputs:
+      packageType: 'sdk'
+      version: '8.0.x'
+
+  - task: Bash@3
+    displayName: Install MAUI
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet nuget locals all --clear
+        dotnet workload install maui-android
+
+  - task: Bash@3
+    displayName: Install JDK
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Create and clean DevTools directory
+        rm -rf $(devToolsDir)
+        mkdir -p $(devToolsDir)
+        
+        # Download and extract OpenJDK
+        wget -q "https://github.com/AdoptOpenJDK/openjdk$(jdkVersion)-upstream-binaries/releases/download/jdk-$(jdkVersion)%2B10/OpenJDK$(jdkVersion)U-jdk_x64_linux_$(jdkVersion).tar.gz" -O $(devToolsDir)/OpenJDK.tar.gz
+        tar -zxvf $(devToolsDir)/OpenJDK.tar.gz -C $(devToolsDir)
+        
+        export JAVA_HOME=$(javaHome)
+        export PATH=$JAVA_HOME/bin:$PATH
+
+        # Verify JDK installation
+        java --version
+        javac --version
+
+  - task: Bash@3
+    displayName: Install Android SDK
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Download and extract Android command line tools
+        mkdir -p $(androidSdkRoot)
+        wget -q "https://dl.google.com/android/repository/commandlinetools-linux-$(androidSdkToolsVersion)_latest.zip" -O $(devToolsDir)/commandlinetools.zip
+        unzip -o $(devToolsDir)/commandlinetools.zip -d $(androidSdkRoot)
+        
+        mkdir -p $(androidSdkRoot)/cmdline-tools/tools
+        mv $(androidSdkRoot)/tools $(androidSdkRoot)/cmdline-tools
+
+        export ANDROID_SDK_ROOT=$(androidSdkRoot)
+        export PATH=$(androidSdkCmdlineTools):$PATH
+        
+        yes | sdkmanager --licenses
+        sdkmanager "platform-tools" "platforms;android-$(androidApiLevel)" "build-tools;$(androidApiLevel).0.0"
+        sdkmanager --update
+
+  - task: Bash@3
+    displayName: 'Restore Android Packages'
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Restore packages specifically for Android target framework
+        dotnet restore -p:TargetFramework=net8.0-android
+
+  - task: Bash@3
+    displayName: Build Android App
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet build -f net8.0-android \
+        -c $(buildConfiguration) \
+        -p:JavaSdkDirectory="$(javaHome)" \
+        -p:AndroidSdkDirectory="$(androidSdkRoot)" \
+        -p:AndroidSigningKeyStore="$(Build.SourcesDirectory)/$(androidKeyAlias)" \
+        -p:AndroidSigningKeyAlias="$(ANDROID_KEY_ALIAS)" \
+        -p:AndroidSigningKeyPass="$(ANDROID_KEYSTORE_PASSWORD)" \
+        -p:AndroidSigningStorePass="$(ANDROID_KEYSTORE_PASSWORD_ALIAS)" \
+        --no-restore
+
+  - task: Bash@3
+    displayName: 'Find and Copy APK Files'
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Clean the artifact staging directory
+        rm -rf $(outputDirectory)/*
+        mkdir -p $(outputDirectory)
+        
+        find $(Build.SourcesDirectory) -name "*.apk" -type f -exec sh -c 'cp "$1" "$(outputDirectory)/$(apkName)_$(typeRelease).apk"' sh {} \;
+        
+        echo "Files to be published:"
+        ls -la $(outputDirectory)
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish release'
+    inputs:
+      PathtoPublish: '$(outputDirectory)'
+      ArtifactName: 'android_apk'
+      publishLocation: 'Container'

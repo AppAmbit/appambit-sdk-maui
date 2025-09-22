@@ -1,9 +1,8 @@
 #if IOS
-using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using AppAmbit;
 using UIKit;
-using Runtime = ObjCRuntime.Runtime;
 
 internal partial class CrashFileGeneratorIOS
 {

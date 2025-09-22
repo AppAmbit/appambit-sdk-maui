@@ -3,6 +3,7 @@ namespace AppAmbit.Models.Logs;
 public class ExceptionInfo
 {
     public string Type { get; set; }
+    public string SessionId { get; set; }
     public string Message { get; set; }
     public string StackTrace { get; set; }
     public string Source { get; set; }
@@ -14,6 +15,8 @@ public class ExceptionInfo
     public long LineNumberFromStackTrace { get; set; }
     
     public string CrashLogFile { get; set; }
+
+    public DateTime CreatedAt {  get; set; }
 
     public static ExceptionInfo FromException(Exception exception, string deviceId = null)
     {
@@ -28,7 +31,9 @@ public class ExceptionInfo
             ClassFullName = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
             FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
             LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
-            CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId)
+            CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId),
+            SessionId = SessionManager.SessionId,
+            CreatedAt = DateTime.UtcNow
         };
     }
 }
