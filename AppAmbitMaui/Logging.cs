@@ -16,14 +16,14 @@ internal static class Logging
         _storageService = storageService;
     }
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
+    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         var deviceId = await _storageService.GetDeviceId();
         var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
-        await LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber, createdAt);
+        await LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
     }
 
-    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null, DateTime? createdAt = null)
+    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
     {
         if (!SessionManager.IsSessionActive)
             return;
@@ -42,7 +42,7 @@ internal static class Logging
             Context = properties ?? new Dictionary<string, string>(),
             Type = logType,
             File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+            CreatedAt =  DateTime.UtcNow,
         };
 
         log.SessionId = string.IsNullOrEmpty(exception?.SessionId) ? SessionManager.SessionId : exception?.SessionId;

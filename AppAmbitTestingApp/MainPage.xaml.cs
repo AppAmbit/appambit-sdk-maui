@@ -4,7 +4,7 @@ using AppAmbit.Services;
 using Newtonsoft.Json;
 using static AppAmbitTestingApp.FormattedRequestSize;
 using static System.Linq.Enumerable;
-using AppAmbitTestingApp.Utils;
+
 using AppAmbitTestingApp.Models;
 
 namespace AppAmbitTestingApp;
@@ -146,73 +146,13 @@ public partial class MainPage : ContentPage
 
     private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
     {
-        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
-        {
-            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
-            return;
-        }
-
-        LoggingHandler.ResetTotalSize();
-
-        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
-        foreach (int index in Range(start: 1, count: 30))
-        {
-            var errorsDate = DateTime.UtcNow.AddDays(-(30 - index));
-
-            await StorableApp.Shared.PutSessionData(errorsDate, "start");
-
-            await Crashes.LogError("Test 30 Last Days Errors", createdAt: errorsDate);
-
-            await StorableApp.Shared.UpdateLogsWithCurrentSessionId();
-
-            await StorableApp.Shared.PutSessionData(errorsDate.AddSeconds(2), "end");
-
-            await Task.Delay(500);
-        }
-
-        await DisplayAlert("Info", "Logs generated, turn on internet", "Ok");
-        ButtonLast30DailyErrors.Padding = 10;
-        ButtonLast30DailyErrors.FontSize = 12;
-        ButtonLast30DailyErrors.Text = $"Generate the last 30 daily errors ({FormatSize(LoggingHandler.TotalRequestSize)})";
+        
     }
 
 
     private async void OnGenerate30daysTestCrash(object sender, EventArgs e)
     {
-        if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet)
-        {
-            await DisplayAlert("Info", "Turn off internet and try again", "Ok");
-            return;
-        }
-
-        await StorableApp.Shared.ClosePreviousSessionIfExists(DateTime.UtcNow);
-        var ex = new NullReferenceException();
-        foreach (int index in Range(start: 1, count: 30))
-        {
-            var crashDate = DateTime.UtcNow.AddDays(-(30 - index));
-
-             await StorableApp.Shared.PutSessionData(crashDate, "start");
-
-            var sessionId = await StorableApp.Shared.GetCurrentOpenSession();
-
-            var info = ExceptionModelApp.FromException(ex, deviceId: "iPhone 16 PRO MAX", sessionId);
-
-            info.CreatedAt = crashDate;
-            info.CrashLogFile = crashDate.ToString("yyyy-MM-ddTHH:mm:ss") + "_" + index;
-
-            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-
-            string timestamp = crashDate.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"crash_{timestamp}_{index}.json";
-
-            string crashFile = Path.Combine(FileSystem.AppDataDirectory, fileName);
-
-            Debug.WriteLine($"Crash file saved to: {crashFile}");
-            await StorableApp.Shared.PutSessionData(crashDate.AddSeconds(2), "end");
-            await Task.Delay(100);
-            File.WriteAllText(crashFile, json);
-        }
-        await DisplayAlert("Info", "Crashes generated, turn on internet", "Ok");
+        
     }
 
     private void OnCounterClicked(object sender, EventArgs e)

@@ -30,16 +30,16 @@ public static class Crashes
         Logging.Initialize(apiService, storageService);
     }
 
-    public static async Task LogError(Exception? exception, Dictionary<string, string> properties = null, string? classFqn = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int lineNumber = 0)
+    public static async Task LogError(Exception? exception, Dictionary<string, string>? properties = null, string? classFqn = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int lineNumber = 0)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
         await Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
-    public static async Task LogError(string message, Dictionary<string, string> properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null, DateTime? createdAt = null)
+    public static async Task LogError(string message, Dictionary<string, string>? properties = null, string? classFqn = null, Exception? exception = null, [CallerFilePath] string? fileName = null, [CallerLineNumber] int? lineNumber = null)
     {
         classFqn = classFqn ?? await GetCallerClassAsync();
-        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber, createdAt);
+        await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
     }
 
     public static async Task GenerateTestCrash()

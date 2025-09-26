@@ -70,10 +70,10 @@
                 Clicked="OnSendTestLogWithClassFQN" />
             <Button x:Name="ButtonLast30DailyErrors"
                 Text="Generate the last 30 daily errors"
-                Clicked="OnGenerate30daysTestErrors" />
+                Clicked="OnGenerate30daysTestErrors" IsEnabled="False" />
             <Button
                 Text="Generates the last 30 daily crashes"
-                Clicked="OnGenerate30daysTestCrash" />
+                Clicked="OnGenerate30daysTestCrash" IsEnabled="False" />
             <Button
                 Text="Throw new Crash" 
                 Clicked="OnCounterClicked" />

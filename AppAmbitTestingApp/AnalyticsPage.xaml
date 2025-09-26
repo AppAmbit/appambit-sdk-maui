@@ -21,7 +21,7 @@
                         Text="End Session"
                         Clicked="Button_OnEndSession"/>
                 <Button Text="Generate the last 30 daily sessions"
-                    Clicked="OnGenerate30DaysTestSessions"/>                        
+                    Clicked="OnGenerate30DaysTestSessions" IsEnabled="False"/>                        
                     <Button x:Name="ButtonClickedEventWProperty"
                         Text='Send "Button Clicked" Event w/ property'
                         Clicked="Button_OnClicked"/>
@@ -35,7 +35,7 @@
                         Text="Send Max-20-Properties Event"
                         Clicked="Button_OnClickedTestMaxPropertiesEvent"/>
                     <Button Text="Send 30 Daily Events"
-                        Clicked="OnSend30DailyEvents" />                        
+                        Clicked="OnSend30DailyEvents" IsEnabled="False"/>
                     <Button x:Name="Button220BatchEvents"
                         Text="Send Batch of 220 Events" 
                         Clicked="OnGenerateBatchEvents" />
