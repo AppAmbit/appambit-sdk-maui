@@ -18,10 +18,10 @@
         <!-- NuGet Metadata -->
         <PackageId>com.AppAmbit.Sdk</PackageId>
         <PackageTags>appambit; sdk; telemetry; logging; analytics; crashes; debug; distribution; ci; cd; maui; xamarin; mobile; apps; diagnostics; monitoring</PackageTags>
-        <Version>0.0.2</Version>
+        <Version>0.0.3</Version>
         <Authors>AppAmbit</Authors>
         <Company>AppAmbit</Company>
-        <Description>AppAmbit - Crashes and Analytics library to track sessions, collect device properties, events, and crash reports for your application</Description>
+        <Description>Lightweight SDK for analytics, events, logging, crashes, and offline support. Simple setup, minimal overhead.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <RepositoryUrl>https://github.com/AppAmbit/appambit-sdk-maui</RepositoryUrl>
