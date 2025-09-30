@@ -1,5 +1,10 @@
 ___
 
+
+## Version 0.0.4
+
+Remove optional date parameters in public interface.
+
 ## Version 0.0.3
 
 Description updated
