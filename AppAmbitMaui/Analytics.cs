@@ -64,12 +64,12 @@ public static class Analytics
         });
     }
 
-    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
+    public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        await SendOrSaveEvent(eventTitle, data, createdAt);
+        await SendOrSaveEvent(eventTitle, data);
     }
 
-    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null, DateTime? createdAt = null)
+    private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
         data = (data ?? new Dictionary<string, string>())
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
@@ -99,7 +99,7 @@ public static class Analytics
                 Id = Guid.NewGuid(),
                 Name = eventTitle,
                 Data = data,
-                CreatedAt = createdAt != null ? createdAt.Value : DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
                 SessionId = SessionManager.SessionId
             };
 
