@@ -175,7 +175,7 @@ Open source under the terms described in the [LICENSE](./LICENSE) file.
 
 * **Docs**: [docs.appambit.com](https://docs.appambit.com)
 * **Dashboard**: [appambit.com](https://appambit.com)
-* **Discord**: [discord.gg](https://discord.gg/nmbdbCZmQX)
+* **Discord**: [discord.gg](https://discord.gg/nJyetYue2s)
 * **Examples**: Sample .NET MAUI demo (iOS and Android) included in repo.
 
 ---
