@@ -20,20 +20,20 @@ public class ExceptionInfo
 
     public static ExceptionInfo FromException(Exception exception, string deviceId = null)
     {
-        
-        return new ExceptionInfo
-        {
-            Type = exception?.GetType()?.FullName,
-            Message = exception?.Message,
-            StackTrace = exception?.StackTrace,
-            Source = exception?.Source,
-            InnerException = exception?.InnerException?.ToString(),
-            ClassFullName = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass,
-            FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName,
-            LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0,
-            CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception,deviceId),
-            SessionId = SessionManager.SessionId,
-            CreatedAt = DateTime.UtcNow
-        };
+        var info = new ExceptionInfo();
+
+        info.Type = exception?.GetType()?.FullName;
+        info.Message = exception?.Message;
+        info.StackTrace = exception?.StackTrace;
+        info.Source = exception?.Source;
+        info.InnerException = exception?.InnerException?.ToString();
+        info.ClassFullName = exception?.TargetSite?.DeclaringType?.FullName ?? AppConstants.UnknownClass;
+        info.FileNameFromStackTrace = exception?.GetFileNameFromStackTrace() ?? AppConstants.UnknownFileName;
+        info.LineNumberFromStackTrace = exception?.GetLineNumberFromStackTrace() ?? 0;
+        info.CrashLogFile = CrashFileGenerator.GenerateCrashLog(exception, deviceId);
+        info.SessionId = SessionManager.SessionId;
+        info.CreatedAt = DateTime.UtcNow;
+
+        return info;
     }
 }

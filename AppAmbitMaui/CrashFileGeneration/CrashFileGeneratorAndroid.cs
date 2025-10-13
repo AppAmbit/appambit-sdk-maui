@@ -1,4 +1,3 @@
-
 #if ANDROID
 using System.Diagnostics;
 using Java.Lang;
@@ -14,13 +13,15 @@ internal static class CrashFileGeneratorAndroid
 {
     public static void AddHeader(StringBuilder log, string deviceId)
     {    
-        log.AppendLine($"Package: {AppInfo.PackageName}");
-        log.AppendLine($"Version Code: {AppInfo.BuildString}");
-        log.AppendLine($"Version Name: {AppInfo.VersionString}");
+        var info = new AppAmbit.Services.AppInfoService();
+        var packageName = global::Android.App.Application.Context?.PackageName;
+        log.AppendLine($"Package: {packageName}");
+        log.AppendLine($"Version Code: {info.Build}");
+        log.AppendLine($"Version Name: {info.AppVersion}");
         log.AppendLine($"Android: {Build.VERSION.SdkInt}");
         log.AppendLine($"Android Build: {Build.Display}");
         log.AppendLine($"Manufacturer: {Build.Manufacturer}");
-        log.AppendLine($"Model: {Build.Model}");
+        log.AppendLine($"Model: {info.DeviceModel ?? Build.Model}");
         log.AppendLine($"Device Id: {deviceId}");
         log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }

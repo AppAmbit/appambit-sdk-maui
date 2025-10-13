@@ -6,11 +6,22 @@ namespace AppAmbit;
 
 internal static class FileUtils
 {
+    private static readonly string BaseDir = GetBaseDir();
+
+    private static string GetBaseDir()
+    {
+        var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrEmpty(baseDir))
+            baseDir = AppContext.BaseDirectory;
+        Directory.CreateDirectory(baseDir);
+        return baseDir;
+    }
+
     internal static async Task<T?> GetSavedSingleObject<T>() where T : class
     {
         try
         {
-            var filePath = GetFilePath(GetFileName(typeof(T)));            
+            var filePath = GetFilePath(GetFileName(typeof(T)));
             if (File.Exists(filePath))
             {
                 Debug.WriteLine($"Get File {typeof(T).Name}: {filePath}");
@@ -30,7 +41,7 @@ internal static class FileUtils
     {
         try
         {
-            var filePath = GetFilePath(GetFileName(typeof(T)));            
+            var filePath = GetFilePath(GetFileName(typeof(T)));
             if (File.Exists(filePath))
             {
                 Debug.WriteLine($"Delete File: {typeof(T).Name}: {filePath}");
@@ -46,8 +57,7 @@ internal static class FileUtils
 
     internal static string GetFilePath(string fileName)
     {
-        var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
-        return path;
+        return Path.Combine(BaseDir, fileName);
     }
 
     internal static string GetFileName(Type type)
@@ -62,7 +72,6 @@ internal static class FileUtils
         File.WriteAllText(filePath, json);
         Debug.WriteLine($"Saved {typeof(T).Name} to {filePath}");
     }
-
 
     public static async Task<List<T>> GetSaveJsonArrayAsync<T>(string fileName, T? entry)
         where T : class, IIdentifiable
@@ -110,7 +119,7 @@ internal static class FileUtils
         {
             Debug.WriteLine("Error to save file json");
         }
-    }    
+    }
 
     private static string PrepareFileSettings(string fileName, out JsonSerializerSettings settings, out string path)
     {
