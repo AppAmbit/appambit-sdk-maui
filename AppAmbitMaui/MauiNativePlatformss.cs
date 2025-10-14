@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 #if ANDROID
@@ -25,8 +26,10 @@ namespace AppAmbit;
 internal static class MauiNativePlatformss
 {
     private static string? _appKey;
-    private static bool _hasStartedSession = false;
     private static bool _readyForBatches = false;
+    private static DateTime _lastSendAllAtUtc = DateTime.MinValue;
+    private static readonly TimeSpan _minSendInterval = TimeSpan.FromSeconds(1);
+    private static readonly SemaphoreSlim _connectivityGate = new(1, 1);
 
 #if ANDROID
     internal static bool _initialized = false;
@@ -65,6 +68,7 @@ internal static class MauiNativePlatformss
     public static void Register(string appKey)
     {
         _appKey = appKey;
+
 #if ANDROID
         var app = AApp.Context as AApp;
         if (app == null) return;
@@ -74,15 +78,16 @@ internal static class MauiNativePlatformss
         RegisterNetworkCallback();
         _initialized = true;
         _ = OnStartAppAsync();
+
 #elif IOS
         if (_obsDidBecomeActive != null) return;
 
         var nc = NSNotificationCenter.DefaultCenter;
-        _obsDidBecomeActive   = nc.AddObserver(UIApplication.DidBecomeActiveNotification, HandleDidBecomeActive);
-        _obsWillResignActive  = nc.AddObserver(UIApplication.WillResignActiveNotification, HandleWillResignActive);
-        _obsDidEnterBackground= nc.AddObserver(UIApplication.DidEnterBackgroundNotification, HandleDidEnterBackground);
-        _obsWillEnterForeground=nc.AddObserver(UIApplication.WillEnterForegroundNotification, HandleWillEnterForeground);
-        _obsWillTerminate     = nc.AddObserver(UIApplication.WillTerminateNotification, HandleWillTerminate);
+        _obsDidBecomeActive     = nc.AddObserver(UIApplication.DidBecomeActiveNotification, HandleDidBecomeActive);
+        _obsWillResignActive    = nc.AddObserver(UIApplication.WillResignActiveNotification, HandleWillResignActive);
+        _obsDidEnterBackground  = nc.AddObserver(UIApplication.DidEnterBackgroundNotification, HandleDidEnterBackground);
+        _obsWillEnterForeground = nc.AddObserver(UIApplication.WillEnterForegroundNotification, HandleWillEnterForeground);
+        _obsWillTerminate       = nc.AddObserver(UIApplication.WillTerminateNotification, HandleWillTerminate);
 
         StartReachability();
         _ = OnStartAppAsync();
@@ -93,11 +98,12 @@ internal static class MauiNativePlatformss
     private sealed class LifecycleCallbacks : Java.Lang.Object, AApp.IActivityLifecycleCallbacks
     {
         public void OnActivityCreated(AActivity activity, ABundle? savedInstanceState) { }
+
         public void OnActivityStarted(AActivity activity)
         {
-            if (_startedActivities == 0) { }
             _startedActivities++;
         }
+
         public void OnActivityResumed(AActivity activity)
         {
             _resumedActivities++;
@@ -112,6 +118,7 @@ internal static class MauiNativePlatformss
                 _ = OnResumeAppAsync();
             }
         }
+
         public void OnActivityPaused(AActivity activity)
         {
             _resumedActivities = Math.Max(0, _resumedActivities - 1);
@@ -121,20 +128,23 @@ internal static class MauiNativePlatformss
                 _handler.PostDelayed(_pauseRunnable, _activityDelay);
             }
         }
+
         public void OnActivityStopped(AActivity activity)
         {
             _startedActivities = Math.Max(0, _startedActivities - 1);
             if (_startedActivities == 0 && !activity.IsChangingConfigurations)
             {
-                Core.InternalEnd();
+                Core.InternalSleep();
             }
         }
+
         public void OnActivitySaveInstanceState(AActivity activity, ABundle outState) { }
+
         public void OnActivityDestroyed(AActivity activity)
         {
             if (_startedActivities == 0 && _resumedActivities == 0 && !activity.IsChangingConfigurations)
             {
-                Core.InternalEnd();
+                Core.InternalSleep();
             }
         }
     }
@@ -152,14 +162,14 @@ internal static class MauiNativePlatformss
 
         try
         {
-            var request = new NRequest.Builder().AddCapability(NCapability.Internet).Build();
+            var request = new NRequest.Builder()
+                .AddCapability(NCapability.Internet)
+                .Build();
+
             _netCallback ??= new NetCb();
             cm.RegisterNetworkCallback(request, _netCallback);
         }
-        catch (global::Java.Lang.SecurityException)
-        {
-            _netCallback = null;
-        }
+        catch (Java.Lang.SecurityException) { _netCallback = null; }
         catch { }
     }
 
@@ -168,7 +178,10 @@ internal static class MauiNativePlatformss
         public override void OnAvailable(ANetwork network)
         {
             base.OnAvailable(network);
-            _handler.PostDelayed(new global::Java.Lang.Runnable(() => { _ = OnConnectivityAvailableAsync(); }), 3000);
+            _handler.PostDelayed(new Java.Lang.Runnable(() =>
+            {
+                _ = OnConnectivityAvailableAsync();
+            }), 3000);
         }
         public override void OnLost(ANetwork network) { base.OnLost(network); }
     }
@@ -186,10 +199,7 @@ internal static class MauiNativePlatformss
 
     private static void OnReachabilityChanged(NetworkReachabilityFlags flags)
     {
-        if (IsReachable(flags))
-        {
-            _ = OnConnectivityAvailableAsync();
-        }
+        if (IsReachable(flags)) { _ = OnConnectivityAvailableAsync(); }
     }
 
     private static bool IsReachable(NetworkReachabilityFlags flags)
@@ -215,9 +225,6 @@ internal static class MauiNativePlatformss
     private static async Task OnStartAppAsync()
     {
         await Core.InternalStart(_appKey ?? string.Empty);
-        _hasStartedSession = true;
-        await Crashes.LoadCrashFileIfExists();
-        await SessionManager.SendBatchSessions();
     }
 
     private static async Task OnResumeAppAsync()
@@ -228,19 +235,27 @@ internal static class MauiNativePlatformss
             return;
         }
 
+#if ANDROID
         if (!Core.InternalTokenIsValid())
-        {
             await Core.InternalEnsureToken(null);
-        }
 
         if (!Analytics._isManualSessionEnabled)
-        {
             await SessionManager.RemoveSavedEndSession();
-        }
 
-        await Crashes.LoadCrashFileIfExists();
         await Analytics.SendBatchEvents();
         await Crashes.SendBatchLogs();
+
+#else
+        // iOS nativo: sí recarga crashes en resume antes de enviar todo.
+        if (!Core.InternalTokenIsValid())
+            await Core.InternalEnsureToken(null);
+
+        if (!Analytics._isManualSessionEnabled)
+            await SessionManager.RemoveSavedEndSession();
+
+        await Crashes.LoadCrashFileIfExists();
+        await SendAllPendingThrottledAsync();
+#endif
     }
 
     private static async Task OnConnectivityAvailableAsync()
@@ -248,13 +263,37 @@ internal static class MauiNativePlatformss
         var ok = await NetConnectivity.HasInternetAsync();
         if (!ok || Analytics._isManualSessionEnabled) return;
 
-        await Core.InternalEnsureToken(null);
+        if (!await _connectivityGate.WaitAsync(0)) return;
+        try
+        {
+            if (!Core.InternalTokenIsValid())
+                await Core.InternalEnsureToken(null);
 
-        await Crashes.LoadCrashFileIfExists();
-        await SessionManager.SendEndSessionFromDatabase();
-        await SessionManager.SendStartSessionIfExist();
+            await SessionManager.SendEndSessionFromDatabase();
+            await SessionManager.SendStartSessionIfExist();
+            await Crashes.LoadCrashFileIfExists();
+            await SessionManager.SendBatchSessions();
+
+#if ANDROID
+            await Analytics.SendBatchEvents();
+            await Crashes.SendBatchLogs();
+#else
+            await SendAllPendingThrottledAsync();
+#endif
+        }
+        finally
+        {
+            _connectivityGate.Release();
+        }
+    }
+
+    private static async Task SendAllPendingThrottledAsync()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastSendAllAtUtc < _minSendInterval) return;
+        _lastSendAllAtUtc = now;
+
         await SessionManager.SendBatchSessions();
-
         await Analytics.SendBatchEvents();
         await Crashes.SendBatchLogs();
     }

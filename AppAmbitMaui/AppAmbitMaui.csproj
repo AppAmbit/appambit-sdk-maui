@@ -53,10 +53,4 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-ios'">
     <Compile Include="Platforms\iOS\**\*.cs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
-    <None Include="ILLink.Descriptors.xml" Pack="true" PackagePath="buildTransitive\" />
-    <None Include="buildTransitive\AppAmbit.Sdk.targets" Pack="true" PackagePath="buildTransitive\AppAmbit.Sdk.targets" />
-  </ItemGroup>
 </Project>

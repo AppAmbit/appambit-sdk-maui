@@ -1,5 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <AppAmbitSdkAssemblyName Condition="'$(AppAmbitSdkAssemblyName)'==''">AppAmbitMaui</AppAmbitSdkAssemblyName>
-  </PropertyGroup>
-</Project>

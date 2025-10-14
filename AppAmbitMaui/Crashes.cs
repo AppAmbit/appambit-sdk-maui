@@ -277,7 +277,7 @@ namespace AppAmbit
 
         private static string GetCrashFilePath()
         {
-            return System.IO.Path.Combine(AppPaths.AppDataDir, "did_app_crash.json");
+            return Path.Combine(AppPaths.AppDataDir, AppConstants.DidCrashFileName);
         }
 
         private static bool CrashFileExists(string path)
@@ -290,12 +290,12 @@ namespace AppAmbit
             var path = GetCrashFilePath();
             if (!didCrash)
             {
-                System.IO.File.Delete(path);
+                File.Delete(path);
                 return;
             }
             try
             {
-                System.IO.File.WriteAllText(path, string.Empty);
+                File.WriteAllText(path, string.Empty);
             }
             catch
             {

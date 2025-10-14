@@ -212,10 +212,6 @@ public static class Core
         return false;
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Crashes))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Logging))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Analytics))]
-    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SessionManager))]
     public static void Start(string appKey)
     {
         if (_configuredByBuilder) return;
