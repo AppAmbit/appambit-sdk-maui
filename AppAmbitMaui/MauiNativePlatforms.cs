@@ -23,7 +23,7 @@ using CoreFoundation;
 
 namespace AppAmbit;
 
-internal static class MauiNativePlatformss
+internal static class MauiNativePlatforms
 {
     private static string? _appKey;
     private static bool _readyForBatches = false;
@@ -49,7 +49,7 @@ internal static class MauiNativePlatformss
             if (_resumedActivities == 0 && _foreground && _isWaitingPause)
             {
                 _foreground = false;
-                Core.InternalSleep();
+                AppAmbitSdk.InternalSleep();
             }
             _isWaitingPause = false;
         }
@@ -134,7 +134,7 @@ internal static class MauiNativePlatformss
             _startedActivities = Math.Max(0, _startedActivities - 1);
             if (_startedActivities == 0 && !activity.IsChangingConfigurations)
             {
-                Core.InternalSleep();
+                AppAmbitSdk.InternalSleep();
             }
         }
 
@@ -144,7 +144,7 @@ internal static class MauiNativePlatformss
         {
             if (_startedActivities == 0 && _resumedActivities == 0 && !activity.IsChangingConfigurations)
             {
-                Core.InternalSleep();
+                AppAmbitSdk.InternalSleep();
             }
         }
     }
@@ -216,15 +216,15 @@ internal static class MauiNativePlatformss
     }
 
     private static void HandleDidBecomeActive(NSNotification n) { _ = OnResumeAppAsync(); }
-    private static void HandleWillResignActive(NSNotification n) { Core.InternalSleep(); }
-    private static void HandleDidEnterBackground(NSNotification n) { Core.InternalSleep(); }
+    private static void HandleWillResignActive(NSNotification n) { AppAmbitSdk.InternalSleep(); }
+    private static void HandleDidEnterBackground(NSNotification n) { AppAmbitSdk.InternalSleep(); }
     private static void HandleWillEnterForeground(NSNotification n) { _ = OnResumeAppAsync(); }
-    private static void HandleWillTerminate(NSNotification n) { Core.InternalEnd(); }
+    private static void HandleWillTerminate(NSNotification n) { AppAmbitSdk.InternalEnd(); }
 #endif
 
     private static async Task OnStartAppAsync()
     {
-        await Core.InternalStart(_appKey ?? string.Empty);
+        await AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
     }
 
     private static async Task OnResumeAppAsync()
@@ -236,8 +236,8 @@ internal static class MauiNativePlatformss
         }
 
 #if ANDROID
-        if (!Core.InternalTokenIsValid())
-            await Core.InternalEnsureToken(null);
+        if (!AppAmbitSdk.InternalTokenIsValid())
+            await AppAmbitSdk.InternalEnsureToken(null);
 
         if (!Analytics._isManualSessionEnabled)
             await SessionManager.RemoveSavedEndSession();
@@ -247,8 +247,8 @@ internal static class MauiNativePlatformss
 
 #else
         // iOS nativo: sí recarga crashes en resume antes de enviar todo.
-        if (!Core.InternalTokenIsValid())
-            await Core.InternalEnsureToken(null);
+        if (!AppAmbitSdk.InternalTokenIsValid())
+            await AppAmbitSdk.InternalEnsureToken(null);
 
         if (!Analytics._isManualSessionEnabled)
             await SessionManager.RemoveSavedEndSession();
@@ -266,8 +266,8 @@ internal static class MauiNativePlatformss
         if (!await _connectivityGate.WaitAsync(0)) return;
         try
         {
-            if (!Core.InternalTokenIsValid())
-                await Core.InternalEnsureToken(null);
+            if (!AppAmbitSdk.InternalTokenIsValid())
+                await AppAmbitSdk.InternalEnsureToken(null);
 
             await SessionManager.SendEndSessionFromDatabase();
             await SessionManager.SendStartSessionIfExist();

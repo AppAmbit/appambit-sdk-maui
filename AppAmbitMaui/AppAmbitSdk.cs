@@ -6,7 +6,7 @@ using Microsoft.Maui.LifecycleEvents;
 
 namespace AppAmbit;
 
-public static class Core
+public static class AppAmbitSdk
 {
     private static IAPIService? apiService;
     private static IStorageService? storageService;
@@ -196,7 +196,7 @@ public static class Core
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Core] Exception during token operation: {ex}");
+            Debug.WriteLine($"[AppAmbitSdk] Exception during token operation: {ex}");
         }
         finally
         {
@@ -216,12 +216,11 @@ public static class Core
     {
         if (_configuredByBuilder) return;
         HookPlatformLifecycle(appKey);
-        // _ = OnStart(appKey);
     }
 
     private static void HookPlatformLifecycle(string appKey)
     {
-        MauiNativePlatformss.Register(appKey);
+        MauiNativePlatforms.Register(appKey);
     }
 
     internal static Task InternalStart(string appKey) => OnStart(appKey);

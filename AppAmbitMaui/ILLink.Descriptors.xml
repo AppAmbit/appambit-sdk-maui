@@ -1,8 +1,0 @@
-<linker>
-  <assembly fullname="AppAmbit">
-    <type fullname="AppAmbit.Crashes" preserve="all" />
-    <type fullname="AppAmbit.Logging" preserve="all" />
-    <type fullname="AppAmbit.Analytics" preserve="all" />
-    <type fullname="AppAmbit.SessionManager" preserve="all" />
-  </assembly>
-</linker>

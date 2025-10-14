@@ -13,7 +13,7 @@ public class AppDelegate : UIApplicationDelegate
 
     public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
     {
-        Core.Start("0b2e8bbc-4224-4f57-9b88-a3b0bd112545");
+        AppAmbitSdk.Start("<YOUR-APPKEY>");
         Window = new UIWindow(UIScreen.MainScreen.Bounds);
         Window.RootViewController = new MainTabBarController();
         Window.MakeKeyAndVisible();        

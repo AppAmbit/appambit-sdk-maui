@@ -8,9 +8,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\AppAmbitMaui\AppAmbitMaui.csproj" />
-  </ItemGroup>  
-
-<ItemGroup Condition="$(TargetFramework.Contains('-ios'))">
-  <TrimmerRootDescriptor Include="..\AppAmbitMaui\ILLink.Descriptors.xml" />
-</ItemGroup>
+  </ItemGroup>
 </Project>
