@@ -246,7 +246,6 @@ internal static class MauiNativePlatforms
         await Crashes.SendBatchLogs();
 
 #else
-        // iOS nativo: sí recarga crashes en resume antes de enviar todo.
         if (!AppAmbitSdk.InternalTokenIsValid())
             await AppAmbitSdk.InternalEnsureToken(null);
 
