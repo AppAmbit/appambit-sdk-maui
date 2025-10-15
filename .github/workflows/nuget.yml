@@ -14,7 +14,6 @@ permissions:
 jobs:
   build:
     name: Build
-    if: github.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -93,7 +92,6 @@ jobs:
         run: dotnet pack "${{ env.PROJECT_PATH }}" --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Create Release and Upload Assets
-        if: github.ref_name == 'main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
