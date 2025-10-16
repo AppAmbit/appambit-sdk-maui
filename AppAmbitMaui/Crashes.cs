@@ -67,8 +67,8 @@ namespace AppAmbit
                     return;
 
                 var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
-                int crashFileCount = 0;
-                foreach (var _ in crashFiles) crashFileCount++;
+                int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
+                
 
                 if (crashFileCount == 0)
                 {
