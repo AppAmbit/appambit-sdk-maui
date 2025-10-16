@@ -36,21 +36,87 @@ jobs:
           $version = $csproj.Project.PropertyGroup.Version
           echo "VERSION_NAME=$version"
           echo "version_name=$version" >> $env:GITHUB_OUTPUT
+          echo "new_tag=v$version" >> $env:GITHUB_OUTPUT
+
+          if ($version -match '-') {
+            echo "is_prerelease=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "is_prerelease=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG=${{ steps.version.outputs.new_tag }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping build and publish."
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Stop if tag exists
+        if: steps.check_tag.outputs.skip_build == 'true'
+        run: |
+          echo "Build skipped because version tag already exists."
+          exit 0
+
+      - name: Extract latest changelog entry
+        id: changelog
+        shell: bash
+        run: |
+          LATEST_CHANGELOG=$(awk '/^## Version /{if (p) exit; p=1} p' CHANGELOG.md | sed '1d')
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$LATEST_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Show changelog
+        run: |
+          echo "Last changes:"
+          echo "${{ steps.changelog.outputs.changelog }}"
 
       - name: Restore
+        if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet restore ${{ env.PROJECT_PATH }}
 
       - name: Build
+        if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration ${{ env.RELEASE_TYPE }}
 
       - name: Create artifacts directory
         run: mkdir ${{ env.FOLDER_OUTPUT }}
 
       - name: Pack
+        if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet pack "${{ env.PROJECT_PATH }}" --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Upload artifact
+        if: steps.check_tag.outputs.skip_build != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: AppAmbitMaui-${{ steps.version.outputs.version_name }}
           path: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
+
+      - name: Create Release and Upload Assets
+        if: github.ref_name == 'main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: "${{ steps.version.outputs.new_tag }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: ${{ steps.version.outputs.is_prerelease }}
+
+      - name: Push to NuGet
+        if: steps.check_tag.outputs.skip_build != 'true' && steps.version.outputs.is_prerelease == 'false' && github.ref_name == 'main'
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem -Path "${{ env.FOLDER_OUTPUT }}" -Filter "*.nupkg" | Select-Object -First 1
+          if (-not $pkg) { throw "No .nupkg found in $env:FOLDER_OUTPUT" }
+          Write-Host "Pushing $($pkg.FullName)"
+          dotnet nuget push "$($pkg.FullName)" `
+            --api-key "${{ secrets.NUGET_APPKEY_SECRET }}" `
+            --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate
