@@ -11,7 +11,8 @@ internal static class MultipartFormDataContentExtensions
 {
     private const string _dateTimeFormatISO8601ForFile = "yyyy-MM-ddTHH_mm_ss_fffZ";
     private const string _dateFormatStringApi = "yyyy-MM-dd HH:mm:ss";
-    public static void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData,object obj,  string prefix = "", bool useSquareBrakets = false)
+
+    public static void AddObjectToMultipartFormDataContent(this MultipartFormDataContent formData, object obj, string prefix = "", bool useSquareBrakets = false)
     {
         if (obj is null)
             return;
@@ -57,7 +58,6 @@ internal static class MultipartFormDataContentExtensions
             var jsonPropAttr = property.GetCustomAttribute<JsonPropertyAttribute>();
             propName = jsonPropAttr?.PropertyName ?? property.Name;
 
-
             string multipartKey = useSquareBrakets ? $"{prefix}[{propName}]" : $"{prefix}{propName}";
             var type = property.PropertyType;
             var isNullable = Nullable.GetUnderlyingType(type) != null;
@@ -76,11 +76,13 @@ internal static class MultipartFormDataContentExtensions
             var multipartFormDataFileAttribute = property.GetCustomAttribute<MultipartFormDataFileAttribute>();
             if (multipartFormDataFileAttribute != null)
             {
-                var fileName = $"log-{DateTime.Now.ToUniversalTime().ToString(_dateTimeFormatISO8601ForFile)}.txt";
-                var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+                var fileName = $"log-{DateTime.UtcNow.ToString(_dateTimeFormatISO8601ForFile)}.txt";
+                var filePath = Path.Combine(AppPaths.AppDataDir, fileName);
+
                 Debug.WriteLine($"Debug FilePath: {filePath}");
                 var encodedBytes = Encoding.ASCII.GetBytes(propValue as string ?? "");
                 var fileContent = new ByteArrayContent(encodedBytes);
+
                 string formNameFile = useSquareBrakets ? "[file]" : "file";
                 formData.Add(fileContent, prefix + formNameFile, Path.GetFileName(filePath));
                 continue;
@@ -90,6 +92,7 @@ internal static class MultipartFormDataContentExtensions
             formData.AddObjectToMultipartFormDataContent(propValue, newPrefix, true);
         }
     }
+
     public static bool IsSimpleType(object obj)
     {
         if (obj == null) return false;
@@ -100,11 +103,10 @@ internal static class MultipartFormDataContentExtensions
         return type.IsPrimitive
                || type == typeof(string)
                || type == typeof(decimal)
-               || type == typeof(Guid)
-               ;
+               || type == typeof(Guid);
     }
-    
-    public static void AddDictionaryToMultipartFormDataContent(this MultipartFormDataContent formData, IDictionary dict,  string prefix = "")
+
+    public static void AddDictionaryToMultipartFormDataContent(this MultipartFormDataContent formData, IDictionary dict, string prefix = "")
     {
         if (dict == null)
             return;
@@ -117,18 +119,19 @@ internal static class MultipartFormDataContentExtensions
             formData.AddObjectToMultipartFormDataContent(value, newPrefix, true);
         }
     }
-    public static void AddListToMultipartFormDataContent(this MultipartFormDataContent formData, List<object> list,   string prefix = "")
+
+    public static void AddListToMultipartFormDataContent(this MultipartFormDataContent formData, List<object> list, string prefix = "")
     {
-        if (list is not List<object> )
+        if (list is not List<object>)
             return;
-            
+
         Dictionary<string, object> dict = list
             .Select((item, index) => new KeyValuePair<string, object>(index.ToString(), item))
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         formData.AddDictionaryToMultipartFormDataContent(dict, prefix);
     }
-    
+
     [Conditional("DEBUG")]
     public static async void DebugMultipartFormDataContent(this MultipartFormDataContent formData)
     {
@@ -142,7 +145,7 @@ internal static class MultipartFormDataContentExtensions
                     Debug.WriteLine($"{header.Key}: FILE");
                     continue;
                 }
-                
+
                 Debug.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
             }
 

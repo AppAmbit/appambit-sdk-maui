@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingHorizontal="50dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp"
+    android:background="@color/app_surface">
+
+    <Button
+        android:id="@+id/btnStartSession"
+        style="@style/AppButton.Primary"
+        android:text="@string/start_session"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btnEndSession"
+        style="@style/AppButton.Primary"
+        android:text="@string/end_session"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnClearToken"
+        style="@style/AppButton.Primary"
+        android:text="@string/invalidate_token"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnTokenRenew"
+        style="@style/AppButton.Primary"
+        android:text="@string/token_refresh_test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnEventWProperty"
+        style="@style/AppButton.Primary"
+        android:text="@string/send_quot_button_clicked_quot_event_w_property"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnDefaultClickedEventWProperty"
+        style="@style/AppButton.Primary"
+        android:text="@string/send_default_event_w_property"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnMax300LengthEvent"
+        style="@style/AppButton.Primary"
+        android:text="@string/send_max_300_length_event"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnMax20PropertiesEvent"
+        style="@style/AppButton.Primary"
+        android:text="@string/send_max_20_properties_event"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btn220BatchEvents"
+        style="@style/AppButton.Primary"
+        android:text="@string/send_batch_of_220_events"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnSecondActivity"
+        style="@style/AppButton.Primary"
+        android:text="@string/change_to_second_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp" />
+</LinearLayout>

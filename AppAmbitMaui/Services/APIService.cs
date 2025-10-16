@@ -20,7 +20,7 @@ internal class APIService : IAPIService
 
     public async Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull
     {
-        if (!HasInternetConnection())
+        if (!await HasInternetConnectionAsync())
         {
             Debug.WriteLine("[APIService] Offline - Cannot send request.");
             return ApiResult<T>.Fail(ApiErrorType.NetworkUnavailable, "No internet available");
@@ -358,7 +358,7 @@ private string SerializeStringPayload(object payload)
         return result;
     }
 
-    private bool HasInternetConnection() =>
-        Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+    private Task<bool> HasInternetConnectionAsync() => NetConnectivity.HasInternetAsync();
+
 
 }

@@ -93,7 +93,7 @@ public static class Analytics
 
         if (response?.ErrorType != ApiErrorType.None)
         {
-            var storageService = Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>();
+            
             var eventEntity = new EventEntity()
             {
                 Id = Guid.NewGuid(),
@@ -103,9 +103,9 @@ public static class Analytics
                 SessionId = SessionManager.SessionId
             };
 
-            if (storageService != null)
+            if (_storageService != null)
             {
-                await storageService.LogAnalyticsEventAsync(eventEntity);
+                await _storageService.LogAnalyticsEventAsync(eventEntity);
             }
         }
     }

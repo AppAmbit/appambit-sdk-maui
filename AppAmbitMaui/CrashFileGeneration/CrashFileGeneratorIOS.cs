@@ -26,12 +26,14 @@ internal partial class CrashFileGeneratorIOS
 
     public static void AddHeader(StringBuilder log, string deviceId)
     {
-        log.AppendLine($"Package: {AppInfo.PackageName}");
-        log.AppendLine($"Version Code: {AppInfo.BuildString}");
-        log.AppendLine($"Version Name: {AppInfo.VersionString}");
+        var info = new AppAmbit.Services.AppInfoService();
+        var bundleId = Foundation.NSBundle.MainBundle?.BundleIdentifier;
+        log.AppendLine($"Package: {bundleId}");
+        log.AppendLine($"Version Code: {info.Build}");
+        log.AppendLine($"Version Name: {info.AppVersion}");
         log.AppendLine($"iOS: {UIDevice.CurrentDevice.SystemVersion}");
         log.AppendLine($"Manufacturer: Apple");
-        log.AppendLine($"Model: {DeviceInfo.Model}");
+        log.AppendLine($"Model: {info.DeviceModel}");
         log.AppendLine($"Device Id: {deviceId}");
         log.AppendLine($"Date: {DateTime.UtcNow:O}");
     }
