@@ -61,7 +61,7 @@ Add the required `using` directive to your file:
 using AppAmbit;
 ```
 
-### Using the SDK
+### Initialize AppAmbit
 
 Call `.UseAppAmbit("<YOUR-APPKEY>")` during application initialization:
 
@@ -119,54 +119,6 @@ For iOS, add the required URL exceptions in your `Info.plist` file:
 </dict>
 ```
 
-
-<script>
-function copyCode(button) {
-  const pre = button.parentElement.parentElement.nextElementSibling;
-  const code = pre.querySelector('code');
-  const range = document.createRange();
-  range.selectNode(code);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
-  document.execCommand('copy');
-  window.getSelection().removeAllRanges();
-  button.textContent = 'Copied!';
-  setTimeout(() => {
-    button.textContent = 'Copy';
-  }, 2000);
-}
-</script>
-
-<style>
-.note {
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  color: #31708f;
-  background-color: #d9edf7;
-  border-color: #bce8f1;
-}
-</style>
-
-<style>
-.warning, .note {
-  padding: 15px;
-  margin-bottom: 20px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-}
-.warning {
-  color: #8a6d3b;
-  background-color: #fcf8e3;
-  border-color: #faebcc;
-}
-.note {
-  color: #31708f;
-  background-color: #d9edf7;
-  border-color: #bce8f1;
-}
-</style>
 ## Crashes
 **AppAmbit.Crashes** allows you to track errors by using handled exceptions. To do so, use the `TrackError` method:
 ```c-sharp
@@ -205,9 +157,13 @@ Properties for events are entirely optional – if you just want to track an eve
 Analytics.TrackEvent("Order Placed");
 ```
 
-## No internet access
+## Offline Behavior
 
-When there isn't any network connectivity, the SDK saves information in the local storage. Once the device gets internet access back, the SDK will send data to the AppAmbit portal.
+If the device is offline, the SDK will store sesssions, events, logs, and crashes locally. Once internet connectivity is restored, the SDK will automatically send the stored sesssions, events, logs, and crashes in batches.
+
+## Network Connectivity Handling
+
+- If the device transitions from offline to online, any pending requests are retried immediately.
 
 ## License
 
