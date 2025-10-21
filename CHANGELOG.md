@@ -1,5 +1,11 @@
 ___
 
+## Version 1.0.0
+
+### AppAmbit
+
+* **[Feature]** SDK Updated to support .NET version 9
+
 
 ## Version 0.0.4
 
