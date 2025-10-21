@@ -71,7 +71,6 @@ public static class AppAmbitSdk
 
         if (access != NetworkAccess.Internet)
         {
-            await BreadcrumbManager.AddAsync("offline");
             return;
         }
 
@@ -79,10 +78,6 @@ public static class AppAmbitSdk
         {
             await GetNewToken(null);
         }
-
-        await BreadcrumbManager.AddAsync("offline");
-
-        await BreadcrumbManager.AddAsync("online");
 
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
