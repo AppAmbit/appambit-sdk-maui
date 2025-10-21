@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Controls;
 
 namespace AppAmbit;
 
@@ -19,13 +21,15 @@ public static class AppAmbitSdk
     private static readonly object _initLock = new();
     private static bool _servicesReady = false;
 
+    private static bool _pageEventsHooked = false;
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         _configuredByBuilder = true;
 
         builder.ConfigureLifecycleEvents(events =>
         {
-        #if ANDROID
+#if ANDROID
                     events.AddAndroid(android =>
                     {
                         android.OnCreate((activity, state) => { OnStart(appKey); });
@@ -35,21 +39,23 @@ public static class AppAmbitSdk
                         android.OnRestart(activity => { OnResume(); });
                         android.OnDestroy(activity => { OnEnd(); });
                     });
-        #elif IOS
-                    events.AddiOS(ios =>
-                    {
-                        ios.FinishedLaunching((application, options) =>
-                        {
-                            OnStart(appKey);
-                            return true;
-                        });
-                        ios.DidEnterBackground(application => { OnSleep(); });
-                        ios.WillEnterForeground(application => { OnResume(); });
-                        ios.WillTerminate(application => { OnEnd(); });
-                    });
-        #endif
+#elif IOS
+            events.AddiOS(ios =>
+            {
+                ios.FinishedLaunching((application, options) =>
+                {
+                    OnStart(appKey);
+                    return true;
                 });
+                ios.DidEnterBackground(application => { OnSleep(); });
+                ios.WillEnterForeground(application => { OnResume(); });
+                ios.WillTerminate(application => { OnEnd(); });
+            });
+#endif
+        });
 
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.ConnectivityChanged += OnConnectivityChanged;
         Crashes.OnCrashException -= exception => { OnEnd(); };
         Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
@@ -58,6 +64,35 @@ public static class AppAmbitSdk
 
         return builder;
     }
+    
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+        {
+            await BreadcrumbManager.AddAsync("offline");
+            return;
+        }
+
+        if (!TokenIsValid())
+        {
+            await GetNewToken(null);
+        }
+
+        await BreadcrumbManager.AddAsync("offline");
+
+        await BreadcrumbManager.AddAsync("online");
+
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
+    }    
 
     private static async Task OnStart(string appKey)
     {
@@ -66,6 +101,12 @@ public static class AppAmbitSdk
         await InitializeServices();
         await InitializeConsumer(appKey);
         _hasStartedSession = true;
+
+        HookPageEvents();
+
+        // breadcrumb: app_start
+        _ = BreadcrumbManager.AddAsync("app_start");
+
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }
@@ -88,12 +129,18 @@ public static class AppAmbitSdk
             await SessionManager.RemoveSavedEndSession();
         }
 
+        // breadcrumb: app_resume
+        await BreadcrumbManager.AddAsync("app_resume");
+
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }
 
     private static void OnSleep()
     {
+        // breadcrumb: app_pause
+        _ = BreadcrumbManager.AddAsync("app_pause");
+
         if (!Analytics._isManualSessionEnabled)
         {
             SessionManager.SaveEndSession();
@@ -102,6 +149,9 @@ public static class AppAmbitSdk
 
     private static void OnEnd()
     {
+        // breadcrumb: app_destroy
+        _ = BreadcrumbManager.AddAsync("app_destroy");
+
         if (!Analytics._isManualSessionEnabled)
         {
             SessionManager.SaveEndSession();
@@ -135,6 +185,7 @@ public static class AppAmbitSdk
             await SessionManager.SendBatchSessions();
             await Crashes.SendBatchLogs();
             await Analytics.SendBatchEvents();
+            await BreadcrumbManager.SendPending();
         }
         finally
         {
@@ -162,6 +213,9 @@ public static class AppAmbitSdk
             Crashes.Initialize(apiService, storageService, deviceId ?? "");
             Analytics.Initialize(apiService, storageService);
             ConsumerService.Initialize(storageService, appInfoService, apiService);
+
+            // Breadcrumbs
+            BreadcrumbManager.Initialize(apiService!, storageService!);
 
             _servicesReady = true;
         }
@@ -230,4 +284,25 @@ public static class AppAmbitSdk
     internal static Task InternalEnsureToken(string? appKey) => GetNewToken(appKey);
     internal static Task InternalSendPending() => SendDataPending();
     internal static bool InternalTokenIsValid() => TokenIsValid();
+
+    private static void HookPageEvents()
+    {
+        if (_pageEventsHooked) return;
+        var app = Application.Current;
+        if (app == null) return;
+
+        app.PageAppearing += OnPageAppearing;
+        app.PageDisappearing += OnPageDisappearing;
+        _pageEventsHooked = true;
+    }
+
+    private static void OnPageAppearing(object? sender, Page page)
+    {
+        _ = BreadcrumbManager.AddAsync("page_appear");
+    }
+
+    private static void OnPageDisappearing(object? sender, Page page)
+    {
+        _ = BreadcrumbManager.AddAsync("page_disappear");
+    }
 }

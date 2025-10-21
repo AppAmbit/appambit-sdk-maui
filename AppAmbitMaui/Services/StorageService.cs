@@ -3,6 +3,7 @@ using AppAmbit.Enums;
 using AppAmbit.Models;
 using AppAmbit.Models.Analytics;
 using AppAmbit.Models.App;
+using AppAmbit.Models.Breadcrums;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
@@ -27,6 +28,7 @@ internal class StorageService : IStorageService
         await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<EventEntity>();
         await _database.CreateTableAsync<SessionBatch>();
+        await _database.CreateTableAsync<BreadcrumEntity>();
     }
 
     public async Task SetDeviceId(string? deviceId)
@@ -328,6 +330,7 @@ internal class StorageService : IStorageService
             .Where(s => s.Id == id)
             .DeleteAsync();
     }
+
     public async Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions)
     {
         if (sessions == null || sessions.Count == 0) return;
@@ -366,4 +369,28 @@ internal class StorageService : IStorageService
         });
     }
 
+    public async Task<List<BreadcrumEntity>> GetAllBreadcrumbsAsync()
+    {
+        return await _database.Table<BreadcrumEntity>()
+            .OrderBy(b => b.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task AddBreadcrumbAsync(BreadcrumEntity breadcrumb)
+    {
+        await _database.InsertAsync(breadcrumb);
+    }
+
+    public Task DeleteBreadcrumbs(List<BreadcrumEntity> breadcrumbs)
+    {
+        var ids = breadcrumbs.Select(b => b.Id).ToList();
+        return _database.RunInTransactionAsync(tran =>
+        {
+            foreach (var id in ids)
+            {
+                tran.Execute("DELETE FROM BreadcrumEntity WHERE Id = ?", id);
+            }
+        });
+    }
 }

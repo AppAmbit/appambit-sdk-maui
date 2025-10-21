@@ -21,6 +21,8 @@ using SystemConfiguration;
 using CoreFoundation;
 #endif
 
+using AppAmbit.Services;
+
 namespace AppAmbit;
 
 internal static class MauiNativePlatforms
@@ -244,6 +246,7 @@ internal static class MauiNativePlatforms
 
         await Analytics.SendBatchEvents();
         await Crashes.SendBatchLogs();
+        await BreadcrumbManager.SendPending();
 
 #else
         if (!AppAmbitSdk.InternalTokenIsValid())
@@ -279,6 +282,7 @@ internal static class MauiNativePlatforms
 #else
             await SendAllPendingThrottledAsync();
 #endif
+            await BreadcrumbManager.SendPending();
         }
         finally
         {
@@ -295,5 +299,6 @@ internal static class MauiNativePlatforms
         await SessionManager.SendBatchSessions();
         await Analytics.SendBatchEvents();
         await Crashes.SendBatchLogs();
+        await BreadcrumbManager.SendPending();
     }
 }
