@@ -18,7 +18,7 @@ public class MainActivity : Activity
     {
         base.OnCreate(savedInstanceState);
 
-        AppAmbitSdk.Start("<YOUR-APPKEY>");
+        AppAmbitSdk.Start("196dad5f-73de-410e-86c5-3463d13a23a5");
 
         SetContentView(L("activity_main"));
 
