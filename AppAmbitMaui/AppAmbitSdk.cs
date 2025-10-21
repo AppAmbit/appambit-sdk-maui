@@ -104,7 +104,6 @@ public static class AppAmbitSdk
 
         HookPageEvents();
 
-        // breadcrumb: app_start
         _ = BreadcrumbManager.AddAsync("app_start");
 
         await Crashes.LoadCrashFileIfExists();
@@ -129,7 +128,6 @@ public static class AppAmbitSdk
             await SessionManager.RemoveSavedEndSession();
         }
 
-        // breadcrumb: app_resume
         await BreadcrumbManager.AddAsync("app_resume");
 
         await Crashes.LoadCrashFileIfExists();
@@ -138,7 +136,6 @@ public static class AppAmbitSdk
 
     private static void OnSleep()
     {
-        // breadcrumb: app_pause
         _ = BreadcrumbManager.AddAsync("app_pause");
 
         if (!Analytics._isManualSessionEnabled)
@@ -149,7 +146,6 @@ public static class AppAmbitSdk
 
     private static void OnEnd()
     {
-        // breadcrumb: app_destroy
         _ = BreadcrumbManager.AddAsync("app_destroy");
 
         if (!Analytics._isManualSessionEnabled)

@@ -1,3 +1,8 @@
+using AppAmbit.Models.Breadcrums;
+using AppAmbit.Models.Responses;
+using AppAmbit.Services.Endpoints;
+using AppAmbit.Services.Interfaces;
+
 namespace AppAmbit;
 
 internal static class BreadcrumbManager
@@ -26,6 +31,11 @@ internal static class BreadcrumbManager
         {
             await _storage.AddBreadcrumbAsync(entity);
         }
+    }
+
+    public static async Task SendPending()
+    {
+        
     }
 
     private static async Task<bool> TrySendAsync(BreadcrumEntity entity)
