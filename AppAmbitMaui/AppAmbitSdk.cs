@@ -25,7 +25,7 @@ public static class AppAmbitSdk
 
         builder.ConfigureLifecycleEvents(events =>
         {
-        #if ANDROID
+#if ANDROID
                     events.AddAndroid(android =>
                     {
                         android.OnCreate((activity, state) => { OnStart(appKey); });
@@ -35,7 +35,7 @@ public static class AppAmbitSdk
                         android.OnRestart(activity => { OnResume(); });
                         android.OnDestroy(activity => { OnEnd(); });
                     });
-        #elif IOS
+#elif IOS
                     events.AddiOS(ios =>
                     {
                         ios.FinishedLaunching((application, options) =>
@@ -47,9 +47,11 @@ public static class AppAmbitSdk
                         ios.WillEnterForeground(application => { OnResume(); });
                         ios.WillTerminate(application => { OnEnd(); });
                     });
-        #endif
-                });
+#endif
+        });
 
+        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.ConnectivityChanged += OnConnectivityChanged;
         Crashes.OnCrashException -= exception => { OnEnd(); };
         Crashes.OnCrashException += exception => { OnEnd(); };
         builder.Services.AddSingleton<IAPIService, APIService>();
@@ -58,6 +60,37 @@ public static class AppAmbitSdk
 
         return builder;
     }
+
+    
+    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+    {
+        Debug.WriteLine("OnConnectivityChanged");
+        Debug.WriteLine($"NetworkAccess:{e}");
+
+        var access = e.NetworkAccess;
+
+        if (access != NetworkAccess.Internet)
+        {
+            await BreadcrumbManager.AddAsync("offline");
+            return;
+        }
+
+        if (!TokenIsValid())
+        {
+            await GetNewToken(null);
+        }
+
+        await BreadcrumbManager.AddAsync("offline");
+
+        await BreadcrumbManager.AddAsync("online");
+
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
+        await SendDataPending();
+        
+    }      
+
 
     private static async Task OnStart(string appKey)
     {
