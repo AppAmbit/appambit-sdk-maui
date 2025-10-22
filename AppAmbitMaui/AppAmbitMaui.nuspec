@@ -7,11 +7,14 @@
     <authors>$author$</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <!-- <icon>icon.png</icon> -->
+    <icon>icon.png</icon>
     <projectUrl>https://github.com/AppAmbit/appambit-sdk-maui</projectUrl>
     <description>$description$</description>
     <releaseNotes>First publish</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>appambit; sdk; telemetry; logging; analytics; crashes; debug; distribution; ci; cd; maui; xamarin; mobile; apps; diagnostics; monitoring</tags>
   </metadata>
+  <files>
+    <file src="icon.png" target="" />
+  </files>
 </package>

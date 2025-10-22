@@ -14,7 +14,6 @@ permissions:
 jobs:
   build:
     name: Build
-    if: github.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -91,6 +90,13 @@ jobs:
       - name: Pack
         if: steps.check_tag.outputs.skip_build != 'true'
         run: dotnet pack "${{ env.PROJECT_PATH }}" --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
+
+      - name: Upload artifact
+        if: steps.check_tag.outputs.skip_build != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppAmbitMaui-${{ steps.version.outputs.version_name }}
+          path: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
 
       - name: Create Release and Upload Assets
         if: github.ref_name == 'main'

@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitMaui", "AppAmbitMau
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitTestingApp", "AppAmbitTestingApp\AppAmbitTestingApp.csproj", "{2C2156BD-D604-457B-BF6D-00F422A8C804}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitTestingAppAndroid", "AppAmbitTestingAppAndroid\AppAmbitTestingAppAndroid.csproj", "{93E18FDF-CC64-49C5-8C4E-EFE6F565B938}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitTestingiOS", "AppAmbitTestingiOS\AppAmbitTestingiOS.csproj", "{204F1BF7-1D37-419F-82F9-483C310E40AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +26,14 @@ Global
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C2156BD-D604-457B-BF6D-00F422A8C804}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93E18FDF-CC64-49C5-8C4E-EFE6F565B938}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93E18FDF-CC64-49C5-8C4E-EFE6F565B938}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93E18FDF-CC64-49C5-8C4E-EFE6F565B938}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93E18FDF-CC64-49C5-8C4E-EFE6F565B938}.Release|Any CPU.Build.0 = Release|Any CPU
+		{204F1BF7-1D37-419F-82F9-483C310E40AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{204F1BF7-1D37-419F-82F9-483C310E40AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{204F1BF7-1D37-419F-82F9-483C310E40AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{204F1BF7-1D37-419F-82F9-483C310E40AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

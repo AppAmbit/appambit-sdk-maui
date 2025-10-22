@@ -1,81 +1,139 @@
+using System.Diagnostics;
+using AppAmbit.Enums;
 using AppAmbit.Models.Logs;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
-using AppAmbit.Enums;
-using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using AppAmbit.Services;
 
-namespace AppAmbit;
-
-internal static class Logging
+namespace AppAmbit
 {
-    private static IAPIService? _apiService;
-    private static IStorageService? _storageService;
-    public static void Initialize(IAPIService? apiService, IStorageService? storageService)
+    internal static class Logging
     {
-        _apiService = apiService;
-        _storageService = storageService;
-    }
+        private static IAPIService? _apiService;
+        private static IStorageService? _storageService;
+        private static string? _deviceId;
 
-    public static async Task LogEvent(string? message, LogType logType, Exception? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
-    {
-        var deviceId = await _storageService.GetDeviceId();
-        var exceptionInfo = (exception != null) ? ExceptionInfo.FromException(exception, deviceId) : null;
-        await LogEvent(message, logType, exceptionInfo, properties, classFqn, fileName, lineNumber);
-    }
-
-    public static async Task LogEvent(string? message, LogType logType, ExceptionInfo? exception = null, Dictionary<string, string>? properties = null, string? classFqn = null, string? fileName = null, int? lineNumber = null)
-    {
-        if (!SessionManager.IsSessionActive)
-            return;
-
-        var stackTrace = exception?.StackTrace;
-        stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
-        var file = exception?.CrashLogFile;
-        var log = new LogEntity
+        public static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
         {
-            AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
-            ClassFQN = exception?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
-            FileName = exception?.FileNameFromStackTrace ?? fileName ?? AppConstants.UnknownFileName,
-            LineNumber = exception?.LineNumberFromStackTrace ?? lineNumber ?? 0,
-            Message = exception?.Message ?? (string.IsNullOrEmpty(message) ? "" : message),
-            StackTrace = stackTrace,
-            Context = properties ?? new Dictionary<string, string>(),
-            Type = logType,
-            File = (logType == LogType.Crash && exception != null) ? file : null,
-            CreatedAt =  DateTime.UtcNow,
-        };
+            _apiService = apiService;
+            _storageService = storageService;
+            _deviceId = deviceId;
+        }
 
-        log.SessionId = string.IsNullOrEmpty(exception?.SessionId) ? SessionManager.SessionId : exception?.SessionId;
-
-        await SendOrSaveLogEventAsync(log);
-    }
-
-    private static async Task SendOrSaveLogEventAsync(Log log)
-    {
-        var logEndpoint = new LogEndpoint(log);
-
-        try
+        public static Task LogEvent(
+            string? message,
+            LogType logType,
+            Exception? exception = null,
+            Dictionary<string, string>? properties = null,
+            string? classFqn = null,
+            string? fileName = null,
+            int? lineNumber = null)
         {
-            var logResponse = await _apiService?.ExecuteRequest<LogResponse>(logEndpoint);
+            var exInfo = (exception != null) ? ExceptionInfo.FromException(exception, _deviceId) : null;
+            _ = BuildAndSend(message, logType, exInfo, properties, classFqn, fileName, lineNumber);
+            return Task.CompletedTask;
+        }
 
-            if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
+        public static Task LogEvent(
+            string? message,
+            LogType logType,
+            ExceptionInfo? exception = null,
+            Dictionary<string, string>? properties = null,
+            string? classFqn = null,
+            string? fileName = null,
+            int? lineNumber = null)
+        {
+            _ = BuildAndSend(message, logType, exception, properties, classFqn, fileName, lineNumber);
+            return Task.CompletedTask;
+        }
+
+        internal static Task LogEventFromExceptionInfo(
+            string? message,
+            LogType logType,
+            ExceptionInfo? exception = null,
+            Dictionary<string, string>? properties = null,
+            string? classFqn = null,
+            string? fileName = null,
+            int? lineNumber = null)
+        {
+            _ = BuildAndSend(message, logType, exception, properties, classFqn, fileName, lineNumber);
+            return Task.CompletedTask;
+        }
+
+        private static Task BuildAndSend(
+            string? message,
+            LogType logType,
+            ExceptionInfo? exInfo,
+            Dictionary<string, string>? properties,
+            string? classFqn,
+            string? fileName,
+            int? lineNumber)
+        {
+            if (!SessionManager.IsSessionActive)
+                return Task.CompletedTask;
+
+            var stackTrace = exInfo?.StackTrace;
+            stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
+            var file = exInfo?.CrashLogFile;
+
+            var log = new LogEntity
             {
-                await StoreLogInDb(log);
-                return;
+                AppVersion = new AppInfoService().AppVersion,
+                ClassFQN = exInfo?.ClassFullName ?? classFqn ?? AppConstants.UnknownClass,
+                FileName = exInfo?.FileNameFromStackTrace ?? fileName ?? AppConstants.UnknownFileName,
+                LineNumber = exInfo?.LineNumberFromStackTrace ?? lineNumber ?? 0,
+                Message = exInfo?.Message ?? (string.IsNullOrEmpty(message) ? "" : message),
+                StackTrace = stackTrace,
+                Context = properties ?? new Dictionary<string, string>(),
+                Type = logType,
+                File = (logType == LogType.Crash && exInfo != null) ? file : null,
+                CreatedAt = DateTime.UtcNow,
+                SessionId = string.IsNullOrEmpty(exInfo?.SessionId) ? SessionManager.SessionId : exInfo?.SessionId
+            };
+
+            Task.Run(() => SendOrSaveLogEventAsync(log));
+            return Task.CompletedTask;
+        }
+
+        private static Task SendOrSaveLogEventAsync(Log log)
+        {
+            try
+            {
+                var endpoint = new LogEndpoint(log);
+                var reqTask = _apiService?.ExecuteRequest<LogResponse>(endpoint);
+                if (reqTask == null)
+                    return StoreLogInDb(log);
+
+                return reqTask
+                    .ContinueWith(static (tr, state) =>
+                    {
+                        var lg = (Log)state!;
+                        if (tr.IsFaulted || tr.IsCanceled)
+                            return StoreLogInDb(lg);
+
+                        var resp = tr.Result;
+                        if (resp == null || resp.ErrorType != ApiErrorType.None)
+                            return StoreLogInDb(lg);
+
+                        return Task.CompletedTask;
+                    }, log, TaskScheduler.Default)
+                    .Unwrap();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Logging] Error {ex.Message}");
+                return StoreLogInDb(log);
             }
         }
-        catch (Exception ex)
+
+        private static Task StoreLogInDb(Log log)
         {
-           Debug.WriteLine($"Error {ex.Message}");
+            var storage = _storageService;
+            var logEntity = log.ConvertTo<LogEntity>();
+            logEntity.Id = Guid.NewGuid();
+            var t = storage?.LogEventAsync(logEntity);
+            return t ?? Task.CompletedTask;
         }
-    }
-
-
-    private static async Task StoreLogInDb(Log log)
-    {
-        var logEntity = log.ConvertTo<LogEntity>();
-        logEntity.Id = Guid.NewGuid();
-
-        await _storageService?.LogEventAsync(logEntity);
     }
 }

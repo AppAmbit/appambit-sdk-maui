@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/app_surface"
+    tools:context=".CrashesFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingBottom="16dp">
+
+        <Button
+            android:id="@+id/btnDidCrash"
+            style="@style/AppButton.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginHorizontal="50dp"
+            android:text="@string/did_the_app_crash_during_your_last_session"
+            android:layout_gravity="center" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_marginHorizontal="50dp"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card_layout"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/etUserId"
+                style="@style/AppInput"
+                android:autofillHints=""
+                android:hint="@string/user_id"
+                android:inputType="text"
+                android:textSize="18sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btnSetUserId"
+                style="@style/AppButton.Primary"
+                android:layout_marginTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/change_user_id" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_marginHorizontal="50dp"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card_layout"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/etUserEmail"
+                style="@style/AppInput"
+                android:autofillHints=""
+                android:hint="@string/user_email"
+                android:inputType="textEmailAddress"
+                android:textSize="18sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btnSetUserEmail"
+                style="@style/AppButton.Primary"
+                android:contentDescription="@string/user_email"
+                android:layout_marginTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/change_user_email" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_marginHorizontal="50dp"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card_layout"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/etCustomLogErrorText"
+                style="@style/AppInput"
+                android:autofillHints=""
+                android:hint="@string/type_log_message"
+                android:inputType="textEmailAddress"
+                android:textSize="18sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btnSendCustomLogError"
+                style="@style/AppButton.Primary"
+                android:contentDescription="@string/user_email"
+                android:layout_marginTop="8dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/send_custom_logerror" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSendDefaultLogError"
+            style="@style/AppButton.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="50dp"
+            android:text="@string/send_default_logerror"
+            android:layout_gravity="center" />
+
+        <Button
+            android:id="@+id/btnSendExceptionLogError"
+            style="@style/AppButton.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="50dp"
+            android:text="@string/send_exception_logerror"
+            android:layout_gravity="center" />
+
+        <Button
+            android:id="@+id/btnThrowNewCrash"
+            style="@style/AppButton.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="50dp"
+            android:text="@string/throw_new_crash"
+            android:layout_gravity="center" />
+
+        <Button
+            android:id="@+id/btnGenerateTestCrash"
+            style="@style/AppButton.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="50dp"
+            android:text="@string/generate_test_crash"
+            android:layout_gravity="center" />
+    </LinearLayout>
+</ScrollView>

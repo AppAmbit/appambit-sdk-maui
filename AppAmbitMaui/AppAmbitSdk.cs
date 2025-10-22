@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
 
 namespace AppAmbit;
 
-public static class Core
+public static class AppAmbitSdk
 {
     private static IAPIService? apiService;
     private static IStorageService? storageService;
@@ -13,35 +14,39 @@ public static class Core
     private static bool _hasStartedSession = false;
     private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
     private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
+    private static bool _configuredByBuilder = false;
 
-
+    private static readonly object _initLock = new();
+    private static bool _servicesReady = false;
 
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
+        _configuredByBuilder = true;
+
         builder.ConfigureLifecycleEvents(events =>
         {
 #if ANDROID
-            events.AddAndroid(android =>
-            {
-                android.OnCreate((activity, state) => { OnStart(appKey); });
-                android.OnPause(activity => { OnSleep(); });
-                android.OnResume(activity => { OnResume(); });
-                android.OnStop(activity => { OnSleep(); });
-                android.OnRestart(activity => { OnResume(); });
-                android.OnDestroy(activity => { OnEnd(); });
-            });
+                    events.AddAndroid(android =>
+                    {
+                        android.OnCreate((activity, state) => { OnStart(appKey); });
+                        android.OnPause(activity => { OnSleep(); });
+                        android.OnResume(activity => { OnResume(); });
+                        android.OnStop(activity => { OnSleep(); });
+                        android.OnRestart(activity => { OnResume(); });
+                        android.OnDestroy(activity => { OnEnd(); });
+                    });
 #elif IOS
-            events.AddiOS(ios =>
-            {
-                ios.FinishedLaunching((application, options) =>
-                {
-                    OnStart(appKey);
-                    return true;
-                });
-                ios.DidEnterBackground(application => { OnSleep(); });
-                ios.WillEnterForeground(application => { OnResume(); });
-                ios.WillTerminate(application => { OnEnd(); });
-            });
+                    events.AddiOS(ios =>
+                    {
+                        ios.FinishedLaunching((application, options) =>
+                        {
+                            OnStart(appKey);
+                            return true;
+                        });
+                        ios.DidEnterBackground(application => { OnSleep(); });
+                        ios.WillEnterForeground(application => { OnResume(); });
+                        ios.WillTerminate(application => { OnEnd(); });
+                    });
 #endif
         });
 
@@ -56,7 +61,7 @@ public static class Core
         return builder;
     }
 
-
+    
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
@@ -65,7 +70,9 @@ public static class Core
         var access = e.NetworkAccess;
 
         if (access != NetworkAccess.Internet)
+        {
             return;
+        }
 
         if (!TokenIsValid())
         {
@@ -77,25 +84,31 @@ public static class Core
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
         
-    }
+    }      
+
 
     private static async Task OnStart(string appKey)
     {
-        await InitializeServices();
+        if (_hasStartedSession) return;
 
+        await InitializeServices();
         await InitializeConsumer(appKey);
         _hasStartedSession = true;
-
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
-
     }
 
     private static async Task OnResume()
     {
+        if (!_servicesReady)
+        {
+            try { await InitializeServices(); } catch { return; }
+            if (!_servicesReady) return;
+        }
+
         if (!TokenIsValid())
         {
-            await GetNewToken(null);            
+            await GetNewToken(null);
         }
 
         if (!Analytics._isManualSessionEnabled && _hasStartedSession)
@@ -105,7 +118,6 @@ public static class Core
 
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
-        
     }
 
     private static void OnSleep()
@@ -147,68 +159,72 @@ public static class Core
     {
         await _ensureBatchLocked.WaitAsync();
         try
-        {            
-            Debug.WriteLine("Sending pending data...");         
-            await SessionManager.SendBatchSessions();      
+        {
+            await SessionManager.SendBatchSessions();
             await Crashes.SendBatchLogs();
             await Analytics.SendBatchEvents();
-            Debug.WriteLine("Finish pending data...");
         }
         finally
         {
             _ensureBatchLocked.Release();
-        }    
+        }
     }
-
 
     private static async Task InitializeServices()
     {
-        apiService = apiService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAPIService>() : apiService;
-        appInfoService = appInfoService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IAppInfoService>() : appInfoService;
-        storageService = storageService == null ? Application.Current?.Handler?.MauiContext?.Services.GetService<IStorageService>() : storageService;
-        TokenService.Initialize(storageService);
-        await storageService!.InitializeAsync();
-        var deviceId = await storageService.GetDeviceId();
-        SessionManager.Initialize(apiService, storageService);
-        Crashes.Initialize(apiService, storageService, deviceId ?? "");
-        Analytics.Initialize(apiService, storageService);
-        ConsumerService.Initialize(storageService, appInfoService, apiService);
+        if (_servicesReady) return;
+
+        try
+        {
+            lock (_initLock)
+            {
+                apiService     ??= new APIService();
+                appInfoService ??= new AppInfoService();
+                storageService ??= new StorageService();
+            }
+
+            TokenService.Initialize(storageService);
+            await storageService!.InitializeAsync();
+            var deviceId = await storageService.GetDeviceId();
+            SessionManager.Initialize(apiService, storageService);
+            Crashes.Initialize(apiService, storageService, deviceId ?? "");
+            Analytics.Initialize(apiService, storageService);
+            ConsumerService.Initialize(storageService, appInfoService, apiService);
+
+            _servicesReady = true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.ToString());
+            _servicesReady = false;
+            throw;
+        }
     }
 
     private static async Task GetNewToken(string? appKey)
     {
-        Debug.WriteLine($"[Core] Trying to get the token...");
         await consumerSemaphore.WaitAsync();
         try
         {
-            if (TokenIsValid())
-            {
-                return;
-            }
-            
-            Debug.WriteLine($"[Core] Obtaining the token");
-            if (storageService == null)
-            {
-                return;
-            }
+            if (!_servicesReady) return;
+            if (TokenIsValid()) return;
+
+            if (storageService == null) return;
+
             await ConsumerService.UpdateAppKeyIfNeeded(appKey);
             var consumerId = await storageService.GetConsumerId();
             if (!string.IsNullOrWhiteSpace(consumerId))
             {
-                Debug.WriteLine($"[Core] Consumer ID exists ({consumerId}), renewing token...");
-                var result = await apiService?.GetNewToken()!;
-                Debug.WriteLine($"[Core] Token renewal result: {result}");
+                var result = await apiService!.GetNewToken();
             }
             else
             {
-                Debug.WriteLine("[Core] There is no consumerId, creating a new one...");
                 var result = await ConsumerService.CreateConsumer();
-                Debug.WriteLine($"[Core] CreateConsumer result: {result}");
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Core] Exception during token operation: {ex}");
+            Debug.WriteLine($"[AppAmbitSdk] Exception during token operation: {ex}");
         }
         finally
         {
@@ -223,4 +239,23 @@ public static class Core
             return true;
         return false;
     }
+
+    public static void Start(string appKey)
+    {
+        if (_configuredByBuilder) return;
+        HookPlatformLifecycle(appKey);
+    }
+
+    private static void HookPlatformLifecycle(string appKey)
+    {
+        MauiNativePlatforms.Register(appKey);
+    }
+
+    internal static Task InternalStart(string appKey) => OnStart(appKey);
+    internal static Task InternalResume() => OnResume();
+    internal static void InternalSleep() => OnSleep();
+    internal static void InternalEnd() => OnEnd();
+    internal static Task InternalEnsureToken(string? appKey) => GetNewToken(appKey);
+    internal static Task InternalSendPending() => SendDataPending();
+    internal static bool InternalTokenIsValid() => TokenIsValid();
 }

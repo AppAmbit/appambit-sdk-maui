@@ -1,27 +1,122 @@
-# AppAmbit
+# AppAmbit: Getting Started with MAUI
 
-AppAmbit allows you to monitor real-world usage of your iOS and Android devices with crash and analytics data all in one place.
+This guide walks you through setting up the AppAmbit .NET SDK in your application, focusing on AppAmbit Analytics and Crash Reporting.
 
-## How to use SDK
+## 1. Prerequisites
 
-1. Register AppAmbit account and team at **appambit.com**.
-2. Create App in apps section and copy **App Key**.
-3. Install the **AppAmbit NuGet package** on your .NET MAUI application.
-4. Add **UserAppAmbit** to your builder chain and pass paste your **App Key** into parameters:
+Before getting started, ensure you meet the following requirements:
 
+- The target devices run iOS 11.0 or higher, or Android 5.0 (API level 21) or higher.
+- You are not using another SDK for crash reporting.
+
+### Supported Platforms
+
+- MAUI for iOS
+- MAUI for Android
+- MAUI for Windows (coming soon)
+- MAUI for macOS (coming soon)
+
+<div class="note">
+  <strong>Note:</strong> Xamarin is currently not supported by the AppAmbit library.
+</div>
+
+## 2. Creating Your App in the AppAmbit Portal
+
+1. Visit [AppAmbit.com](http://appambit.com/).
+2. Sign in or create an account. Navigate to "Apps" and click on "New App".
+3. Provide a name for your app.
+4. Select the appropriate release type and target OS.
+5. Click "Create" to generate your app.
+6. Retrieve the App Key from the app details page.
+7. Use this App Key as a parameter when calling `.UseAppAmbit("<YOUR-APPKEY>")` in your project.
+
+## Adding the AppAmbit SDK to Your Solution
+
+### [NuGet](https://www.nuget.org/packages/com.AppAmbit.Sdk)
+
+Add the package to your MAUI project:
+
+```bash
+dotnet add package com.AppAmbit.Sdk
+# or specify version
+dotnet add package com.AppAmbit.Sdk --version 1.0.0
 ```
-// Add the using to the top
+
+Or, using Visual Studio:
+
+* Right-click your project → **Manage NuGet Packages…**
+* Search for **AppAmbit** and install the latest stable version.
+
+---
+
+## Initializing the SDK
+
+To begin using AppAmbit, you need to explicitly enable the services you wish to use. No services are activated by default.
+
+### Import the Namespace
+
+Add the required `using` directive to your file:
+
+```csharp
+using AppAmbit;
+```
+
+### Initialize AppAmbit
+
+Call `.UseAppAmbit("<YOUR-APPKEY>")` during application initialization:
+
+```csharp
+.UseAppAmbit("<YOUR-APPKEY>");
+```
+
+Here's an example of how to configure it within your `MauiProgram` class:
+
+```csharp
 using AppAmbit;
 
-public static MauiApp Create()
+public static class MauiProgram
 {
-    var builder = MauiApp.CreateBuilder();
-    builder
-        .UseMauiApp<App>()  
-        .UseAppAmbit("your_app_key"); // Make sure to add this line and pass your app key
-    
-    return builder.Build();
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseAppAmbit("<YOUR-APPKEY>");
+        
+        return builder.Build();
+    }
 }
+```
+
+This code automatically generates a session, the session management is automatic.
+
+#### Android Requirements
+
+Add the following permissions in your `AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+#### iOS and macOS (coming soon) Requirements
+
+For iOS, add the required URL exceptions in your `Info.plist` file:
+
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSExceptionDomains</key>
+    <dict>
+        <key>appambit.com</key>
+        <dict>
+            <key>NSIncludesSubdomains</key>
+            <true/>
+            <key>NSThirdPartyExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+        </dict>
+    </dict>
+</dict>
 ```
 
 ## Crashes
@@ -62,9 +157,13 @@ Properties for events are entirely optional – if you just want to track an eve
 Analytics.TrackEvent("Order Placed");
 ```
 
-## No internet access
+## Offline Behavior
 
-When there isn't any network connectivity, the SDK saves information in the local storage. Once the device gets internet access back, the SDK will send data to the AppAmbit portal.
+If the device is offline, the SDK will store sesssions, events, logs, and crashes locally. Once internet connectivity is restored, the SDK will automatically send the stored sesssions, events, logs, and crashes in batches.
+
+## Network Connectivity Handling
+
+- If the device transitions from offline to online, any pending requests are retried immediately.
 
 ## License
 
