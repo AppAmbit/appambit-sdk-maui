@@ -39,20 +39,20 @@ public static class AppAmbitSdk
                         android.OnRestart(activity => { OnResume(); });
                         android.OnDestroy(activity => { OnEnd(); });
                     });
-#elif IOS
-            events.AddiOS(ios =>
-            {
-                ios.FinishedLaunching((application, options) =>
-                {
-                    OnStart(appKey);
-                    return true;
+        #elif IOS
+                    events.AddiOS(ios =>
+                    {
+                        ios.FinishedLaunching((application, options) =>
+                        {
+                            OnStart(appKey);
+                            return true;
+                        });
+                        ios.DidEnterBackground(application => { OnSleep(); });
+                        ios.WillEnterForeground(application => { OnResume(); });
+                        ios.WillTerminate(application => { OnEnd(); });
+                    });
+        #endif
                 });
-                ios.DidEnterBackground(application => { OnSleep(); });
-                ios.WillEnterForeground(application => { OnResume(); });
-                ios.WillTerminate(application => { OnEnd(); });
-            });
-#endif
-        });
 
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
