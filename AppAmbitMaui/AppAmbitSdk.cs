@@ -1,10 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
-using Microsoft.Maui.Controls;
 
 namespace AppAmbit;
 
@@ -104,7 +101,7 @@ public static class AppAmbitSdk
 
         HookPageEvents();
 
-        _ = BreadcrumbManager.AddAsync("app_start");
+        await BreadcrumbManager.AddAsync("app_start");
 
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
@@ -283,22 +280,6 @@ public static class AppAmbitSdk
 
     private static void HookPageEvents()
     {
-        if (_pageEventsHooked) return;
-        var app = Application.Current;
-        if (app == null) return;
-
-        app.PageAppearing += OnPageAppearing;
-        app.PageDisappearing += OnPageDisappearing;
-        _pageEventsHooked = true;
-    }
-
-    private static void OnPageAppearing(object? sender, Page page)
-    {
-        _ = BreadcrumbManager.AddAsync("page_appear");
-    }
-
-    private static void OnPageDisappearing(object? sender, Page page)
-    {
-        _ = BreadcrumbManager.AddAsync("page_disappear");
+        MauiNativePlatforms.EnableNativePageBreadcrumbs();
     }
 }

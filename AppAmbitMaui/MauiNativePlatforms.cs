@@ -43,6 +43,7 @@ internal static class MauiNativePlatforms
     private static readonly AHandler _handler = new AHandler(ALooper.MainLooper);
     private static CManager.NetworkCallback? _netCallback;
     private static readonly Java.Lang.IRunnable _pauseRunnable = new PauseRunnable();
+    private static bool _androidPageBreadcrumbsEnabled = false;
 
     private sealed class PauseRunnable : Java.Lang.Object, Java.Lang.IRunnable
     {
@@ -64,7 +65,25 @@ internal static class MauiNativePlatforms
     private static NSObject? _obsDidEnterBackground;
     private static NSObject? _obsWillEnterForeground;
     private static NSObject? _obsWillTerminate;
+
     private static NetworkReachability? _reachability;
+    private static bool? _iosLastOnline = null;
+
+    private static bool _iosPageBreadcrumbsEnabled = false;
+    private static bool _iosPagesHooked = false;
+    private static UINavigationControllerDelegate? _navDelegate;
+
+    private sealed class NavDelegate : UINavigationControllerDelegate
+    {
+        public override void WillShowViewController(UINavigationController navigationController, UIViewController viewController, bool animated)
+        {
+            _ = BreadcrumbManager.AddAsync("page_disappear");
+        }
+        public override void DidShowViewController(UINavigationController navigationController, UIViewController viewController, bool animated)
+        {
+            _ = BreadcrumbManager.AddAsync("page_appear");
+        }
+    }
 #endif
 
     public static void Register(string appKey)
@@ -96,6 +115,17 @@ internal static class MauiNativePlatforms
 #endif
     }
 
+    public static void EnableNativePageBreadcrumbs()
+    {
+#if ANDROID
+        _androidPageBreadcrumbsEnabled = true;
+#endif
+#if IOS
+        _iosPageBreadcrumbsEnabled = true;
+        EnsureIOSPagesHookedOnMain();
+#endif
+    }
+
 #if ANDROID
     private sealed class LifecycleCallbacks : Java.Lang.Object, AApp.IActivityLifecycleCallbacks
     {
@@ -119,6 +149,11 @@ internal static class MauiNativePlatforms
                 _foreground = true;
                 _ = OnResumeAppAsync();
             }
+
+            if (_androidPageBreadcrumbsEnabled)
+            {
+                _ = BreadcrumbManager.AddAsync("page_appear");
+            }
         }
 
         public void OnActivityPaused(AActivity activity)
@@ -128,6 +163,11 @@ internal static class MauiNativePlatforms
             {
                 _isWaitingPause = true;
                 _handler.PostDelayed(_pauseRunnable, _activityDelay);
+            }
+
+            if (_androidPageBreadcrumbsEnabled)
+            {
+                _ = BreadcrumbManager.AddAsync("page_disappear");
             }
         }
 
@@ -180,28 +220,61 @@ internal static class MauiNativePlatforms
         public override void OnAvailable(ANetwork network)
         {
             base.OnAvailable(network);
+            _ = BreadcrumbManager.AddAsync("online");
             _handler.PostDelayed(new Java.Lang.Runnable(() =>
             {
                 _ = OnConnectivityAvailableAsync();
             }), 3000);
         }
-        public override void OnLost(ANetwork network) { base.OnLost(network); }
+        public override void OnLost(ANetwork network)
+        {
+            base.OnLost(network);
+            _ = BreadcrumbManager.AddAsync("offline");
+        }
     }
 #endif
 
 #if IOS
     private static void StartReachability()
     {
-        if (_reachability != null) return;
+        try
+        {
+            if (_reachability != null) return;
 
-        _reachability = new NetworkReachability(new IPAddress(0));
-        _reachability.SetNotification(OnReachabilityChanged);
-        _reachability.Schedule(CFRunLoop.Current, CFRunLoop.ModeDefault);
+            _reachability = new NetworkReachability(new IPAddress(0));
+            _reachability.SetNotification(OnReachabilityChanged);
+            _reachability.Schedule(CFRunLoop.Main, CFRunLoop.ModeDefault);
+
+            if (_reachability.TryGetFlags(out var flags))
+            {
+                var online = IsReachable(flags);
+                _iosLastOnline = online;
+                _ = BreadcrumbManager.AddAsync(online ? "online" : "offline");
+                if (online) _ = OnConnectivityAvailableAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] StartReachability: {ex}");
+        }
     }
 
     private static void OnReachabilityChanged(NetworkReachabilityFlags flags)
     {
-        if (IsReachable(flags)) { _ = OnConnectivityAvailableAsync(); }
+        try
+        {
+            var online = IsReachable(flags);
+            if (_iosLastOnline != online)
+            {
+                _iosLastOnline = online;
+                _ = BreadcrumbManager.AddAsync(online ? "online" : "offline");
+                if (online) _ = OnConnectivityAvailableAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] OnReachabilityChanged: {ex}");
+        }
     }
 
     private static bool IsReachable(NetworkReachabilityFlags flags)
@@ -217,16 +290,138 @@ internal static class MauiNativePlatforms
         return reachable && (noConnectionRequired || canConnectWithoutUser);
     }
 
-    private static void HandleDidBecomeActive(NSNotification n) { _ = OnResumeAppAsync(); }
-    private static void HandleWillResignActive(NSNotification n) { AppAmbitSdk.InternalSleep(); }
-    private static void HandleDidEnterBackground(NSNotification n) { AppAmbitSdk.InternalSleep(); }
-    private static void HandleWillEnterForeground(NSNotification n) { _ = OnResumeAppAsync(); }
-    private static void HandleWillTerminate(NSNotification n) { AppAmbitSdk.InternalEnd(); }
+    private static void HandleDidBecomeActive(NSNotification n)
+    {
+        try
+        {
+            _ = AppAmbitSdk.InternalResume();
+            EnsureIOSPagesHookedOnMain();
+            _ = OnResumeAppAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] DidBecomeActive: {ex}");
+        }
+    }
+
+    private static void HandleWillResignActive(NSNotification n)
+    {
+        try { AppAmbitSdk.InternalSleep(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] WillResignActive: {ex}"); }
+    }
+
+    private static void HandleDidEnterBackground(NSNotification n)
+    {
+        try { AppAmbitSdk.InternalSleep(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] DidEnterBackground: {ex}"); }
+    }
+
+    private static void HandleWillEnterForeground(NSNotification n)
+    {
+        try
+        {
+            _ = AppAmbitSdk.InternalResume();
+            EnsureIOSPagesHookedOnMain();
+            _ = OnResumeAppAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] WillEnterForeground: {ex}");
+        }
+    }
+
+    private static void HandleWillTerminate(NSNotification n)
+    {
+        try { AppAmbitSdk.InternalEnd(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] WillTerminate: {ex}"); }
+    }
+
+    private static void EnsureIOSPagesHookedOnMain()
+    {
+        if (!_iosPageBreadcrumbsEnabled || _iosPagesHooked) return;
+        UIApplication.SharedApplication.InvokeOnMainThread(TryHookIOSNativePages);
+    }
+
+    private static void TryHookIOSNativePages()
+    {
+        if (_iosPagesHooked) return;
+
+        var scenes = UIApplication.SharedApplication.ConnectedScenes;
+        if (scenes != null && scenes.Count > 0)
+        {
+            foreach (var sceneObj in scenes)
+            {
+                if (sceneObj is UIWindowScene ws && ws.Windows != null)
+                {
+                    foreach (var window in ws.Windows)
+                    {
+                        var nav = FindNavController(window.RootViewController);
+                        if (nav != null)
+                        {
+                            _navDelegate ??= new NavDelegate();
+                            nav.Delegate = _navDelegate;
+                            _iosPagesHooked = true;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        var legacyWindows = UIApplication.SharedApplication.Windows;
+        if (legacyWindows != null)
+        {
+            foreach (var window in legacyWindows)
+            {
+                var nav = FindNavController(window.RootViewController);
+                if (nav != null)
+                {
+                    _navDelegate ??= new NavDelegate();
+                    nav.Delegate = _navDelegate;
+                    _iosPagesHooked = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    private static UINavigationController? FindNavController(UIViewController? vc)
+    {
+        if (vc == null) return null;
+        if (vc is UINavigationController nvc) return nvc;
+
+        if (vc.PresentedViewController != null)
+        {
+            var p = FindNavController(vc.PresentedViewController);
+            if (p != null) return p;
+        }
+
+        if (vc is UITabBarController tab && tab.SelectedViewController != null)
+        {
+            var t = FindNavController(tab.SelectedViewController);
+            if (t != null) return t;
+        }
+
+        var children = vc.ChildViewControllers;
+        if (children != null)
+        {
+            foreach (var child in children)
+            {
+                var c = FindNavController(child);
+                if (c != null) return c;
+            }
+        }
+        return null;
+    }
 #endif
 
     private static async Task OnStartAppAsync()
     {
-        await AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
+        try
+        {
+            await AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] OnStartAppAsync: {ex}");
+        }
     }
 
     private static async Task OnResumeAppAsync()
@@ -237,68 +432,88 @@ internal static class MauiNativePlatforms
             return;
         }
 
+        try
+        {
 #if ANDROID
-        if (!AppAmbitSdk.InternalTokenIsValid())
-            await AppAmbitSdk.InternalEnsureToken(null);
+            if (!AppAmbitSdk.InternalTokenIsValid())
+                await AppAmbitSdk.InternalEnsureToken(null);
 
-        if (!Analytics._isManualSessionEnabled)
-            await SessionManager.RemoveSavedEndSession();
+            if (!Analytics._isManualSessionEnabled)
+                await SessionManager.RemoveSavedEndSession();
 
-        await Analytics.SendBatchEvents();
-        await Crashes.SendBatchLogs();
-        await BreadcrumbManager.SendPending();
-
+            await Analytics.SendBatchEvents();
+            await Crashes.SendBatchLogs();
+            await BreadcrumbManager.SendPending();
 #else
-        if (!AppAmbitSdk.InternalTokenIsValid())
-            await AppAmbitSdk.InternalEnsureToken(null);
+            if (!AppAmbitSdk.InternalTokenIsValid())
+                await AppAmbitSdk.InternalEnsureToken(null);
 
-        if (!Analytics._isManualSessionEnabled)
-            await SessionManager.RemoveSavedEndSession();
+            if (!Analytics._isManualSessionEnabled)
+                await SessionManager.RemoveSavedEndSession();
 
-        await Crashes.LoadCrashFileIfExists();
-        await SendAllPendingThrottledAsync();
+            await Crashes.LoadCrashFileIfExists();
+            await SendAllPendingThrottledAsync();
 #endif
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] OnResumeAppAsync: {ex}");
+        }
     }
 
     private static async Task OnConnectivityAvailableAsync()
     {
-        var ok = await NetConnectivity.HasInternetAsync();
-        if (!ok || Analytics._isManualSessionEnabled) return;
-
-        if (!await _connectivityGate.WaitAsync(0)) return;
         try
         {
-            if (!AppAmbitSdk.InternalTokenIsValid())
-                await AppAmbitSdk.InternalEnsureToken(null);
+            var ok = await NetConnectivity.HasInternetAsync();
+            if (!ok || Analytics._isManualSessionEnabled) return;
 
-            await SessionManager.SendEndSessionFromDatabase();
-            await SessionManager.SendStartSessionIfExist();
-            await Crashes.LoadCrashFileIfExists();
-            await SessionManager.SendBatchSessions();
+            if (!await _connectivityGate.WaitAsync(0)) return;
+            try
+            {
+                if (!AppAmbitSdk.InternalTokenIsValid())
+                    await AppAmbitSdk.InternalEnsureToken(null);
+
+                await SessionManager.SendEndSessionFromDatabase();
+                await SessionManager.SendStartSessionIfExist();
+                await Crashes.LoadCrashFileIfExists();
+                await SessionManager.SendBatchSessions();
 
 #if ANDROID
-            await Analytics.SendBatchEvents();
-            await Crashes.SendBatchLogs();
+                await Analytics.SendBatchEvents();
+                await Crashes.SendBatchLogs();
 #else
-            await SendAllPendingThrottledAsync();
+                await SendAllPendingThrottledAsync();
 #endif
-            await BreadcrumbManager.SendPending();
+                await BreadcrumbManager.SendPending();
+            }
+            finally
+            {
+                _connectivityGate.Release();
+            }
         }
-        finally
+        catch (Exception ex)
         {
-            _connectivityGate.Release();
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] OnConnectivityAvailableAsync: {ex}");
         }
     }
 
     private static async Task SendAllPendingThrottledAsync()
     {
-        var now = DateTime.UtcNow;
-        if (now - _lastSendAllAtUtc < _minSendInterval) return;
-        _lastSendAllAtUtc = now;
+        try
+        {
+            var now = DateTime.UtcNow;
+            if (now - _lastSendAllAtUtc < _minSendInterval) return;
+            _lastSendAllAtUtc = now;
 
-        await SessionManager.SendBatchSessions();
-        await Analytics.SendBatchEvents();
-        await Crashes.SendBatchLogs();
-        await BreadcrumbManager.SendPending();
+            await SessionManager.SendBatchSessions();
+            await Analytics.SendBatchEvents();
+            await Crashes.SendBatchLogs();
+            await BreadcrumbManager.SendPending();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MauiNativePlatforms] SendAllPendingThrottledAsync: {ex}");
+        }
     }
 }

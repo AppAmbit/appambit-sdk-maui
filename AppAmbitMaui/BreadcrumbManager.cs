@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AppAmbit.Models.Breadcrums;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
@@ -19,11 +20,13 @@ internal static class BreadcrumbManager
 
     public static async Task AddAsync(string name)
     {
+        var createdAt = DateTime.UtcNow;
+        Debug.WriteLine($"BreadcrumbManager: {name} - {createdAt}");
         var entity = new BreadcrumEntity
         {
             Id = Guid.NewGuid(),
             Name = name,
-            CreatedAt = UtcNowSeconds()
+            CreatedAt = createdAt
         };
 
         var sent = await TrySendAsync(entity);
@@ -51,11 +54,5 @@ internal static class BreadcrumbManager
         {
             return false;
         }
-    }
-
-    private static DateTime UtcNowSeconds()
-    {
-        var now = DateTime.UtcNow;
-        return new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Utc);
     }
 }

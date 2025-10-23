@@ -163,7 +163,6 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
-            await LogCrash(info);
         }
 
         private static void SaveCrashToFile(string json)
