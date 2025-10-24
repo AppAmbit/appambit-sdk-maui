@@ -72,11 +72,12 @@ public static class Analytics
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
         data = (data ?? new Dictionary<string, string>())
+            .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Key) && !string.IsNullOrWhiteSpace(kvp.Value))
             .GroupBy(kvp => Truncate(kvp.Key, TrackEventPropertyMaxCharacters))
             .Take(TrackEventMaxPropertyLimit)
             .ToDictionary(
-            g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
-            g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
+                g => Truncate(g.Key, TrackEventPropertyMaxCharacters),
+                g => Truncate(g.First().Value, TrackEventPropertyMaxCharacters)
             );
 
         eventTitle = Truncate(eventTitle, TrackEventNameMaxLimit);
@@ -93,7 +94,6 @@ public static class Analytics
 
         if (response?.ErrorType != ApiErrorType.None)
         {
-            
             var eventEntity = new EventEntity()
             {
                 Id = Guid.NewGuid(),
@@ -109,6 +109,7 @@ public static class Analytics
             }
         }
     }
+
 
     private static string Truncate(string value, int maxLength)
     {
