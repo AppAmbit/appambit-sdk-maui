@@ -22,18 +22,23 @@ internal static class BreadcrumbManager
     {
         var createdAt = DateTime.UtcNow;
         Debug.WriteLine($"BreadcrumbManager: {name} - {createdAt}");
-        var entity = new BreadcrumEntity
-        {
-            Id = Guid.NewGuid(),
-            Name = name,
-            CreatedAt = createdAt
-        };
+        var entity = CreateEntity(name);
 
         var sent = await TrySendAsync(entity);
         if (!sent && _storage != null)
         {
             await _storage.AddBreadcrumbAsync(entity);
         }
+    }
+
+    private static BreadcrumEntity CreateEntity(string name)
+    {
+        return new BreadcrumEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
     public static async Task SendPending()
