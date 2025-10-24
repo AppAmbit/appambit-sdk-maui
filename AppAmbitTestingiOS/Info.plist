@@ -5,7 +5,7 @@
     <key>CFBundleDisplayName</key>
     <string>AppAmbitTestingiOS</string>
     <key>CFBundleIdentifier</key>
-    <string>com.companyname.AppAmbitTestingiOS</string>
+    <string>com.AppAmbit.TestApp</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>

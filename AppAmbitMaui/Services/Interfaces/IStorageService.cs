@@ -1,4 +1,5 @@
 using AppAmbit.Models.Analytics;
+using AppAmbit.Models.Breadcrums;
 using AppAmbit.Models.Logs;
 
 namespace AppAmbit.Services.Interfaces;
@@ -59,6 +60,12 @@ internal interface IStorageService
 
     Task<List<EventEntity>> GetOldest100EventsAsync();
 
-    Task DeleteEventList(List<EventEntity> logs);    
+    Task DeleteEventList(List<EventEntity> logs);
+    #endregion
+
+    #region Breadcrumbs
+    Task<List<BreadcrumEntity>> GetAllBreadcrumbsAsync();
+    Task AddBreadcrumbAsync(BreadcrumEntity breadcrumb);
+    Task DeleteBreadcrumbs(List<BreadcrumEntity> breadcrumbs);
     #endregion
 }

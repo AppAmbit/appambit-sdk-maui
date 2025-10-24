@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 using Microsoft.Maui.LifecycleEvents;
@@ -19,6 +18,8 @@ public static class AppAmbitSdk
     private static readonly object _initLock = new();
     private static bool _servicesReady = false;
 
+    private static bool _pageEventsHooked = false;
+
     public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
     {
         _configuredByBuilder = true;
@@ -35,7 +36,7 @@ public static class AppAmbitSdk
                         android.OnRestart(activity => { OnResume(); });
                         android.OnDestroy(activity => { OnEnd(); });
                     });
-#elif IOS
+        #elif IOS
                     events.AddiOS(ios =>
                     {
                         ios.FinishedLaunching((application, options) =>
@@ -47,8 +48,8 @@ public static class AppAmbitSdk
                         ios.WillEnterForeground(application => { OnResume(); });
                         ios.WillTerminate(application => { OnEnd(); });
                     });
-#endif
-        });
+        #endif
+                });
 
         Connectivity.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.ConnectivityChanged += OnConnectivityChanged;
@@ -60,7 +61,6 @@ public static class AppAmbitSdk
 
         return builder;
     }
-
     
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
@@ -71,6 +71,7 @@ public static class AppAmbitSdk
 
         if (access != NetworkAccess.Internet)
         {
+            await BreadcrumbManager.AddAsync("offline");
             return;
         }
 
@@ -79,13 +80,16 @@ public static class AppAmbitSdk
             await GetNewToken(null);
         }
 
+        await BreadcrumbManager.AddAsync("offline");
+
+        await BreadcrumbManager.AddAsync("online");
+
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
         
-    }      
-
+    }    
 
     private static async Task OnStart(string appKey)
     {
@@ -94,6 +98,11 @@ public static class AppAmbitSdk
         await InitializeServices();
         await InitializeConsumer(appKey);
         _hasStartedSession = true;
+
+        HookPageEvents();
+
+        await BreadcrumbManager.AddAsync("app_start");
+
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }
@@ -116,12 +125,16 @@ public static class AppAmbitSdk
             await SessionManager.RemoveSavedEndSession();
         }
 
+        await BreadcrumbManager.AddAsync("app_resume");
+
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }
 
     private static void OnSleep()
     {
+        _ = BreadcrumbManager.AddAsync("app_pause");
+
         if (!Analytics._isManualSessionEnabled)
         {
             SessionManager.SaveEndSession();
@@ -130,6 +143,8 @@ public static class AppAmbitSdk
 
     private static void OnEnd()
     {
+        _ = BreadcrumbManager.AddAsync("app_destroy");
+
         if (!Analytics._isManualSessionEnabled)
         {
             SessionManager.SaveEndSession();
@@ -163,6 +178,7 @@ public static class AppAmbitSdk
             await SessionManager.SendBatchSessions();
             await Crashes.SendBatchLogs();
             await Analytics.SendBatchEvents();
+            await BreadcrumbManager.SendPending();
         }
         finally
         {
@@ -190,6 +206,9 @@ public static class AppAmbitSdk
             Crashes.Initialize(apiService, storageService, deviceId ?? "");
             Analytics.Initialize(apiService, storageService);
             ConsumerService.Initialize(storageService, appInfoService, apiService);
+
+            // Breadcrumbs
+            BreadcrumbManager.Initialize(apiService!, storageService!);
 
             _servicesReady = true;
         }
@@ -258,4 +277,9 @@ public static class AppAmbitSdk
     internal static Task InternalEnsureToken(string? appKey) => GetNewToken(appKey);
     internal static Task InternalSendPending() => SendDataPending();
     internal static bool InternalTokenIsValid() => TokenIsValid();
+
+    private static void HookPageEvents()
+    {
+        MauiNativePlatforms.EnableNativePageBreadcrumbs();
+    }
 }
