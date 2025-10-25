@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
-using Microsoft.Maui.LifecycleEvents;
+using System.Threading.Tasks;
 
 namespace AppAmbit;
 
@@ -15,94 +14,33 @@ public static class AppAmbitSdk
     private static readonly SemaphoreSlim consumerSemaphore = new(1, 1);
     private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
     private static bool _configuredByBuilder = false;
-
-    private static readonly object _initLock = new();
     private static bool _servicesReady = false;
 
-    public static MauiAppBuilder UseAppAmbit(this MauiAppBuilder builder, string appKey)
+    public static void MarkConfiguredByBuilder() => _configuredByBuilder = true;
+
+    private static void OnStart(string appKey)
     {
-        _configuredByBuilder = true;
-
-        builder.ConfigureLifecycleEvents(events =>
+        try
         {
-#if ANDROID
-                    events.AddAndroid(android =>
-                    {
-                        android.OnCreate((activity, state) => { OnStart(appKey); });
-                        android.OnPause(activity => { OnSleep(); });
-                        android.OnResume(activity => { OnResume(); });
-                        android.OnStop(activity => { OnSleep(); });
-                        android.OnRestart(activity => { OnResume(); });
-                        android.OnDestroy(activity => { OnEnd(); });
-                    });
-#elif IOS
-                    events.AddiOS(ios =>
-                    {
-                        ios.FinishedLaunching((application, options) =>
-                        {
-                            OnStart(appKey);
-                            return true;
-                        });
-                        ios.DidEnterBackground(application => { OnSleep(); });
-                        ios.WillEnterForeground(application => { OnResume(); });
-                        ios.WillTerminate(application => { OnEnd(); });
-                    });
-#endif
-        });
+            if (_hasStartedSession) return;
 
-        Connectivity.ConnectivityChanged -= OnConnectivityChanged;
-        Connectivity.ConnectivityChanged += OnConnectivityChanged;
-        Crashes.OnCrashException -= exception => { OnEnd(); };
-        Crashes.OnCrashException += exception => { OnEnd(); };
-        builder.Services.AddSingleton<IAPIService, APIService>();
-        builder.Services.AddSingleton<IStorageService, StorageService>();
-        builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
-
-        return builder;
-    }
-
-    
-    private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
-    {
-        Debug.WriteLine("OnConnectivityChanged");
-        Debug.WriteLine($"NetworkAccess:{e}");
-
-        var access = e.NetworkAccess;
-
-        if (access != NetworkAccess.Internet)
-        {
-            return;
+            InitializeServices();
+            InitializeConsumer(appKey);
+            _hasStartedSession = true;
+            RunSync(() => Crashes.LoadCrashFileIfExists());
+            RunSync(SendDataPending);
         }
-
-        if (!TokenIsValid())
+        catch (Exception ex)
         {
-            await GetNewToken(null);
+            Debug.WriteLine($"[AppAmbitSdk] Exception during OnStart initialization: {ex}");
         }
-
-        await SessionManager.SendEndSessionFromDatabase();
-        await SessionManager.SendStartSessionIfExist();
-        await Crashes.LoadCrashFileIfExists();
-        await SendDataPending();
-        
-    }      
-
-
-    private static async Task OnStart(string appKey)
-    {
-        if (_hasStartedSession) return;
-
-        await InitializeServices();
-        await InitializeConsumer(appKey);
-        _hasStartedSession = true;
-        await Crashes.LoadCrashFileIfExists();
-        await SendDataPending();
     }
 
     private static async Task OnResume()
     {
         if (!_servicesReady)
         {
-            try { await InitializeServices(); } catch { return; }
+            InitializeServices();
             if (!_servicesReady) return;
         }
 
@@ -136,23 +74,21 @@ public static class AppAmbitSdk
         }
     }
 
-    private static async Task InitializeConsumer(string appKey)
+    private static void InitializeConsumer(string appKey)
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            await SessionManager.SaveSessionEndToDatabaseIfExist();
+            RunSync(SessionManager.SaveSessionEndToDatabaseIfExist);
         }
 
-        await GetNewToken(appKey);
+        RunSync(() => GetNewToken(appKey));
 
         if (Analytics._isManualSessionEnabled)
-        {
             return;
-        }
 
-        await SessionManager.SendEndSessionFromDatabase();
-        await SessionManager.SendEndSessionFromFile();
-        await SessionManager.StartSession();
+        RunSync(SessionManager.SendEndSessionFromDatabase);
+        RunSync(SessionManager.SendEndSessionFromFile);
+        RunSync(SessionManager.StartSession);
     }
 
     private static async Task SendDataPending()
@@ -170,26 +106,25 @@ public static class AppAmbitSdk
         }
     }
 
-    private static async Task InitializeServices()
+    private static void InitializeServices()
     {
         if (_servicesReady) return;
 
         try
         {
-            lock (_initLock)
-            {
-                apiService     ??= new APIService();
-                appInfoService ??= new AppInfoService();
-                storageService ??= new StorageService();
-            }
+            apiService     ??= new APIService();
+            appInfoService ??= new AppInfoService();
+            storageService ??= new StorageService();
 
+            RunSync(() => storageService!.InitializeAsync());
+            ConsumerService.Initialize(storageService, appInfoService, apiService);
             TokenService.Initialize(storageService);
-            await storageService!.InitializeAsync();
-            var deviceId = await storageService.GetDeviceId();
+
+            var deviceId = RunSync(() => storageService.GetDeviceId());
+
             SessionManager.Initialize(apiService, storageService);
             Crashes.Initialize(apiService, storageService, deviceId ?? "");
             Analytics.Initialize(apiService, storageService);
-            ConsumerService.Initialize(storageService, appInfoService, apiService);
 
             _servicesReady = true;
         }
@@ -208,19 +143,14 @@ public static class AppAmbitSdk
         {
             if (!_servicesReady) return;
             if (TokenIsValid()) return;
-
             if (storageService == null) return;
 
             await ConsumerService.UpdateAppKeyIfNeeded(appKey);
             var consumerId = await storageService.GetConsumerId();
             if (!string.IsNullOrWhiteSpace(consumerId))
-            {
-                var result = await apiService!.GetNewToken();
-            }
+                _ = await apiService!.GetNewToken();
             else
-            {
-                var result = await ConsumerService.CreateConsumer();
-            }
+                _ = await ConsumerService.CreateConsumer();
         }
         catch (Exception ex)
         {
@@ -235,9 +165,7 @@ public static class AppAmbitSdk
     private static bool TokenIsValid()
     {
         var token = apiService?.GetToken();
-        if (!string.IsNullOrEmpty(token))
-            return true;
-        return false;
+        return !string.IsNullOrEmpty(token);
     }
 
     public static void Start(string appKey)
@@ -251,7 +179,17 @@ public static class AppAmbitSdk
         MauiNativePlatforms.Register(appKey);
     }
 
-    internal static Task InternalStart(string appKey) => OnStart(appKey);
+    private static void RunSync(Func<Task> task)
+    {
+        try { Task.Run(task).GetAwaiter().GetResult(); } catch { }
+    }
+
+    private static T? RunSync<T>(Func<Task<T>> task)
+    {
+        try { return Task.Run(task).GetAwaiter().GetResult(); } catch { return default; }
+    }
+
+    internal static void InternalStart(string appKey) => OnStart(appKey);
     internal static Task InternalResume() => OnResume();
     internal static void InternalSleep() => OnSleep();
     internal static void InternalEnd() => OnEnd();

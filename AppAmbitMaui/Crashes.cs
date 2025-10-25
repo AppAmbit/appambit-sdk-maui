@@ -41,7 +41,7 @@ namespace AppAmbit
             return Logging.LogEvent("", LogType.Error, exception, properties, classFqn, fileName, lineNumber);
         }
 
-        public static Task LogError(
+        public static async Task LogError(
             string message,
             Dictionary<string, string>? properties = null,
             string? classFqn = null,
@@ -49,13 +49,20 @@ namespace AppAmbit
             [CallerFilePath] string? fileName = null,
             [CallerLineNumber] int? lineNumber = null)
         {
-            classFqn ??= GetCallerClass();
-            return Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+            try
+            {
+                classFqn ??= GetCallerClass();
+                await Logging.LogEvent(message, LogType.Error, exception, properties, classFqn, fileName, lineNumber);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Crashes] Exception during LogError: {ex}");
+            }
         }
 
         public static Task GenerateTestCrash()
         {
-             throw new NullReferenceException();
+            throw new NullReferenceException();
         }
 
         internal static async Task LoadCrashFileIfExists()
@@ -68,7 +75,7 @@ namespace AppAmbit
 
                 var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
                 int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
-                
+
 
                 if (crashFileCount == 0)
                 {
@@ -201,30 +208,38 @@ namespace AppAmbit
             return false;
         }
 
-        public static async Task SendBatchLogs()
+        internal static async Task SendBatchLogs()
         {
-            Debug.WriteLine("Send Batch Logs");
-            var list = await _storageService?.GetOldest100LogsAsync()!;
-            if (list == null || list.Count == 0)
+            try
             {
-                Debug.WriteLine($"No logs to send");
-                return;
-            }
+                Debug.WriteLine("Send Batch Logs");
+                var list = await _storageService?.GetOldest100LogsAsync()!;
+                if (list == null || list.Count == 0)
+                {
+                    Debug.WriteLine($"No logs to send");
+                    return;
+                }
 
-            var logBatch = new LogBatch() { Logs = list };
-            var endpoint = new LogBatchEndpoint(logBatch);
-            var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint)!;
-            if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
+                var logBatch = new LogBatch() { Logs = list };
+                var endpoint = new LogBatchEndpoint(logBatch);
+                var logResponse = await _apiService?.ExecuteRequest<Response>(endpoint)!;
+                if (logResponse == null || logResponse.ErrorType != ApiErrorType.None)
+                {
+                    Debug.WriteLine("Batch of unsent logs");
+                    return;
+                }
+
+                await _storageService!.DeleteLogList(list);
+                Debug.WriteLine("Finished Logs Batch");
+
+            }
+            catch (Exception ex)
             {
-                Debug.WriteLine("Batch of unsent logs");
-                return;
+                Debug.WriteLine($"[Crashes] Exception during SendBatchLogs: {ex}");
             }
-
-            await _storageService!.DeleteLogList(list);
-            Debug.WriteLine("Finished Logs Batch");
         }
 
-        public static async Task StoreBatchCrashesLog(List<ExceptionInfo> crashList)
+        private static async Task StoreBatchCrashesLog(List<ExceptionInfo> crashList)
         {
             Debug.WriteLine("Debug Storing in DB Crashes Batches");
             foreach (var crash in crashList)
@@ -278,11 +293,6 @@ namespace AppAmbit
         private static string GetCrashFilePath()
         {
             return Path.Combine(AppPaths.AppDataDir, AppConstants.DidCrashFileName);
-        }
-
-        private static bool CrashFileExists(string path)
-        {
-            return System.IO.File.Exists(path);
         }
 
         private static void SetCrashFlag(bool didCrash)
