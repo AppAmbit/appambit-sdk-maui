@@ -28,45 +28,104 @@ public static class Analytics
 
     public static async Task StartSession()
     {
-        await SessionManager.StartSession();
+        try
+        {
+            await SessionManager.StartSession();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during StartSession: {ex}");
+        }
+
     }
 
     public static async Task EndSession()
     {
-        await SessionManager.EndSession();
+        try
+        {
+            await SessionManager.EndSession();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during EndSession: {ex}");
+        }
     }
 
     public static async void SetUserId(string userId)
     {
-        await _storageService.SetUserId(userId);
+        try
+        {
+            await _storageService.SetUserId(userId);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during SetUserId: {ex}");
+        }
     }
 
     public static async Task<string?> GetUserId()
     {
-        return await _storageService.GetUserId();
+        try
+        {
+            return await _storageService.GetUserId();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during GetUserId: {ex}");
+            return null;
+        }
     }
 
     public static async void SetUserEmail(string userEmail)
     {
-        await _storageService.SetUserEmail(userEmail);
+        try
+        {
+            await _storageService.SetUserEmail(userEmail);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during SetUserEmail: {ex}");
+        }
     }
 
     public static async Task<string?> GetUserEmail()
     {
-        return await _storageService.GetUserEmail();
+        try
+        {
+            return await _storageService.GetUserEmail();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during GetUserEmail: {ex}");
+            return null;
+        }
     }
 
     public static async Task GenerateTestEvent()
     {
-        await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+        try
         {
-            { "Event", "Custom event" }
-        });
+            await SendOrSaveEvent("Test Event", new Dictionary<string, string>()
+            {
+                { "Event", "Custom event" }
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during GenerateTestEvent: {ex}");
+        }
     }
 
     public static async Task TrackEvent(string eventTitle, Dictionary<string, string>? data = null)
     {
-        await SendOrSaveEvent(eventTitle, data);
+        try
+        {
+            await SendOrSaveEvent(eventTitle, data);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during TrackEvent: {ex}");
+        }
     }
 
     private static async Task SendOrSaveEvent(string eventTitle, Dictionary<string, string>? data = null)
@@ -110,42 +169,62 @@ public static class Analytics
         }
     }
 
-
     private static string Truncate(string value, int maxLength)
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length <= maxLength ? value : value.Substring(0, maxLength);
     }
 
-    public static async Task SendBatchEvents()
+    internal static async Task SendBatchEvents()
     {
-        Debug.WriteLine("Send Batch Events");
-        var eventEntityList = await _storageService.GetOldest100EventsAsync();
-        if (eventEntityList?.Count == 0)
+        try
         {
-            Debug.WriteLine($"No events to send");
-            return;
-        }
+            Debug.WriteLine("Send Batch Events");
+            var eventEntityList = await _storageService.GetOldest100EventsAsync();
+            if (eventEntityList?.Count == 0)
+            {
+                Debug.WriteLine($"No events to send");
+                return;
+            }
 
-        var endpoint = new EventBatchEndpoint(eventEntityList);
-        var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
-        if (eventsBatchResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+            var endpoint = new EventBatchEndpoint(eventEntityList);
+            var eventsBatchResponse = await _apiService?.ExecuteRequest<EventsBatchResponse>(endpoint);
+            if (eventsBatchResponse?.ErrorType == ApiErrorType.NetworkUnavailable)
+            {
+                Debug.WriteLine("Batch of unsent events");
+                return;
+            }
+
+            await _storageService.DeleteEventList(eventEntityList);
+            Debug.WriteLine("Finished Events Batch");
+        }
+        catch (Exception ex)
         {
-            Debug.WriteLine("Batch of unsent events");
-            return;
+            Debug.WriteLine($"[Analytics] Exception during SendBatchEvents: {ex}");
         }
-
-        await _storageService.DeleteEventList(eventEntityList);
-        Debug.WriteLine("Finished Events Batch");
     }
 
     public static void ClearToken()
     {
-        _apiService?.SetToken("");
+        try
+        {
+           _apiService?.SetToken("");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during ClearToken: {ex}");
+        }
     }
 
     public async static Task RequestToken()
     {
-        await _apiService?.GetNewToken();
+        try
+        {
+           await _apiService.GetNewToken();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] Exception during RequestToken: {ex}");
+        }
     }
 }
