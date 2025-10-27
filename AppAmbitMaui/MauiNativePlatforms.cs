@@ -77,7 +77,7 @@ internal static class MauiNativePlatforms
         app.RegisterActivityLifecycleCallbacks(new LifecycleCallbacks());
         RegisterNetworkCallback();
         _initialized = true;
-        _ = OnStartAppAsync();
+        OnStartApp();
 
 #elif IOS
         if (_obsDidBecomeActive != null) return;
@@ -90,7 +90,7 @@ internal static class MauiNativePlatforms
         _obsWillTerminate       = nc.AddObserver(UIApplication.WillTerminateNotification, HandleWillTerminate);
 
         StartReachability();
-        _ = OnStartAppAsync();
+        OnStartApp();
 #endif
     }
 
@@ -222,9 +222,9 @@ internal static class MauiNativePlatforms
     private static void HandleWillTerminate(NSNotification n) { AppAmbitSdk.InternalEnd(); }
 #endif
 
-    private static async Task OnStartAppAsync()
+    private static void OnStartApp()
     {
-        await AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
+        AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
     }
 
     private static async Task OnResumeAppAsync()
