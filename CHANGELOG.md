@@ -1,4 +1,8 @@
-___
+## Version 1.0.2
+
+### AppAmbit
+
+* **[Fix]** Fixed errors in early SDK initialization
 
 ## Version 1.0.1
 
