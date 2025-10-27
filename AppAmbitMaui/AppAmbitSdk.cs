@@ -112,7 +112,7 @@ public static class AppAmbitSdk
 
         try
         {
-            apiService     ??= new APIService();
+            apiService ??= new APIService();
             appInfoService ??= new AppInfoService();
             storageService ??= new StorageService();
 
@@ -181,12 +181,27 @@ public static class AppAmbitSdk
 
     private static void RunSync(Func<Task> task)
     {
-        try { Task.Run(task).GetAwaiter().GetResult(); } catch { }
+        try
+        {
+            Task.Run(task).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AppAmbitSdk] Exception during synchronous task execution: {ex}");
+        }
     }
 
     private static T? RunSync<T>(Func<Task<T>> task)
     {
-        try { return Task.Run(task).GetAwaiter().GetResult(); } catch { return default; }
+        try
+        {
+            return Task.Run(task).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[AppAmbitSdk] Exception during synchronous task execution: {ex}");
+            return default;
+        }
     }
 
     internal static void InternalStart(string appKey) => OnStart(appKey);
