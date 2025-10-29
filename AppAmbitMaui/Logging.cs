@@ -77,6 +77,10 @@ namespace AppAmbit
             stackTrace = string.IsNullOrEmpty(stackTrace) ? AppConstants.NoStackTraceAvailable : stackTrace;
             var file = exInfo?.CrashLogFile;
 
+            var cleanedProperties = (properties ?? new Dictionary<string, string>())
+                .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
             var log = new LogEntity
             {
                 AppVersion = new AppInfoService().AppVersion,
@@ -85,7 +89,7 @@ namespace AppAmbit
                 LineNumber = exInfo?.LineNumberFromStackTrace ?? lineNumber ?? 0,
                 Message = exInfo?.Message ?? (string.IsNullOrEmpty(message) ? "" : message),
                 StackTrace = stackTrace,
-                Context = properties ?? new Dictionary<string, string>(),
+                Context = cleanedProperties,
                 Type = logType,
                 File = (logType == LogType.Crash && exInfo != null) ? file : null,
                 CreatedAt = DateTime.UtcNow,
@@ -95,6 +99,7 @@ namespace AppAmbit
             Task.Run(() => SendOrSaveLogEventAsync(log));
             return Task.CompletedTask;
         }
+
 
         private static Task SendOrSaveLogEventAsync(Log log)
         {
