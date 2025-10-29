@@ -103,7 +103,7 @@ internal static class MauiNativePlatforms
 
         _iosState = IOSAppState.Foreground;
         StartReachability();
-        _ = AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
+        AppAmbitSdk.InternalStart(_appKey ?? string.Empty);
 #endif
     }
 
