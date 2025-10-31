@@ -1,4 +1,5 @@
 using AppAmbit.Models.Analytics;
+using AppAmbit.Models.Breadcrums;
 using AppAmbit.Models.Logs;
 
 namespace AppAmbit.Services.Interfaces;
@@ -20,7 +21,7 @@ internal interface IStorageService
 
     Task DeleteSessionById(string id);
 
-    Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions);
+    Task UpdateSessionIdsForAllTrackingData(List<SessionBatch> sessions);
     
     #endregion
 
@@ -59,6 +60,12 @@ internal interface IStorageService
 
     Task<List<EventEntity>> GetOldest100EventsAsync();
 
-    Task DeleteEventList(List<EventEntity> logs);    
+    Task DeleteEventList(List<EventEntity> logs);
+    #endregion
+
+    #region Breadcrumbs
+    Task<List<BreadcrumbsEntity>> GetOldest100BreadcrumbsAsync();
+    Task AddBreadcrumbAsync(BreadcrumbsEntity breadcrumb);
+    Task DeleteBreadcrumbs(List<BreadcrumbsEntity> breadcrumbs);
     #endregion
 }
