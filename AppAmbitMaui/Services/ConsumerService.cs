@@ -65,6 +65,7 @@ internal class ConsumerService
             OS = _appInfoService?.OS ?? "",
             Country = _appInfoService?.Country ?? "",
             Language = _appInfoService?.Language ?? "",
+            AppVersion = _appInfoService.AppVersion
         });
     }
 

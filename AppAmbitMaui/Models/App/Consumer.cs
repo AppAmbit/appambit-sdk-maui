@@ -19,6 +19,9 @@ public class Consumer
     [JsonProperty("user_email")]
     public string? UserEmail { get; set; }
 
+    [JsonProperty("app_version")]
+    public string? AppVersion { get; set; }    
+
     [JsonProperty("os")]
     public string OS { get; set; }
     
