@@ -7,7 +7,7 @@ namespace AppAmbit.Services.Endpoints;
 
 internal class BreadcrumbEndpoint : BaseEndpoint
 {
-    public BreadcrumbEndpoint(BreadcrumEntity breadcrumb)
+    public BreadcrumbEndpoint(BreadcrumbsEntity breadcrumb)
     {
         Url = "/breadcrumbs";
         Method = HttpMethodEnum.Post;

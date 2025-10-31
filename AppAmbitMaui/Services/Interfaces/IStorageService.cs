@@ -21,7 +21,7 @@ internal interface IStorageService
 
     Task DeleteSessionById(string id);
 
-    Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions);
+    Task UpdateSessionIdsForAllTrackingData(List<SessionBatch> sessions);
     
     #endregion
 
@@ -64,8 +64,8 @@ internal interface IStorageService
     #endregion
 
     #region Breadcrumbs
-    Task<List<BreadcrumEntity>> GetAllBreadcrumbsAsync();
-    Task AddBreadcrumbAsync(BreadcrumEntity breadcrumb);
-    Task DeleteBreadcrumbs(List<BreadcrumEntity> breadcrumbs);
+    Task<List<BreadcrumbsEntity>> GetOldest100BreadcrumbsAsync();
+    Task AddBreadcrumbAsync(BreadcrumbsEntity breadcrumb);
+    Task DeleteBreadcrumbs(List<BreadcrumbsEntity> breadcrumbs);
     #endregion
 }

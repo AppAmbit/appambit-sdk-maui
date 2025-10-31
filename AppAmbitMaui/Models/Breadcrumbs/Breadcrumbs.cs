@@ -5,6 +5,6 @@ namespace AppAmbit.Models.Breadcrums;
 
 public class Breadcrumb
 {
-    [JsonProperty("breadcrumb_name")]
+    [JsonProperty("name")]
     public string Name { get; set; }
 }

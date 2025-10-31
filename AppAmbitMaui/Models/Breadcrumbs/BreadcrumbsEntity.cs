@@ -1,9 +1,10 @@
+using AppAmbit.Utils;
 using Newtonsoft.Json;
 using SQLite;
 
 namespace AppAmbit.Models.Breadcrums;
 
-public class BreadcrumEntity : Breadcrumb
+public class BreadcrumbsEntity : Breadcrumb
 {
     [PrimaryKey]
     [JsonIgnore]
@@ -11,4 +12,7 @@ public class BreadcrumEntity : Breadcrumb
 
     [JsonProperty("created_at")]
     public DateTime CreatedAt { get; set; }
+
+    [JsonProperty("session_id")]
+    public string SessionId { get; set; } = string.Empty;
 }

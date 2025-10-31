@@ -51,7 +51,11 @@ public static class AppAmbitMauiExtensions
     private static async void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
         Debug.WriteLine("OnConnectivityChanged");
-        if (e.NetworkAccess != NetworkAccess.Internet) return;
+        if (e.NetworkAccess != NetworkAccess.Internet)
+        {
+            BreadcrumbManager.SaveFile(BreadcrumbsConstants.offline);
+            return;
+        }
 
         if (!AppAmbitSdk.InternalTokenIsValid())
             await AppAmbitSdk.InternalEnsureToken(null);
@@ -59,6 +63,9 @@ public static class AppAmbitMauiExtensions
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
         await Crashes.LoadCrashFileIfExists();
+        BreadcrumbManager.LoadBreadcrumbsFromFile();
+        await BreadcrumbManager.SendBatchBreadcrumbs();
+        await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
         await AppAmbitSdk.InternalSendPending();
     }
 }

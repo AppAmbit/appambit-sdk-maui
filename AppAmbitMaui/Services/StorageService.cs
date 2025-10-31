@@ -28,7 +28,7 @@ internal class StorageService : IStorageService
         await _database.CreateTableAsync<LogEntity>();
         await _database.CreateTableAsync<EventEntity>();
         await _database.CreateTableAsync<SessionBatch>();
-        await _database.CreateTableAsync<BreadcrumEntity>();
+        await _database.CreateTableAsync<BreadcrumbsEntity>();
     }
 
     public async Task SetDeviceId(string? deviceId)
@@ -331,7 +331,7 @@ internal class StorageService : IStorageService
             .DeleteAsync();
     }
 
-    public async Task UpdateLogsAndEventsSessionIds(List<SessionBatch> sessions)
+    public async Task UpdateSessionIdsForAllTrackingData(List<SessionBatch> sessions)
     {
         if (sessions == null || sessions.Count == 0) return;
 
@@ -344,6 +344,11 @@ internal class StorageService : IStorageService
         UPDATE EventEntity
         SET sessionId = TRIM(?)
         WHERE TRIM(sessionId) = TRIM(?) COLLATE NOCASE;";
+
+        const string sqlBreadcrumbs = @"
+        UPDATE BreadcrumbsEntity
+        SET sessionId = TRIM(?)
+        WHERE TRIM(sessionId) = TRIM(?) COLLATE NOCASE;";        
 
         await _database.RunInTransactionAsync(tran =>
         {
@@ -365,31 +370,32 @@ internal class StorageService : IStorageService
 
                 tran.Execute(sqlLogs, newRaw, oldRaw);
                 tran.Execute(sqlEvents, newRaw, oldRaw);
+                tran.Execute(sqlBreadcrumbs, newRaw, oldRaw);
             }
         });
     }
 
-    public async Task<List<BreadcrumEntity>> GetAllBreadcrumbsAsync()
+    public async Task<List<BreadcrumbsEntity>> GetOldest100BreadcrumbsAsync()
     {
-        return await _database.Table<BreadcrumEntity>()
+        return await _database.Table<BreadcrumbsEntity>()
             .OrderBy(b => b.CreatedAt)
             .Take(100)
             .ToListAsync();
     }
 
-    public async Task AddBreadcrumbAsync(BreadcrumEntity breadcrumb)
+    public async Task AddBreadcrumbAsync(BreadcrumbsEntity breadcrumb)
     {
         await _database.InsertAsync(breadcrumb);
     }
 
-    public Task DeleteBreadcrumbs(List<BreadcrumEntity> breadcrumbs)
+    public Task DeleteBreadcrumbs(List<BreadcrumbsEntity> breadcrumbs)
     {
         var ids = breadcrumbs.Select(b => b.Id).ToList();
         return _database.RunInTransactionAsync(tran =>
         {
             foreach (var id in ids)
             {
-                tran.Execute("DELETE FROM BreadcrumEntity WHERE Id = ?", id);
+                tran.Execute("DELETE FROM BreadcrumbsEntity WHERE Id = ?", id);
             }
         });
     }
