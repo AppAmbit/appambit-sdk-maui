@@ -1,3 +1,9 @@
+## Version 1.0.3
+
+### AppAmbit
+
+* **[Fix]** Fixed bug in detecting user app version
+
 ## Version 1.0.2
 
 ### AppAmbit
