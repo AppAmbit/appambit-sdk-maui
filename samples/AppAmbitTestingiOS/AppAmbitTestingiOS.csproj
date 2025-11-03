@@ -7,6 +7,6 @@
     <SupportedOSPlatformVersion>12.2</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AppAmbitMaui\AppAmbitMaui.csproj" />
+    <ProjectReference Include="..\..\AppAmbitMaui\AppAmbitMaui.csproj" />
   </ItemGroup>
 </Project>
