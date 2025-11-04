@@ -62,7 +62,7 @@ internal static partial class MauiNativePlatforms
         lock (_bcLock)
         {
             if (_lastCrumb == name && (now - _lastCrumbAtUtc) < _crumbWindow)
-                return Task.CompletedTask;
+                return Task.CompletedTask; 
 
             _lastCrumb = name;
             _lastCrumbAtUtc = now;

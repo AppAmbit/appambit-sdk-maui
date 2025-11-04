@@ -13,6 +13,8 @@ internal static class BreadcrumbManager
 {
     private static IAPIService? _api;
     private static IStorageService? _storage;
+    private static readonly object _lastLock = new();
+    private static string? _lastBreadcrumb;
 
     public static void Initialize(IAPIService api, IStorageService storage)
     {
@@ -22,17 +24,25 @@ internal static class BreadcrumbManager
 
     public static async Task AddAsync(string name)
     {
+        lock (_lastLock)
+        {
+            if (_lastBreadcrumb == name) return;
+            _lastBreadcrumb = name;
+        }
+
         var entity = CreateBreadcrumb(name);
-
         await SendBreadcumbs(entity);
-
     }
 
     public static void SaveFile(string name)
     {
+        lock (_lastLock)
+        {
+            _lastBreadcrumb = name;
+        }
+
         var breadcrumb = CreateBreadcrumb(name);
         var data = breadcrumb.ToData(sessionId: SessionManager.SessionId);
-
         GetSaveJsonArray(BreadcrumbsConstants.nameFile, data);
     }
 
@@ -115,7 +125,6 @@ internal static class BreadcrumbManager
             Debug.WriteLine("SendBatchBreadcrumbs error: " + ex);
         }
     }
-
 
     private static async Task<bool> TrySendAsync(BreadcrumbsEntity entity)
     {
