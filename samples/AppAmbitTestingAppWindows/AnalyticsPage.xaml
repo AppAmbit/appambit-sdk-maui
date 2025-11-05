@@ -14,23 +14,40 @@
                            Margin="0,0,0,30" />
 
                 <Button Content="Invalidate Token" Click="onInvalidateToken"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Token refresh test" Click="onTokenRefreshTest"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Start Session" Click="onStartSession"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="End Session" Click="onEndSession"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Send 'Button Clicked' Event w/ property" Click="onButtonClicked"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Send Default Event w/ property" Click="onDefaultEvent"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Send Max-300-Length Event" Click="onSendMax300Event"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Send Max-20-Properties Event" Click="onSendMax20PropertiesEvent"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
                 <Button Content="Send Batch of 220 Events" Click="onGenerateBatchEvents"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

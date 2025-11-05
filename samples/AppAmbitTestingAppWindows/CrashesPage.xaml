@@ -14,40 +14,49 @@
                            Margin="0,0,0,30" />
 
                 <Button Content="Did the app crash during your last session?" Click="onDidCrashInLastSession"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <TextBox x:Name="UserIdTextBox"
-                         FontSize="18"
-                         Height="60"
+                         FontSize="16"
+                         Height="45"
                          Margin="0,0,0,15"
-                         Padding="10"
+                         Padding="8"
                          BorderBrush="Gray"
                          BorderThickness="1" />
+
                 <Button Content="Change user id" Click="onChangeUserId"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <TextBox x:Name="UserEmailTextBox"
-                         FontSize="18"
-                         Height="60"
+                         FontSize="16"
+                         Height="45"
                          Margin="0,0,0,15"
-                         Padding="10"
+                         Padding="8"
                          BorderBrush="Gray"
                          BorderThickness="1" />
+
                 <Button Content="Change user email" Click="onChangeUserEmail"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <TextBox x:Name="CustomLogErrorTextBox"
-                     FontSize="18"
-                     Height="60"
-                     Margin="0,0,0,15"
-                     Padding="10"
-                     BorderBrush="Gray"
-                     BorderThickness="1" />
+                         FontSize="16"
+                         Height="45"
+                         Margin="0,0,0,15"
+                         Padding="8"
+                         BorderBrush="Gray"
+                         BorderThickness="1" />
+
                 <Button Content="Send Custom LogError" Click="onSendCustomLogError"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <Button Content="Send Exception LogError" Click="onSendExceptionLogError"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <Button Content="Throw new Crash" Click="onThrowNewCrash"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
+
                 <Button Content="Generate Test Crash" Click="onGeneratedTestCrash"
-                        Height="80" FontSize="20" Margin="0,5" Background="Blue" Foreground="White" />
+                        Height="55" FontSize="16" Margin="0,5" Background="Blue" Foreground="White" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

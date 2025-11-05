@@ -4,11 +4,11 @@ using System.Net.NetworkInformation;
 
 namespace AppAmbit
 {
-    public static class AppAmbitWindows
+    internal static class AppAmbitWindows
     {
         private static string? _appKey;
         private static bool _initialized = false;
-        public static void Start(string appKey)
+        public static void Register(string appKey)
         {
             if (_initialized) return;
 

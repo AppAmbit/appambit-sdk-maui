@@ -32,7 +32,7 @@ public class LoggingHandler : DelegatingHandler
             if (request.Content != null)
             {
                 var reqBody = await request.Content.ReadAsStringAsync(cancellationToken);
-                Console.WriteLine(reqBody);
+                Debug.WriteLine(reqBody);
             }
 
             var response = await base.SendAsync(request, cancellationToken);
@@ -41,7 +41,7 @@ public class LoggingHandler : DelegatingHandler
             if (response.Content != null)
             {
                 var respBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                Console.WriteLine(respBody);
+                Debug.WriteLine(respBody);
             }
             return response;
         }catch (Exception ex)

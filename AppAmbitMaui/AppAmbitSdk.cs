@@ -170,8 +170,15 @@ public static class AppAmbitSdk
 
     public static void Start(string appKey)
     {
-        if (_configuredByBuilder) return;
-        HookPlatformLifecycle(appKey);
+#if ANDROID
+            HookPlatformLifecycle(appKey);
+#elif IOS && !MACCATALYST
+            HookPlatformLifecycle(appKey);
+#elif MACCATALYST
+            AppAmbitMacOs.Register(appKey);
+#elif WINDOWS
+            AppAmbitWindows.Register(appKey);
+#endif
     }
 
     private static void HookPlatformLifecycle(string appKey)
