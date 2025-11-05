@@ -31,6 +31,8 @@ internal static class CrashFileGenerator
         CrashFileGeneratorAndroid.AddThreads(log);
 #elif IOS
         CrashFileGeneratorIOS.AddThreads(log);
+#elif MACCATALYST
+        CrashFileGeneratorMacOS.AddThreads(log);
 #else 
         AddThreads(log);
 #endif

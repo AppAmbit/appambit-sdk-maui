@@ -315,7 +315,6 @@ internal class SessionManager
     {
         if (startedAt == null || endedAt == null) return "";
 
-        // Forzamos UTC sin doble conversión y truncamos a segundos
         var a = UtcIsoFormatString(NormalizeToUtcSecond(startedAt.Value));
         var b = UtcIsoFormatString(NormalizeToUtcSecond(endedAt.Value));
 

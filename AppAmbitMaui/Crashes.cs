@@ -6,6 +6,11 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using System.IO;
+#if MACCATALYST
+using ObjCRuntime;
+#endif
+
 
 namespace AppAmbit
 {
@@ -16,6 +21,7 @@ namespace AppAmbit
         private static IAPIService? _apiService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
+        private static bool _crashScanDone;
 
         internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
         {
@@ -23,6 +29,11 @@ namespace AppAmbit
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
             TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+
+#if MACCATALYST
+                Runtime.MarshalManagedException -= OnMarshalManagedException;
+                Runtime.MarshalManagedException += OnMarshalManagedException;
+#endif
 
             _storageService = storageService;
             _apiService = apiService;
@@ -68,6 +79,10 @@ namespace AppAmbit
         internal static async Task LoadCrashFileIfExists()
         {
             await _ensureFileLocked.WaitAsync();
+            if (_crashScanDone) return;
+            _crashScanDone = true;
+
+
             try
             {
                 if (!SessionManager.IsSessionActive)
@@ -106,6 +121,10 @@ namespace AppAmbit
                     Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
                     await StoreBatchCrashesLog(exceptionInfos);
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
             }
             finally
             {
@@ -170,17 +189,47 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
-            await LogCrash(info);
         }
+
+
+#if MACCATALYST
+        private static void OnMarshalManagedException(object? sender, MarshalManagedExceptionEventArgs e)
+        {
+            try
+            {
+                if (e?.Exception is not Exception ex) return;
+
+                var info = ExceptionInfo.FromException(ex, _deviceId);
+                var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                SaveCrashToFile(json);
+                OnCrashException?.Invoke(ex);
+            }
+            catch (Exception err)
+            {
+                Debug.WriteLine($"[Crashes] MarshalManagedException error: {err}");
+            }
+        }
+#endif
+
 
         private static void SaveCrashToFile(string json)
         {
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"crash_{timestamp}.json";
-            string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
+            try
+            {
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"crash_{timestamp}.json";
+                string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
 
-            Debug.WriteLine($"Crash file saved to: {crashFile}");
-            File.WriteAllText(crashFile, json);
+                File.WriteAllText(crashFile, json);
+                Debug.WriteLine($"Crash file saved to: {crashFile}");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"[Crashes] SaveCrashToFile error: {e.Message}");
+            }
         }
 
         private static string? GetCallerClass()
