@@ -14,6 +14,7 @@ public static class AppAmbitSdk
     private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
     private static bool _configuredByBuilder = false;
     private static bool _servicesReady = false;
+    private static bool _skippedFirstResume = false;
     public static void MarkConfiguredByBuilder() => _configuredByBuilder = true;
 
     private static void OnStart(string appKey)
@@ -55,16 +56,24 @@ public static class AppAmbitSdk
         {
             await SessionManager.RemoveSavedEndSession();
         }
-        
+
         BreadcrumbManager.LoadBreadcrumbsFromFile();
-        await BreadcrumbManager.AddAsync(BreadcrumbsConstants.onResume);        
+
+        if (_skippedFirstResume)
+        {
+            await BreadcrumbManager.AddAsync(BreadcrumbsConstants.onResume);
+        }
+        else
+        {
+            _skippedFirstResume = true;
+        }
+
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }
 
     private static void OnSleep()
     {
-
         if (!Analytics._isManualSessionEnabled)
         {
             BreadcrumbManager.SaveFile(BreadcrumbsConstants.onPause);
@@ -76,7 +85,6 @@ public static class AppAmbitSdk
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            BreadcrumbManager.SaveFile(BreadcrumbsConstants.onDestroy);
             SessionManager.SaveEndSession();
         }
     }
@@ -184,7 +192,7 @@ public static class AppAmbitSdk
         try
         {
             if (_configuredByBuilder) return;
-            HookPlatformLifecycle(appKey);            
+            HookPlatformLifecycle(appKey);
         }
         catch (Exception ex)
         {

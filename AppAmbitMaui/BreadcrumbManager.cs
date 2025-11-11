@@ -15,6 +15,7 @@ internal static class BreadcrumbManager
     private static IStorageService? _storage;
     private static readonly object _lastLock = new();
     private static string? _lastBreadcrumb;
+    private static long _lastBreadcrumbAtMs;
 
     public static void Initialize(IAPIService api, IStorageService storage)
     {
@@ -24,23 +25,14 @@ internal static class BreadcrumbManager
 
     public static async Task AddAsync(string name)
     {
-        lock (_lastLock)
-        {
-            if (_lastBreadcrumb == name) return;
-            _lastBreadcrumb = name;
-        }
-
+        if (IsDuplicate(name)) return;
         var entity = CreateBreadcrumb(name);
         await SendBreadcumbs(entity);
     }
 
     public static void SaveFile(string name)
     {
-        lock (_lastLock)
-        {
-            _lastBreadcrumb = name;
-        }
-
+        if (IsDuplicate(name)) return;
         var breadcrumb = CreateBreadcrumb(name);
         var data = breadcrumb.ToData(sessionId: SessionManager.SessionId);
         GetSaveJsonArray(BreadcrumbsConstants.nameFile, data);
@@ -53,18 +45,25 @@ internal static class BreadcrumbManager
             var files = GetSaveJsonArray<BreadcrumbData>(BreadcrumbsConstants.nameFile, null);
             var notSent = new List<BreadcrumbData>();
 
-            if (files == null || files.Count == 0)
-            {
-                return;
-            }
+            if (files == null || files.Count == 0) return;
+
+            string? lastName = null;
+            long lastMs = 0;
 
             foreach (var item in files)
             {
                 if (item == null) continue;
-
                 try
                 {
-                    AsyncHelpers.RunSync(() => _storage!.AddBreadcrumbAsync(item.ToEntity()));
+                    var entity = item.ToEntity();
+                    var name = entity.Name ?? string.Empty;
+                    var createdMs = new DateTimeOffset(entity.CreatedAt).ToUnixTimeMilliseconds();
+
+                    if (lastName != null && name == lastName && (createdMs - lastMs) < 2000) continue;
+
+                    AsyncHelpers.RunSync(() => _storage!.AddBreadcrumbAsync(entity));
+                    lastName = name;
+                    lastMs = createdMs;
                 }
                 catch
                 {
@@ -96,29 +95,18 @@ internal static class BreadcrumbManager
         try
         {
             var items = await _storage.GetOldest100BreadcrumbsAsync();
-
-            if (items == null || items.Count == 0)
-            {
-                Debug.WriteLine("There are no breadcrumbs");
-                return;
-            }
+            if (items == null || items.Count == 0) return;
 
             var itemsData = items
                 .Select(b => b.ToData(sessionId: b.SessionId ?? string.Empty))
                 .ToList();
 
             var endpoint = new BreadcrumbsBatchEndpoint(itemsData ?? []);
-
             var responseBatch = await _api.ExecuteRequest<Response>(endpoint);
 
-            if (responseBatch?.ErrorType == ApiErrorType.NetworkUnavailable)
-            {
-                Debug.WriteLine("Batch of unsent events");
-                return;
-            }
+            if (responseBatch?.ErrorType == ApiErrorType.NetworkUnavailable) return;
 
             await _storage.DeleteBreadcrumbs(items);
-            Debug.WriteLine("Finished Breacrumbs Batch");
         }
         catch (Exception ex)
         {
@@ -133,13 +121,7 @@ internal static class BreadcrumbManager
         {
             var ep = new BreadcrumbEndpoint(entity);
             var result = await _api.ExecuteRequest<Response>(ep);
-
-            if (result.ErrorType == ApiErrorType.None)
-            {
-                return true;
-            }
-
-            return false;
+            return result.ErrorType == ApiErrorType.None;
         }
         catch
         {
@@ -153,6 +135,21 @@ internal static class BreadcrumbManager
         if (!sent && _storage != null)
         {
             await _storage.AddBreadcrumbAsync(entity);
+        }
+    }
+
+    private static bool IsDuplicate(string name)
+    {
+        lock (_lastLock)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var dup = _lastBreadcrumb == name && (now - _lastBreadcrumbAtMs) < 2000;
+            if (!dup)
+            {
+                _lastBreadcrumb = name;
+                _lastBreadcrumbAtMs = now;
+            }
+            return dup;
         }
     }
 }

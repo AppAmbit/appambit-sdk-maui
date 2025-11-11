@@ -95,17 +95,8 @@ namespace AppAmbit
                         exceptionInfos.Add(exceptionInfo);
                 }
 
-                if (exceptionInfos.Count == 1)
-                {
-                    Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
-                    await LogCrash(exceptionInfos[0]);
-                    DeleteCrashes();
-                }
-                else if (exceptionInfos.Count > 1)
-                {
-                    Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
-                    await StoreBatchCrashesLog(exceptionInfos);
-                }
+                Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
+                await StoreBatchCrashesLog(exceptionInfos);
             }
             finally
             {
