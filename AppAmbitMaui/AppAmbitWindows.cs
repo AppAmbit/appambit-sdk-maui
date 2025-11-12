@@ -32,19 +32,6 @@ namespace AppAmbit
             AppAmbitSdk.InternalEnd();
         }
 
-        public static void AttachWindowEvents(Window window)
-        {
-            window.Activated += (_, _) =>
-            {
-                Log("(OnResume)");
-            };
-
-            window.Deactivated += (_, _) =>
-            {
-                Log("(OnPause)");
-            };
-        }
-
         private static void CheckNetworkStatus()
         {
             bool isOnline = NetworkInterface.GetIsNetworkAvailable();

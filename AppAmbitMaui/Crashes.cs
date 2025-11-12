@@ -14,6 +14,7 @@ namespace AppAmbit
         public static event Action<object> OnCrashException;
         private static IStorageService? _storageService;
         private static IAPIService? _apiService;
+        private static IAppInfoService? _appInfoService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
 
@@ -273,7 +274,7 @@ namespace AppAmbit
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+                AppVersion = $"{_appInfoService?.AppVersion} ({_appInfoService?.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,
