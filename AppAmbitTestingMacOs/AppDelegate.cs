@@ -6,7 +6,7 @@ public class AppDelegate : UIApplicationDelegate
 {
 	public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
 	{
-		AppAmbitSdk.Start("d3cf780c-36d8-42f4-aba9-5d81611ec4ce");
+		AppAmbitSdk.Start("<YOUR-APPKEY>");
 		return true;
 	}
 

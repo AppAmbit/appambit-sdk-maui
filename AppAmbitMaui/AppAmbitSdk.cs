@@ -53,7 +53,8 @@ public static class AppAmbitSdk
         {
             await SessionManager.RemoveSavedEndSession();
         }
-
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
         await Crashes.LoadCrashFileIfExists();
         await SendDataPending();
     }

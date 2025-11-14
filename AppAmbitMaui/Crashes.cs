@@ -79,58 +79,52 @@ namespace AppAmbit
         internal static async Task LoadCrashFileIfExists()
         {
             await _ensureFileLocked.WaitAsync();
-            if (_crashScanDone) return;
-            _crashScanDone = true;
-
 
             try
             {
-                if (!SessionManager.IsSessionActive)
-                    return;
+                if (_crashScanDone) return;
+                _crashScanDone = true;
 
-                var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
-                int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
-
-
-                if (crashFileCount == 0)
+                try
                 {
-                    SetCrashFlag(false);
-                    return;
-                }
+                    if (!SessionManager.IsSessionActive)
+                        return;
 
-                Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
-                SetCrashFlag(true);
+                    var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
+                    int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
 
-                var exceptionInfos = new List<ExceptionInfo>();
+                    if (crashFileCount == 0)
+                    {
+                        SetCrashFlag(false);
+                        return;
+                    }
 
-                foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
-                {
-                    var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
-                    if (exceptionInfo != null)
-                        exceptionInfos.Add(exceptionInfo);
-                }
+                    Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
+                    SetCrashFlag(true);
 
-                if (exceptionInfos.Count == 1)
-                {
-                    Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
-                    await LogCrash(exceptionInfos[0]);
-                    DeleteCrashes();
-                }
-                else if (exceptionInfos.Count > 1)
-                {
-                    Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
+                    var exceptionInfos = new List<ExceptionInfo>();
+
+                    foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
+                    {
+                        var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
+                        if (exceptionInfo != null)
+                            exceptionInfos.Add(exceptionInfo);
+                    }
+
+                    Debug.WriteLine($"Storage crash batch: {exceptionInfos.Count} items");
                     await StoreBatchCrashesLog(exceptionInfos);
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.ToString());
+                }
             }
             finally
             {
                 _ensureFileLocked.Release();
             }
         }
+
 
         public static Task<bool> DidCrashInLastSession()
         {
@@ -197,6 +191,12 @@ namespace AppAmbit
         {
             try
             {
+                if (!Analytics._isManualSessionEnabled)
+                    SessionManager.SaveEndSession();
+
+                if (!SessionManager.IsSessionActive)
+                    return;
+
                 if (e?.Exception is not Exception ex) return;
 
                 var info = ExceptionInfo.FromException(ex, _deviceId);
@@ -319,10 +319,12 @@ namespace AppAmbit
         private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
         {
             var file = exception?.CrashLogFile;
+            var info = new Services.AppInfoService();
+
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+                AppVersion = $"{info.AppVersion} ({info.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,
