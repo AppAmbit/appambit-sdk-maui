@@ -34,6 +34,7 @@ internal static partial class MauiNativePlatforms
     internal static async Task OnConnectivityAvailableAsync()
     {
         var ok = await NetConnectivity.HasInternetAsync();
+
         if (!ok || Analytics._isManualSessionEnabled) return;
 
         if (!await _connectivityGate.WaitAsync(0)) return;
@@ -42,12 +43,10 @@ internal static partial class MauiNativePlatforms
             if (!AppAmbitSdk.InternalTokenIsValid())
                 await AppAmbitSdk.InternalEnsureToken(null);
 
+            BreadcrumbManager.LoadBreadcrumbsFromFile();
             await SessionManager.SendEndSessionFromDatabase();
             await SessionManager.SendStartSessionIfExist();
-            await Crashes.LoadCrashFileIfExists();
-            BreadcrumbManager.LoadBreadcrumbsFromFile();
-            await SessionManager.SendBatchSessions();
-
+            await Crashes.LoadCrashFileIfExists();            
             await AppAmbitSdk.InternalSendPending();
         }
         finally

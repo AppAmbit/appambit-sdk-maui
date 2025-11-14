@@ -9,18 +9,7 @@ internal class AppConstants
 
     internal const SQLite.SQLiteOpenFlags Flags = SQLite.SQLiteOpenFlags.ReadWrite | SQLite.SQLiteOpenFlags.Create | SQLite.SQLiteOpenFlags.SharedCache;
 
-    internal static string DatabasePath
-    {
-        get
-        {
-            var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            if (string.IsNullOrEmpty(baseDir))
-                baseDir = AppContext.BaseDirectory;
-            Directory.CreateDirectory(baseDir);
-            return Path.Combine(baseDir, DatabaseFileName);
-        }
-    }
-
+    internal static string DatabasePath => AppPaths.GetDatabaseFilePath(DatabaseFileName);
     internal const string DidCrashFileName = "did_app_crash.json";
     
     internal const string UnknownFileName = nameof(UnknownFileName); 

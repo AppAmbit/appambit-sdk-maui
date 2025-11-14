@@ -161,6 +161,11 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
-         
+
     }
+    
+    private async void OnGoToSecondPage(object? sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new SecondPage());
+    }    
 }

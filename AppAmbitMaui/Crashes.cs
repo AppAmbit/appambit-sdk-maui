@@ -165,12 +165,20 @@ namespace AppAmbit
 
         private static void SaveCrashToFile(string json)
         {
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"crash_{timestamp}.json";
-            string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
+            try
+            {
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"crash_{timestamp}.json";
+                string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
 
-            Debug.WriteLine($"Crash file saved to: {crashFile}");
-            File.WriteAllText(crashFile, json);
+                File.WriteAllText(crashFile, json);
+                Debug.WriteLine($"Crash file saved to: {crashFile}");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"[Crashes] SaveCrashToFile error: {e.Message}");
+            }
         }
 
         private static string? GetCallerClass()
@@ -260,10 +268,11 @@ namespace AppAmbit
         private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
         {
             var file = exception?.CrashLogFile;
+             var info = new Services.AppInfoService();
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+                AppVersion = $"{info.AppVersion} ({info.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,

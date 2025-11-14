@@ -72,7 +72,6 @@ public static class AppAmbitMauiExtensions
         await SessionManager.SendStartSessionIfExist();
         await Crashes.LoadCrashFileIfExists();
         BreadcrumbManager.LoadBreadcrumbsFromFile();
-        await BreadcrumbManager.SendBatchBreadcrumbs();
         await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
         await AppAmbitSdk.InternalSendPending();
     }

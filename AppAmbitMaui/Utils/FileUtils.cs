@@ -10,11 +10,7 @@ internal static class FileUtils
 
     private static string GetBaseDir()
     {
-        var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (string.IsNullOrEmpty(baseDir))
-            baseDir = AppContext.BaseDirectory;
-        Directory.CreateDirectory(baseDir);
-        return baseDir;
+        return AppPaths.AppDataDir;
     }
 
     internal static async Task<T?> GetSavedSingleObject<T>() where T : class

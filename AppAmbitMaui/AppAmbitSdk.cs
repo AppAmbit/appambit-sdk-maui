@@ -41,6 +41,7 @@ public static class AppAmbitSdk
 
     private static async Task OnResume()
     {
+
         if (!_servicesReady)
         {
             InitializeServices();
@@ -69,7 +70,9 @@ public static class AppAmbitSdk
         }
 
         await Crashes.LoadCrashFileIfExists();
-        await SendDataPending();
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await SendDataPending();       
     }
 
     private static void OnSleep()
@@ -189,15 +192,19 @@ public static class AppAmbitSdk
 
     public static void Start(string appKey)
     {
-        try
-        {
-            if (_configuredByBuilder) return;
+        #if ANDROID
             HookPlatformLifecycle(appKey);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Erro to start: {ex.Message}");
-        }
+        #elif IOS && !MACCATALYST
+            HookPlatformLifecycle(appKey);
+        #endif
+
+        #if WINDOWS
+            Debug.WriteLine("WINDOWS");
+        #endif
+
+        #if MACCATALYST
+            Debug.WriteLine("MACCATALYST");
+        #endif
     }
 
     private static void HookPlatformLifecycle(string appKey)

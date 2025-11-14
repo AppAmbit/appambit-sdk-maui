@@ -1,11 +1,11 @@
 #if ANDROID
 using System;
 using System.Threading;
+using System.Diagnostics;
 using Android.Content;
+using Android.Content.Res;
 using Android.Net;
 using Android.Views;
-using AppAmbit.Services;
-using System.Diagnostics;
 
 using AApp = Android.App.Application;
 using AActivity = Android.App.Activity;
@@ -16,8 +16,6 @@ using AContext = Android.Content.Context;
 using CManager = Android.Net.ConnectivityManager;
 using NRequest = Android.Net.NetworkRequest;
 using NCapability = Android.Net.NetCapability;
-using AView = Android.Views.View;
-using AViewGroup = Android.Views.ViewGroup;
 
 namespace AppAmbit;
 
@@ -29,69 +27,72 @@ internal static partial class MauiNativePlatforms
     private static volatile bool _inForeground;
     private static volatile bool _waitingPause;
 
-    private static volatile bool _androidPageBreadcrumbsEnabled;
-    private static readonly object _pageLock = new();
-    private static string? _currentPageKey;
-
-    private static CManager.NetworkCallback? _netCallback;
-
     private static readonly long _activityDelayMs = 700;
     private static readonly AHandler _handler = new(ALooper.MainLooper);
     private static readonly Java.Lang.IRunnable _pauseRunnable = new PauseRunnable();
+
+    private static CManager.NetworkCallback? _netCallback;
+    private static volatile bool _firstConnectivityEvent = true;
+
+    private static readonly object _pageLock = new();
+    private static string? _lastPageClassFqcn;
 
     static partial void PlatformRegister(string appKey)
     {
         if (_androidInitialized) return;
         var app = AApp.Context as AApp;
         if (app is null) return;
-
         app.RegisterActivityLifecycleCallbacks(new LifecycleCallbacks());
         TryRegisterNetworkCallback(AApp.Context);
         _androidInitialized = true;
     }
 
-    static partial void PlatformEnablePageBreadcrumbs()
-    {
-        _androidPageBreadcrumbsEnabled = true;
-    }
+    static partial void PlatformEnablePageBreadcrumbs() { }
 
-    private static void EmitKey(string key)
+    private static void TrackPageChange(AActivity activity)
     {
+        if (IsDialogLike(activity)) return;
+        var fqcn = activity.Class?.Name ?? activity.GetType().FullName ?? "";
         string? prev;
         lock (_pageLock)
         {
-            if (_currentPageKey == key) return;
-            prev = _currentPageKey;
-            _currentPageKey = key;
-        }
-        if (prev != null) _ = AddCrumb(BreadcrumbsConstants.onDisappear);
-        _ = AddCrumb(BreadcrumbsConstants.onAppear);
-    }
-
-    private static string KeyFromView(Context ctx, AView? v)
-    {
-        if (v is null) return "view:Unknown";
-        if (v.Id != AView.NoId)
-        {
-            try
+            if (_lastPageClassFqcn == null)
             {
-                var name = ctx.Resources?.GetResourceEntryName(v.Id);
-                if (!string.IsNullOrWhiteSpace(name)) return $"view:{name}";
+                _lastPageClassFqcn = fqcn;
+                return;
             }
-            catch { }
+            if (string.Equals(_lastPageClassFqcn, fqcn, StringComparison.Ordinal))
+                return;
+            prev = _lastPageClassFqcn;
+            _lastPageClassFqcn = fqcn;
         }
-        return $"view:{v.GetType().FullName}";
+        var previousDisplay = SimpleNameOf(prev);
+        var currentDisplay = activity.Class?.SimpleName ?? activity.GetType().Name;
+        _ = BreadcrumbManager.AddAsync($"{BreadcrumbsConstants.onDisappear}: {previousDisplay}");
+        _ = BreadcrumbManager.AddAsync($"{BreadcrumbsConstants.onAppear}: {currentDisplay}");
     }
 
-    private static string KeyFromActivity(AActivity activity)
+    private static bool IsDialogLike(AActivity activity)
     {
-        var root = activity.FindViewById<AViewGroup>(Android.Resource.Id.Content);
-        if (root != null && root.ChildCount > 0)
+        try
         {
-            var child = root.GetChildAt(root.ChildCount - 1);
-            return KeyFromView(activity, child);
+            int[] attrs = new int[] { Android.Resource.Attribute.WindowIsTranslucent, Android.Resource.Attribute.WindowIsFloating };
+            using var ta = activity.Theme?.ObtainStyledAttributes(attrs);
+            bool translucent = ta?.GetBoolean(0, false) ?? false;
+            bool floating = ta?.GetBoolean(1, false) ?? false;
+            return translucent || floating;
         }
-        return $"activity:{activity.GetType().FullName}";
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string SimpleNameOf(string? fqcn)
+    {
+        if (string.IsNullOrWhiteSpace(fqcn)) return "";
+        var i = fqcn.LastIndexOf('.');
+        return i >= 0 ? fqcn.Substring(i + 1) : fqcn;
     }
 
     private sealed class PauseRunnable : Java.Lang.Object, Java.Lang.IRunnable
@@ -109,16 +110,7 @@ internal static partial class MauiNativePlatforms
 
     private sealed class LifecycleCallbacks : Java.Lang.Object, AApp.IActivityLifecycleCallbacks
     {
-        public void OnActivityCreated(AActivity activity, ABundle? savedInstanceState)
-        {
-            if (!_androidPageBreadcrumbsEnabled) return;
-
-            var root = activity.FindViewById<AViewGroup>(Android.Resource.Id.Content);
-            if (root != null)
-            {
-                root.SetOnHierarchyChangeListener(new RootHierarchyListener(activity));
-            }
-        }
+        public void OnActivityCreated(AActivity activity, ABundle? savedInstanceState) { }
 
         public void OnActivityStarted(AActivity activity)
         {
@@ -141,16 +133,12 @@ internal static partial class MauiNativePlatforms
                 _ = AppAmbitSdk.InternalResume();
             }
 
-            if (_androidPageBreadcrumbsEnabled)
-            {
-                EmitKey(KeyFromActivity(activity));
-            }
+            TrackPageChange(activity);
         }
 
         public void OnActivityPaused(AActivity activity)
         {
             InterlockedExtensions.DecrementToZero(ref _resumedActivities);
-
             if (_resumedActivities == 0)
             {
                 _waitingPause = true;
@@ -162,7 +150,7 @@ internal static partial class MauiNativePlatforms
         {
             InterlockedExtensions.DecrementToZero(ref _startedActivities);
             if (_startedActivities == 0 && !activity.IsChangingConfigurations)
-                AppAmbitSdk.InternalSleep();
+                AppAmbitSdk.InternalEnd();
         }
 
         public void OnActivitySaveInstanceState(AActivity activity, ABundle outState) { }
@@ -174,32 +162,10 @@ internal static partial class MauiNativePlatforms
         }
     }
 
-    private sealed class RootHierarchyListener : Java.Lang.Object, AViewGroup.IOnHierarchyChangeListener
-    {
-        private readonly WeakReference<AActivity> _actRef;
-
-        public RootHierarchyListener(AActivity activity)
-        {
-            _actRef = new WeakReference<AActivity>(activity);
-        }
-
-        public void OnChildViewAdded(AView? parent, AView? child)
-        {
-            if (!_androidPageBreadcrumbsEnabled || child is null) return;
-            if (_actRef.TryGetTarget(out var act))
-            {
-                EmitKey(KeyFromView(act, child));
-            }
-        }
-
-        public void OnChildViewRemoved(AView? parent, AView? child) { }
-    }
-
     private static void TryRegisterNetworkCallback(AContext context)
     {
         var cm = (CManager?)context.GetSystemService(AContext.ConnectivityService);
         if (cm is null) return;
-
         try
         {
             var request = new NRequest.Builder().AddCapability(NCapability.Internet).Build();
@@ -218,20 +184,25 @@ internal static partial class MauiNativePlatforms
 
     private sealed class NetCb : CManager.NetworkCallback
     {
-        public override void OnAvailable(Android.Net.Network network)
+        public override void OnAvailable(Network network)
         {
             base.OnAvailable(network);
+            if (_firstConnectivityEvent)
+            {
+                _firstConnectivityEvent = false;
+                return;
+            }
             _handler.PostDelayed(new Java.Lang.Runnable(async () =>
             {
-                await AddCrumb(BreadcrumbsConstants.online);
-                await OnConnectivityAvailableAsync();
+                await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
+                _ = OnConnectivityAvailableAsync();
             }), 3000);
         }
 
-        public override void OnLost(Android.Net.Network network)
+        public override void OnLost(Network network)
         {
             base.OnLost(network);
-            AddCrumbFile(BreadcrumbsConstants.offline);
+            BreadcrumbManager.SaveFile(BreadcrumbsConstants.offline);
         }
     }
 
