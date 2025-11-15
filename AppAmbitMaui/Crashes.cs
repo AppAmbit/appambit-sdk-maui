@@ -16,6 +16,7 @@ namespace AppAmbit
         private static IAPIService? _apiService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
+        private static bool _crashFlagEvaluated = false;
 
         internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
         {
@@ -76,15 +77,19 @@ namespace AppAmbit
                 var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
                 int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
 
-
                 if (crashFileCount == 0)
                 {
-                    SetCrashFlag(false);
+                    if (!_crashFlagEvaluated)
+                    {
+                        SetCrashFlag(false);
+                        _crashFlagEvaluated = true;
+                    }
                     return;
                 }
 
                 Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
                 SetCrashFlag(true);
+                _crashFlagEvaluated = true;
 
                 var exceptionInfos = new List<ExceptionInfo>();
 
@@ -268,7 +273,7 @@ namespace AppAmbit
         private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
         {
             var file = exception?.CrashLogFile;
-             var info = new Services.AppInfoService();
+            var info = new Services.AppInfoService();
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
