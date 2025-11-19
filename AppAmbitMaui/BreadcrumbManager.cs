@@ -104,7 +104,7 @@ internal static class BreadcrumbManager
             var endpoint = new BreadcrumbsBatchEndpoint(itemsData ?? []);
             var responseBatch = await _api.ExecuteRequest<Response>(endpoint);
 
-            if (responseBatch?.ErrorType == ApiErrorType.NetworkUnavailable) return;
+            if (responseBatch?.ErrorType != ApiErrorType.None) return;
 
             await _storage.DeleteBreadcrumbs(items);
         }
