@@ -199,11 +199,11 @@ public static class AppAmbitSdk
         #endif
 
         #if WINDOWS
-            Debug.WriteLine("WINDOWS");
+            Console.WriteLine("WINDOWS");
         #endif
 
         #if MACCATALYST
-            Debug.WriteLine("MACCATALYST");
+            AppAmbitMacOs.Register(appKey);
         #endif
     }
 

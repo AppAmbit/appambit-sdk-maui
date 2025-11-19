@@ -6,6 +6,11 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using System.IO;
+#if MACCATALYST
+using ObjCRuntime;
+#endif
+
 
 namespace AppAmbit
 {
@@ -24,6 +29,11 @@ namespace AppAmbit
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
             TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+
+#if MACCATALYST
+                Runtime.MarshalManagedException -= OnMarshalManagedException;
+                Runtime.MarshalManagedException += OnMarshalManagedException;
+#endif
 
             _storageService = storageService;
             _apiService = apiService;
@@ -108,6 +118,8 @@ namespace AppAmbit
                 _ensureFileLocked.Release();
             }
         }
+         
+
 
         public static Task<bool> DidCrashInLastSession()
         {
@@ -166,7 +178,36 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
+            await LogCrash(info);
         }
+
+#if MACCATALYST
+        private static void OnMarshalManagedException(object? sender, MarshalManagedExceptionEventArgs e)
+        {
+            try
+            {
+                if (!Analytics._isManualSessionEnabled)
+                    SessionManager.SaveEndSession();
+
+                if (!SessionManager.IsSessionActive)
+                    return;
+
+                if (e?.Exception is not Exception ex) return;
+
+                var info = ExceptionInfo.FromException(ex, _deviceId);
+                var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                SaveCrashToFile(json);
+                OnCrashException?.Invoke(ex);
+            }
+            catch (Exception err)
+            {
+                Debug.WriteLine($"[Crashes] MarshalManagedException error: {err}");
+            }
+        }
+#endif
+
 
         private static void SaveCrashToFile(string json)
         {
@@ -274,6 +315,8 @@ namespace AppAmbit
         {
             var file = exception?.CrashLogFile;
             var info = new Services.AppInfoService();
+
+
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
