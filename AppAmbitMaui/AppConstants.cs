@@ -14,7 +14,6 @@ internal class AppConstants
         SQLite.SQLiteOpenFlags.ReadWrite | SQLite.SQLiteOpenFlags.Create | SQLite.SQLiteOpenFlags.SharedCache;
 
     internal static string DatabasePath => AppPaths.GetDatabaseFilePath(DatabaseFileName);
-
     internal const string DidCrashFileName = "did_app_crash.json";
     internal const string UnknownFileName = nameof(UnknownFileName);
     internal const string UnknownClass = nameof(UnknownClass);

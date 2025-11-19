@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-#if MACCATALYST
+#if MACCATALYST || IOS
 using Foundation;
 #endif
 
@@ -12,7 +12,7 @@ namespace AppAmbit
         {
             get
             {
-#if MACCATALYST
+#if MACCATALYST || IOS
                 var baseDir = NSFileManager.DefaultManager
                     .GetUrls(NSSearchPathDirectory.ApplicationSupportDirectory, NSSearchPathDomain.User)[0].Path;
                 var dir = Path.Combine(baseDir, NSBundle.MainBundle.BundleIdentifier ?? "AppAmbit");
@@ -29,7 +29,7 @@ namespace AppAmbit
 
         public static string GetDatabaseFilePath(string databaseFileName)
         {
-#if MACCATALYST
+#if MACCATALYST || IOS
             var dir = Path.Combine(
                 NSFileManager.DefaultManager.GetUrls(NSSearchPathDirectory.ApplicationSupportDirectory, NSSearchPathDomain.User)[0].Path,
                 NSBundle.MainBundle.BundleIdentifier ?? "AppAmbit"

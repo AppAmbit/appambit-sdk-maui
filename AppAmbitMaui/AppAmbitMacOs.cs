@@ -19,10 +19,18 @@ internal static class AppAmbitMacOs
     static bool _hasStatus;
     static NWPathStatus _lastStatus;
     static bool _isHandlingNetworkChange;
+    static bool _skipFirstResume = true;
 
     static void TryResume()
     {
         if (_active <= 0) return;
+
+        if (_skipFirstResume)
+        {
+            _skipFirstResume = false;
+            return;
+        }
+
         _ever = true;
         _ = AppAmbitSdk.InternalResume();
     }
@@ -54,6 +62,12 @@ internal static class AppAmbitMacOs
         _lastStatus = status;
         _hasStatus = true;
 
+        if (status != NWPathStatus.Satisfied && previous == NWPathStatus.Satisfied)
+        {
+            BreadcrumbManager.SaveFile(BreadcrumbsConstants.offline);
+            return;
+        }
+
         if (status == NWPathStatus.Satisfied && previous != NWPathStatus.Satisfied)
         {
             _ = HandleNetworkChangeAsync();
@@ -73,6 +87,8 @@ internal static class AppAmbitMacOs
             await SessionManager.SendEndSessionFromDatabase();
             await SessionManager.SendStartSessionIfExist();
             await Crashes.LoadCrashFileIfExists();
+            BreadcrumbManager.LoadBreadcrumbsFromFile();
+            await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
             await AppAmbitSdk.InternalSendPending();
         }
         finally

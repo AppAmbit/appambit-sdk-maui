@@ -154,7 +154,7 @@ internal class SessionManager
             }
         };
 
-        await _storageService.UpdateLogsAndEventsSessionIds(session);
+        await _storageService.UpdateSessionIdsForAllTrackingData(session);
         await _storageService.DeleteSessionsList(session);
     }
 
@@ -235,7 +235,7 @@ internal class SessionManager
 
             if (resolved.Count > 0)
             {
-                await _storageService.UpdateLogsAndEventsSessionIds(resolved);
+                await _storageService.UpdateSessionIdsForAllTrackingData(resolved);
                 await _storageService.DeleteSessionsList(resolved);
             }
 
