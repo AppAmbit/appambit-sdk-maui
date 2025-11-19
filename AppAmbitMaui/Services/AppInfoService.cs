@@ -5,7 +5,10 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using AOSBuild = Android.OS.Build;
-#elif IOS
+#elif IOS && !MACCATALYST
+using Foundation;
+using UIKit;
+#elif MACCATALYST
 using Foundation;
 using UIKit;
 #endif
@@ -43,11 +46,18 @@ internal class AppInfoService : IAppInfoService
 #pragma warning restore 612, 618
         }
         Build = code.ToString();
-#elif IOS
+#elif IOS && !MACCATALYST
         Platform = "iOS";
         OS = UIDevice.CurrentDevice.SystemVersion;
         DeviceModel = UIDevice.CurrentDevice.Model;
 
+        var bundle = NSBundle.MainBundle;
+        AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
+        Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();
+#elif MACCATALYST
+        Platform = "macOS";
+        OS = NSProcessInfo.ProcessInfo.OperatingSystemVersionString;
+        DeviceModel = "Mac";
         var bundle = NSBundle.MainBundle;
         AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
         Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();

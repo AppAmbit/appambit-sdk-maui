@@ -6,6 +6,11 @@ using AppAmbit.Models.Responses;
 using AppAmbit.Services.Endpoints;
 using AppAmbit.Services.Interfaces;
 using Newtonsoft.Json;
+using System.IO;
+#if MACCATALYST
+using ObjCRuntime;
+#endif
+
 
 namespace AppAmbit
 {
@@ -16,6 +21,7 @@ namespace AppAmbit
         private static IAPIService? _apiService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
+        private static bool _crashScanDone;
 
         internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
         {
@@ -23,6 +29,11 @@ namespace AppAmbit
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException -= UnobservedTaskException;
             TaskScheduler.UnobservedTaskException += UnobservedTaskException;
+
+#if MACCATALYST
+                Runtime.MarshalManagedException -= OnMarshalManagedException;
+                Runtime.MarshalManagedException += OnMarshalManagedException;
+#endif
 
             _storageService = storageService;
             _apiService = apiService;
@@ -68,43 +79,44 @@ namespace AppAmbit
         internal static async Task LoadCrashFileIfExists()
         {
             await _ensureFileLocked.WaitAsync();
+
             try
             {
-                if (!SessionManager.IsSessionActive)
-                    return;
+                if (_crashScanDone) return;
+                _crashScanDone = true;
 
-                var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
-                int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
-
-
-                if (crashFileCount == 0)
+                try
                 {
-                    SetCrashFlag(false);
-                    return;
-                }
+                    if (!SessionManager.IsSessionActive)
+                        return;
 
-                Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
-                SetCrashFlag(true);
+                    var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
+                    int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
 
-                var exceptionInfos = new List<ExceptionInfo>();
+                    if (crashFileCount == 0)
+                    {
+                        SetCrashFlag(false);
+                        return;
+                    }
 
-                foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
-                {
-                    var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
-                    if (exceptionInfo != null)
-                        exceptionInfos.Add(exceptionInfo);
-                }
+                    Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
+                    SetCrashFlag(true);
 
-                if (exceptionInfos.Count == 1)
-                {
-                    Debug.WriteLine($"Sending one crash {exceptionInfos.Count} crash files");
-                    await LogCrash(exceptionInfos[0]);
-                    DeleteCrashes();
-                }
-                else if (exceptionInfos.Count > 1)
-                {
-                    Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
+                    var exceptionInfos = new List<ExceptionInfo>();
+
+                    foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
+                    {
+                        var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
+                        if (exceptionInfo != null)
+                            exceptionInfos.Add(exceptionInfo);
+                    }
+
+                    Debug.WriteLine($"Storage crash batch: {exceptionInfos.Count} items");
                     await StoreBatchCrashesLog(exceptionInfos);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.ToString());
                 }
             }
             finally
@@ -112,6 +124,7 @@ namespace AppAmbit
                 _ensureFileLocked.Release();
             }
         }
+
 
         public static Task<bool> DidCrashInLastSession()
         {
@@ -170,17 +183,53 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
-            await LogCrash(info);
         }
+
+
+#if MACCATALYST
+        private static void OnMarshalManagedException(object? sender, MarshalManagedExceptionEventArgs e)
+        {
+            try
+            {
+                if (!Analytics._isManualSessionEnabled)
+                    SessionManager.SaveEndSession();
+
+                if (!SessionManager.IsSessionActive)
+                    return;
+
+                if (e?.Exception is not Exception ex) return;
+
+                var info = ExceptionInfo.FromException(ex, _deviceId);
+                var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                SaveCrashToFile(json);
+                OnCrashException?.Invoke(ex);
+            }
+            catch (Exception err)
+            {
+                Debug.WriteLine($"[Crashes] MarshalManagedException error: {err}");
+            }
+        }
+#endif
+
 
         private static void SaveCrashToFile(string json)
         {
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"crash_{timestamp}.json";
-            string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
+            try
+            {
+                Directory.CreateDirectory(AppPaths.AppDataDir);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string fileName = $"crash_{timestamp}.json";
+                string crashFile = Path.Combine(AppPaths.AppDataDir, fileName);
 
-            Debug.WriteLine($"Crash file saved to: {crashFile}");
-            File.WriteAllText(crashFile, json);
+                File.WriteAllText(crashFile, json);
+                Debug.WriteLine($"Crash file saved to: {crashFile}");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine($"[Crashes] SaveCrashToFile error: {e.Message}");
+            }
         }
 
         private static string? GetCallerClass()
@@ -270,10 +319,12 @@ namespace AppAmbit
         private static LogEntity MapExceptionInfoToLogEntity(ExceptionInfo exception, LogType logType = LogType.Crash)
         {
             var file = exception?.CrashLogFile;
+            var info = new Services.AppInfoService();
+
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{AppInfo.VersionString} ({AppInfo.BuildString})",
+                AppVersion = $"{info.AppVersion} ({info.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,
