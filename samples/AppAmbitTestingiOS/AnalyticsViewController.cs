@@ -54,6 +54,7 @@ public class AnalyticsViewController : UIViewController
     {
         base.ViewDidLoad();
         View.BackgroundColor = UIColor.SystemBackground;
+        Title = "AnalyticsView";
 
         var scroll = new UIScrollView { TranslatesAutoresizingMaskIntoConstraints = false };
         var stack = new UIStackView
@@ -66,12 +67,16 @@ public class AnalyticsViewController : UIViewController
         };
 
         var btnInvalidate = MakeButton("Invalidate Token");
-        btnInvalidate.TouchUpInside += (s, e) => { Analytics.ClearToken(); };
+        btnInvalidate.TouchUpInside += (s, e) =>
+        {
+            Analytics.ClearToken();
+        };
 
         var btnTokenRefresh = MakeButton("Token refresh test");
         btnTokenRefresh.TouchUpInside += async (s, e) =>
         {
             var props = new Dictionary<string, string> { { "user_id", "1" } };
+
             var logsTasks = Enumerable.Range(1, 5).Select(async i =>
             {
                 await Crashes.LogError("Sending logs 5 after invalid token", props, "AnalyticsView");
@@ -83,7 +88,10 @@ public class AnalyticsViewController : UIViewController
             for (int i = 1; i <= 5; i++)
             {
                 await serial.WaitAsync();
-                await Analytics.TrackEvent("Sending event 5 after invalid token", new Dictionary<string, string> { { "Test Token", "5 events sent" } });
+                await Analytics.TrackEvent(
+                    "Sending event 5 after invalid token",
+                    new Dictionary<string, string> { { "Test Token", "5 events sent" } }
+                );
                 Debug.WriteLine($"Event {i} tracked successfully");
                 serial.Release();
             }
@@ -124,7 +132,13 @@ public class AnalyticsViewController : UIViewController
         {
             var _300Characters = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
             var _300Characters2 = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678902";
-            var properties = new Dictionary<string, string> { { _300Characters, _300Characters }, { _300Characters2, _300Characters2 } };
+
+            var properties = new Dictionary<string, string>
+            {
+                { _300Characters, _300Characters },
+                { _300Characters2, _300Characters2 }
+            };
+
             await Analytics.TrackEvent(_300Characters, properties);
             Debug.WriteLine("Event sent successfully");
         };
@@ -137,8 +151,45 @@ public class AnalyticsViewController : UIViewController
             Debug.WriteLine("Event sent successfully");
         };
 
+        var btnGoSecond = MakeButton("Change to Second Activity");
+        btnGoSecond.TouchUpInside += (s, e) =>
+        {
+            var second = new SecondView();
+
+            var top = GetTopViewController();
+            if (top == null)
+                return;
+
+            var nav = top.NavigationController;
+            if (nav != null)
+            {
+                nav.PushViewController(second, true);
+            }
+            else if (top is UINavigationController nav2)
+            {
+                nav2.PushViewController(second, true);
+            }
+            else
+            {
+                second.ModalPresentationStyle = UIModalPresentationStyle.FullScreen;
+                top.PresentViewController(second, true, null);
+            }
+        };
+
         var container = new UIView { TranslatesAutoresizingMaskIntoConstraints = false };
-        var buttons = new[] { btnInvalidate, btnTokenRefresh, btnStartSession, btnEndSession, btnEventWithProp, btnDefaultEvent, btn300, btnMaxProps };
+        var buttons = new[]
+        {
+            btnInvalidate,
+            btnTokenRefresh,
+            btnStartSession,
+            btnEndSession,
+            btnEventWithProp,
+            btnDefaultEvent,
+            btn300,
+            btnMaxProps,
+            btnGoSecond
+        };
+
         foreach (var b in buttons) stack.AddArrangedSubview(b);
 
         View.AddSubview(scroll);
@@ -163,5 +214,41 @@ public class AnalyticsViewController : UIViewController
             stack.TrailingAnchor.ConstraintEqualTo(container.TrailingAnchor, -16),
             stack.BottomAnchor.ConstraintEqualTo(container.BottomAnchor, -16),
         });
+    }
+
+    UIViewController? GetTopViewController()
+    {
+        var app = UIApplication.SharedApplication;
+        if (app?.ConnectedScenes == null) return null;
+
+        foreach (var scene in app.ConnectedScenes)
+        {
+            if (scene is UIWindowScene ws)
+            {
+                foreach (var window in ws.Windows)
+                {
+                    if (!window.IsKeyWindow) continue;
+                    var root = window.RootViewController;
+                    if (root == null) continue;
+                    return TopViewController(root);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    UIViewController TopViewController(UIViewController root)
+    {
+        if (root.PresentedViewController != null)
+            return TopViewController(root.PresentedViewController);
+
+        if (root is UINavigationController nav && nav.VisibleViewController != null)
+            return TopViewController(nav.VisibleViewController);
+
+        if (root is UITabBarController tab && tab.SelectedViewController != null)
+            return TopViewController(tab.SelectedViewController);
+
+        return root;
     }
 }

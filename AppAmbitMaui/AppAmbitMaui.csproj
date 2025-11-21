@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-windows</TargetFrameworks>
+    <TargetFrameworks>net9.0;net9.0-android;net9.0-ios;net9.0-windows;net9.0-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows</TargetFrameworks>
     <UseMaui>true</UseMaui>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -13,7 +13,7 @@
 
     <PackageId>com.AppAmbit.Sdk</PackageId>
     <PackageTags>appambit; sdk; telemetry; logging; analytics; crashes; debug; distribution; ci; cd; maui; xamarin; mobile; apps; diagnostics; monitoring</PackageTags>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>AppAmbit</Authors>
     <Company>AppAmbit</Company>
     <Description>Lightweight SDK for analytics, events, logging, crashes, and offline support. Simple setup, minimal overhead.</Description>
@@ -53,6 +53,10 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-ios'">
     <Compile Include="Platforms\iOS\**\*.cs" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-maccatalyst'">
+    <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>  
 
 <PropertyGroup>
   <PackageIcon>icon.png</PackageIcon>

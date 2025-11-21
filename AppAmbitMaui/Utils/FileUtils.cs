@@ -1,7 +1,10 @@
+using System;
+using System.IO;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using AppAmbit.Utils;
 using Newtonsoft.Json.Converters;
+
 namespace AppAmbit;
 
 internal static class FileUtils
@@ -10,11 +13,7 @@ internal static class FileUtils
 
     private static string GetBaseDir()
     {
-        var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (string.IsNullOrEmpty(baseDir))
-            baseDir = AppContext.BaseDirectory;
-        Directory.CreateDirectory(baseDir);
-        return baseDir;
+        return AppPaths.AppDataDir;
     }
 
     internal static async Task<T?> GetSavedSingleObject<T>() where T : class
@@ -73,7 +72,7 @@ internal static class FileUtils
         Debug.WriteLine($"Saved {typeof(T).Name} to {filePath}");
     }
 
-    public static async Task<List<T>> GetSaveJsonArrayAsync<T>(string fileName, T? entry)
+    public static List<T> GetSaveJsonArray<T>(string fileName, T? entry)
         where T : class, IIdentifiable
     {
         try
@@ -88,7 +87,7 @@ internal static class FileUtils
             {
                 list.Add(entry);
                 var listSorted = list.OrderBy(x => x.Timestamp).ToList();
-                await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(listSorted, settings));
+                File.WriteAllText(path, JsonConvert.SerializeObject(listSorted, settings));
             }
 
             return list;
@@ -100,7 +99,7 @@ internal static class FileUtils
         }
     }
 
-    internal static async Task UpdateJsonArrayAsync<T>(string fileName, IEnumerable<T> updatedList)
+    internal static void UpdateJsonArray<T>(string fileName, IEnumerable<T> updatedList)
     {
         try
         {
@@ -113,7 +112,7 @@ internal static class FileUtils
             }
 
             var json = JsonConvert.SerializeObject(updatedList, settings);
-            await File.WriteAllTextAsync(path, json);
+            File.WriteAllText(path, json);
         }
         catch (Exception)
         {

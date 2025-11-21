@@ -23,14 +23,17 @@ public class MainTabBarController : UITabBarController
         var imgCrashes = SysImg("exclamationmark.triangle");
         var imgAnalytics = SysImg("chart.bar");
 
-        crashes.TabBarItem = imgCrashes != null
+        var crashesNav = new UINavigationController(crashes);
+        var analyticsNav = new UINavigationController(analytics);
+
+        crashesNav.TabBarItem = imgCrashes != null
             ? new UITabBarItem("Crashes", imgCrashes, 0)
             : new UITabBarItem("Crashes", null, 0);
 
-        analytics.TabBarItem = imgAnalytics != null
+        analyticsNav.TabBarItem = imgAnalytics != null
             ? new UITabBarItem("Analytics", imgAnalytics, 1)
             : new UITabBarItem("Analytics", null, 1);
 
-        ViewControllers = [crashes, analytics];
+        ViewControllers = new UIViewController[] { crashesNav, analyticsNav };
     }
 }

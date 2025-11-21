@@ -39,6 +39,9 @@
                     <Button x:Name="Button220BatchEvents"
                         Text="Send Batch of 220 Events" 
                         Clicked="OnGenerateBatchEvents" />
+                    <Button x:Name="ButtonSecondPage" 
+                        Text="Change to Second Page" 
+                        Clicked="OnGoToSecondPage" />    
             </VerticalStackLayout>
         </ScrollView>
     </ContentPage.Content>

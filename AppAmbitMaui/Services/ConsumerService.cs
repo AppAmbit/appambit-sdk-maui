@@ -114,7 +114,6 @@ internal class ConsumerService
     {
         if (_storageService == null)
         {
-            Console.WriteLine("UpdateAppKeyIfNeeded: _storageService is null, skipping.");
             return;
         }
 

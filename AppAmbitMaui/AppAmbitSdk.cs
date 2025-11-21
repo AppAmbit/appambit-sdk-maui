@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
-using System.Threading.Tasks;
 
 namespace AppAmbit;
 
@@ -15,7 +14,7 @@ public static class AppAmbitSdk
     private static readonly SemaphoreSlim _ensureBatchLocked = new(1, 1);
     private static bool _configuredByBuilder = false;
     private static bool _servicesReady = false;
-
+    private static bool _skippedFirstResume = false;
     public static void MarkConfiguredByBuilder() => _configuredByBuilder = true;
 
     private static void OnStart(string appKey)
@@ -26,9 +25,13 @@ public static class AppAmbitSdk
 
             InitializeServices();
             InitializeConsumer(appKey);
+
+            AsyncHelpers.RunSync(() => BreadcrumbManager.AddAsync(BreadcrumbsConstants.onStart));
+
             _hasStartedSession = true;
-            RunSync(() => Crashes.LoadCrashFileIfExists());
-            RunSync(SendDataPending);
+            BreadcrumbManager.LoadBreadcrumbsFromFile();
+            AsyncHelpers.RunSync(() => Crashes.LoadCrashFileIfExists());
+            AsyncHelpers.RunSync(SendDataPending);
         }
         catch (Exception ex)
         {
@@ -38,6 +41,7 @@ public static class AppAmbitSdk
 
     private static async Task OnResume()
     {
+
         if (!_servicesReady)
         {
             InitializeServices();
@@ -54,14 +58,28 @@ public static class AppAmbitSdk
             await SessionManager.RemoveSavedEndSession();
         }
 
+        BreadcrumbManager.LoadBreadcrumbsFromFile();
+
+        if (_skippedFirstResume)
+        {
+            await BreadcrumbManager.AddAsync(BreadcrumbsConstants.onResume);
+        }
+        else
+        {
+            _skippedFirstResume = true;
+        }
+
         await Crashes.LoadCrashFileIfExists();
-        await SendDataPending();
+        await SessionManager.SendEndSessionFromDatabase();
+        await SessionManager.SendStartSessionIfExist();
+        await SendDataPending();       
     }
 
     private static void OnSleep()
     {
         if (!Analytics._isManualSessionEnabled)
         {
+            BreadcrumbManager.SaveFile(BreadcrumbsConstants.onPause);
             SessionManager.SaveEndSession();
         }
     }
@@ -78,17 +96,17 @@ public static class AppAmbitSdk
     {
         if (!Analytics._isManualSessionEnabled)
         {
-            RunSync(SessionManager.SaveSessionEndToDatabaseIfExist);
+            AsyncHelpers.RunSync(SessionManager.SaveSessionEndToDatabaseIfExist);
         }
 
-        RunSync(() => GetNewToken(appKey));
+        AsyncHelpers.RunSync(() => GetNewToken(appKey));
 
         if (Analytics._isManualSessionEnabled)
             return;
 
-        RunSync(SessionManager.SendEndSessionFromDatabase);
-        RunSync(SessionManager.SendEndSessionFromFile);
-        RunSync(SessionManager.StartSession);
+        AsyncHelpers.RunSync(SessionManager.SendEndSessionFromDatabase);
+        AsyncHelpers.RunSync(SessionManager.SendEndSessionFromFile);
+        AsyncHelpers.RunSync(SessionManager.StartSession);
     }
 
     private static async Task SendDataPending()
@@ -99,6 +117,7 @@ public static class AppAmbitSdk
             await SessionManager.SendBatchSessions();
             await Crashes.SendBatchLogs();
             await Analytics.SendBatchEvents();
+            await BreadcrumbManager.SendBatchBreadcrumbs();
         }
         finally
         {
@@ -116,15 +135,18 @@ public static class AppAmbitSdk
             appInfoService ??= new AppInfoService();
             storageService ??= new StorageService();
 
-            RunSync(() => storageService!.InitializeAsync());
+            AsyncHelpers.RunSync(() => storageService!.InitializeAsync());
             ConsumerService.Initialize(storageService, appInfoService, apiService);
             TokenService.Initialize(storageService);
 
-            var deviceId = RunSync(() => storageService.GetDeviceId());
+            var deviceId = AsyncHelpers.RunSync(() => storageService.GetDeviceId());
 
             SessionManager.Initialize(apiService, storageService);
             Crashes.Initialize(apiService, storageService, deviceId ?? "");
             Analytics.Initialize(apiService, storageService);
+            ConsumerService.Initialize(storageService, appInfoService, apiService);
+
+            BreadcrumbManager.Initialize(apiService!, storageService!);
 
             _servicesReady = true;
         }
@@ -183,31 +205,13 @@ public static class AppAmbitSdk
 
     private static void HookPlatformLifecycle(string appKey)
     {
-        MauiNativePlatforms.Register(appKey);
-    }
-
-    private static void RunSync(Func<Task> task)
-    {
         try
         {
-            Task.Run(task).GetAwaiter().GetResult();
+            MauiNativePlatforms.Register(appKey);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AppAmbitSdk] Exception during synchronous task execution: {ex}");
-        }
-    }
-
-    private static T? RunSync<T>(Func<Task<T>> task)
-    {
-        try
-        {
-            return Task.Run(task).GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[AppAmbitSdk] Exception during synchronous task execution: {ex}");
-            return default;
+            Debug.WriteLine($"Error to start: {ex.Message}");             
         }
     }
 
