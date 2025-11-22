@@ -8,8 +8,6 @@ namespace AppAmbitTestingApp;
 
 public partial class AnalyticsPage : ContentPage
 {
-    private const string OfflineSessionsFile = "OfflineSessions.json";
-
     public AnalyticsPage()
     {
         InitializeComponent();
