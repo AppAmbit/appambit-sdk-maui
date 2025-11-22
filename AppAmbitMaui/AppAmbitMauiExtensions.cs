@@ -68,10 +68,10 @@ public static class AppAmbitMauiExtensions
         if (!AppAmbitSdk.InternalTokenIsValid())
             await AppAmbitSdk.InternalEnsureToken(null);
 
+        BreadcrumbManager.LoadBreadcrumbsFromFile();
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
-        await Crashes.LoadCrashFileIfExists();
-        BreadcrumbManager.LoadBreadcrumbsFromFile();
+        await Crashes.LoadCrashFileIfExists();        
         await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
         await AppAmbitSdk.InternalSendPending();
     }
