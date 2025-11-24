@@ -8,22 +8,27 @@ namespace AppAmbit
     {
         private static string? _appKey;
         private static bool _initialized = false;
+        private static bool _sessionStarted = false;
+
         public static void Register(string appKey)
         {
             if (_initialized) return;
 
-            _appKey = appKey;
             _initialized = true;
+            _appKey = appKey;
 
             AppDomain.CurrentDomain.ProcessExit += OnAppExit;
 
-            CheckNetworkStatus();
+            RegisterNetworkEvents();
 
-            OnStartApp(_appKey);
+            StartAppSessionSafe(_appKey);
         }
 
-        private static void OnStartApp(string appKey)
+        private static void StartAppSessionSafe(string appKey)
         {
+            if (_sessionStarted) return;
+
+            _sessionStarted = true;
             AppAmbitSdk.InternalStart(appKey);
         }
 
@@ -32,15 +37,27 @@ namespace AppAmbit
             AppAmbitSdk.InternalEnd();
         }
 
-        private static void CheckNetworkStatus()
+        private static void RegisterNetworkEvents()
         {
-            bool isOnline = NetworkInterface.GetIsNetworkAvailable();
-            Log(isOnline ? "Online" : "Offline");
+            NetworkChange.NetworkAvailabilityChanged += async (s, e) =>
+            {
+                bool isOnline = e.IsAvailable;
+                Log(isOnline ? "Network: Online" : "Network: Offline");
+
+                await BreadcrumbManager.AddAsync(
+                    isOnline ? BreadcrumbsConstants.online : BreadcrumbsConstants.offline
+                );
+            };
+
+            NetworkChange.NetworkAddressChanged += (s, e) =>
+            {
+                Log("Network Address Changed");
+            };
         }
 
         private static void Log(string message)
         {
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
+            Debug.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
         }
     }
 }
