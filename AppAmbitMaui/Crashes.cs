@@ -323,7 +323,7 @@ namespace AppAmbit
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{_appInfoService?.AppVersion} ({_appInfoService?.Build})",
+                AppVersion = $"{info?.AppVersion} ({info?.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,
