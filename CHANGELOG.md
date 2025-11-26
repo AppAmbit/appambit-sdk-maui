@@ -1,3 +1,9 @@
+## Version 1.1.0
+
+### AppAmbit
+
+* **[Feature]** SDK Updated to support Windows and MacCatalyst
+
 ## Version 1.0.3
 
 ### AppAmbit
