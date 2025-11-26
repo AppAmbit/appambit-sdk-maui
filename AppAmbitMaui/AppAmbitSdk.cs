@@ -69,9 +69,9 @@ public static class AppAmbitSdk
             _skippedFirstResume = true;
         }
 
-        await Crashes.LoadCrashFileIfExists();
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
         await SendDataPending();       
     }
 
