@@ -19,7 +19,6 @@ namespace AppAmbit
         public static event Action<object> OnCrashException;
         private static IStorageService? _storageService;
         private static IAPIService? _apiService;
-        private static IAppInfoService? _appInfoService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
         private static bool _crashScanDone;
