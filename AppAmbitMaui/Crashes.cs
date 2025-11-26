@@ -183,7 +183,6 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
-            await LogCrash(info);
         }
 
 #if MACCATALYST
@@ -320,7 +319,6 @@ namespace AppAmbit
         {
             var file = exception?.CrashLogFile;
             var info = new Services.AppInfoService();
-
 
             return new LogEntity
             {
