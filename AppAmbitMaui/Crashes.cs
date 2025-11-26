@@ -22,7 +22,7 @@ namespace AppAmbit
         private static IAppInfoService? _appInfoService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
-        private static bool _crashFlagEvaluated = false;
+        private static bool _crashScanDone;
 
         internal static void Initialize(IAPIService? apiService, IStorageService? storageService, string deviceId)
         {
@@ -80,47 +80,51 @@ namespace AppAmbit
         internal static async Task LoadCrashFileIfExists()
         {
             await _ensureFileLocked.WaitAsync();
+
             try
             {
-                if (!SessionManager.IsSessionActive)
-                    return;
+                if (_crashScanDone) return;
+                _crashScanDone = true;
 
-                var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
-                int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
-
-                if (crashFileCount == 0)
+                try
                 {
-                    if (!_crashFlagEvaluated)
+                    if (!SessionManager.IsSessionActive)
+                        return;
+
+                    var crashFiles = Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", SearchOption.TopDirectoryOnly);
+                    int crashFileCount = crashFiles != null ? crashFiles.Count() : 0;
+
+                    if (crashFileCount == 0)
                     {
                         SetCrashFlag(false);
-                        _crashFlagEvaluated = true;
+                        return;
                     }
-                    return;
+
+                    Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
+                    SetCrashFlag(true);
+
+                    var exceptionInfos = new List<ExceptionInfo>();
+
+                    foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
+                    {
+                        var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
+                        if (exceptionInfo != null)
+                            exceptionInfos.Add(exceptionInfo);
+                    }
+
+                    Debug.WriteLine($"Storage crash batch: {exceptionInfos.Count} items");
+                    await StoreBatchCrashesLog(exceptionInfos);
                 }
-
-                Debug.WriteLine($"Debug Count of Crashes: {crashFileCount}");
-                SetCrashFlag(true);
-                _crashFlagEvaluated = true;
-
-                var exceptionInfos = new List<ExceptionInfo>();
-
-                foreach (var file in System.IO.Directory.EnumerateFiles(AppPaths.AppDataDir, "crash_*.json", System.IO.SearchOption.TopDirectoryOnly))
+                catch (Exception ex)
                 {
-                    var exceptionInfo = await ReadAndDeleteCrashFileAsync(file);
-                    if (exceptionInfo != null)
-                        exceptionInfos.Add(exceptionInfo);
+                    Debug.WriteLine(ex.ToString());
                 }
-
-                Debug.WriteLine($"Sending crash batch: {exceptionInfos.Count} items");
-                await StoreBatchCrashesLog(exceptionInfos);
             }
             finally
             {
                 _ensureFileLocked.Release();
             }
         }
-         
-
 
         public static Task<bool> DidCrashInLastSession()
         {
