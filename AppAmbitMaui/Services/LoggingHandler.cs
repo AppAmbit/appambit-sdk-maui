@@ -27,21 +27,28 @@ public class LoggingHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        if (request.Content != null)
+        try
         {
-            var reqBody = await request.Content.ReadAsStringAsync(cancellationToken);
-            Debug.WriteLine(reqBody);
-        }
+            if (request.Content != null)
+            {
+                var reqBody = await request.Content.ReadAsStringAsync(cancellationToken);
+                Debug.WriteLine(reqBody);
+            }
 
-        var response = await base.SendAsync(request, cancellationToken);
-        await CalculateRequestSize(request);
+            var response = await base.SendAsync(request, cancellationToken);
+            await CalculateRequestSize(request);
 
-        if (response.Content != null)
+            if (response.Content != null)
+            {
+                var respBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                Debug.WriteLine(respBody);
+            }
+            return response;
+        }catch (Exception ex)
         {
-            var respBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            Debug.WriteLine(respBody);
+            Debug.WriteLine(ex);
         }
-        return response;
+        return null;
     }
 
     internal static async Task CalculateRequestSize(HttpRequestMessage request)

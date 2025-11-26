@@ -69,9 +69,9 @@ public static class AppAmbitSdk
             _skippedFirstResume = true;
         }
 
-        await Crashes.LoadCrashFileIfExists();
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
+        await Crashes.LoadCrashFileIfExists();
         await SendDataPending();       
     }
 
@@ -192,19 +192,15 @@ public static class AppAmbitSdk
 
     public static void Start(string appKey)
     {
-        #if ANDROID
+#if ANDROID
             HookPlatformLifecycle(appKey);
-        #elif IOS && !MACCATALYST
+#elif IOS && !MACCATALYST
             HookPlatformLifecycle(appKey);
-        #endif
-
-        #if WINDOWS
-            Console.WriteLine("WINDOWS");
-        #endif
-
-        #if MACCATALYST
+#elif MACCATALYST
             AppAmbitMacOs.Register(appKey);
-        #endif
+#elif WINDOWS
+            AppAmbitWindows.Register(appKey);
+#endif
     }
 
     private static void HookPlatformLifecycle(string appKey)
