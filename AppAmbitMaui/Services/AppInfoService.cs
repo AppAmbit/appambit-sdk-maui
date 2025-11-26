@@ -67,9 +67,9 @@ internal class AppInfoService : IAppInfoService
 
         var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
-        AppVersion = version?.ToString();
+        AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
 
-        Build = version?.Build.ToString();
+        Build = Assembly.GetEntryAssembly()?.GetName()?.Version?.Build.ToString();
 #elif MACCATALYST
         Platform = "macOS";
         OS = NSProcessInfo.ProcessInfo.OperatingSystemVersionString;
