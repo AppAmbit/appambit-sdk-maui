@@ -87,7 +87,6 @@ public class AnalyticsExamples : IDisposable
         var (api, storage, appInfo) = BuildFakes();
         InitializeSdk(api, storage, appInfo);
 
-        // Crear 10 sesiones locales con tiempos únicos
         var baseTime = DateTime.UtcNow;
         var localBatches = Enumerable.Range(0, 10).Select(i => new SessionBatch
         {
@@ -97,7 +96,6 @@ public class AnalyticsExamples : IDisposable
             EndedAt = baseTime.AddHours(i).AddMinutes(30)
         }).ToList();
 
-        // Datos asociados sin SessionId (25 eventos y 25 breadcrumbs por sesión)
         foreach (var sb in localBatches)
         {
             for (int j = 0; j < 25; j++)
@@ -120,7 +118,6 @@ public class AnalyticsExamples : IDisposable
             }
         }
 
-        // Simular respuesta del servidor con SessionId asignado
         var serverBatches = localBatches.Select((sb, idx) => new SessionBatch
         {
             Id = sb.Id,
@@ -136,7 +133,6 @@ public class AnalyticsExamples : IDisposable
 
         await storage.UpdateSessionIdsForAllTrackingData(resolved!);
 
-        // Verificar que todos los eventos y breadcrumbs recibieron SessionId del servidor
         Assert.Equal(250, storage.Events.Count);
         Assert.All(storage.Events, e => Assert.Contains("srv-", e.SessionId));
         Assert.Equal(250, storage.Breadcrumbs.Count);
