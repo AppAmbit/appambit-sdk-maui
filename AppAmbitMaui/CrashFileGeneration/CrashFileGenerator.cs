@@ -16,8 +16,10 @@ internal static class CrashFileGenerator
         CrashFileGeneratorAndroid.AddHeader(log,deviceId);
 #elif IOS
         CrashFileGeneratorIOS.AddHeader(log,deviceId);
+#elif WINDOWS
+        CrashFileGeneratorWindows.AddHeader(log, deviceId);
 #endif
-        
+
         log.AppendLine();
 
         // Exception Stack Trace
@@ -31,6 +33,8 @@ internal static class CrashFileGenerator
         CrashFileGeneratorAndroid.AddThreads(log);
 #elif IOS
         CrashFileGeneratorIOS.AddThreads(log);
+#elif MACCATALYST
+        CrashFileGeneratorMacOS.AddThreads(log);
 #else 
         AddThreads(log);
 #endif

@@ -1,13 +1,21 @@
 using System.Globalization;
 using AppAmbit.Services.Interfaces;
+using System.Reflection;
+using System.Runtime.InteropServices;
+
 #if ANDROID
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using AOSBuild = Android.OS.Build;
-#elif IOS
+#elif IOS && !MACCATALYST
 using Foundation;
 using UIKit;
+#elif MACCATALYST
+using Foundation;
+using UIKit;
+#elif WINDOWS
+using Microsoft.Win32;
 #endif
 
 namespace AppAmbit.Services;
@@ -43,7 +51,7 @@ internal class AppInfoService : IAppInfoService
 #pragma warning restore 612, 618
         }
         Build = code.ToString();
-#elif IOS
+#elif IOS && !MACCATALYST
         Platform = "iOS";
         OS = UIDevice.CurrentDevice.SystemVersion;
         DeviceModel = UIDevice.CurrentDevice.Model;
@@ -51,18 +59,37 @@ internal class AppInfoService : IAppInfoService
         var bundle = NSBundle.MainBundle;
         AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
         Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();
+
+#elif WINDOWS
+        Platform = "Windows";
+        OS = RuntimeInformation.OSDescription;
+        DeviceModel = Environment.MachineName;
+
+        var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version;
+        AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
+
+        Build = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+#elif MACCATALYST
+        Platform = "macOS";
+        OS = NSProcessInfo.ProcessInfo.OperatingSystemVersionString;
+        DeviceModel = "Mac";
+        var bundle = NSBundle.MainBundle;
+        AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
+        Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();
 #else
-        Platform = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
-        OS = System.Environment.OSVersion.VersionString;
-        DeviceModel = null;
-        AppVersion = null;
-        Build = null;
+        Platform = RuntimeInformation.OSDescription;
+        OS = Environment.OSVersion.VersionString;
+        DeviceModel = Environment.MachineName;
+        AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
+        Build = Assembly.GetEntryAssembly()?.GetName()?.Version?.Build.ToString();
 #endif
+
         Country = RegionInfo.CurrentRegion?.Name;
         UtcOffset = TimeZoneInfo.Local.BaseUtcOffset.ToString();
         Language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     }
-    
+
     public string? AppVersion { get; set; }
     public string? Build { get; set; }
     public string? Platform { get; set; }

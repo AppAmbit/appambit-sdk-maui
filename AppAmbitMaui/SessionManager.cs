@@ -154,7 +154,7 @@ internal class SessionManager
             }
         };
 
-        await _storageService.UpdateLogsAndEventsSessionIds(session);
+        await _storageService.UpdateSessionIdsForAllTrackingData(session);
         await _storageService.DeleteSessionsList(session);
     }
 
@@ -235,7 +235,7 @@ internal class SessionManager
 
             if (resolved.Count > 0)
             {
-                await _storageService.UpdateLogsAndEventsSessionIds(resolved);
+                await _storageService.UpdateSessionIdsForAllTrackingData(resolved);
                 await _storageService.DeleteSessionsList(resolved);
             }
 
@@ -315,7 +315,6 @@ internal class SessionManager
     {
         if (startedAt == null || endedAt == null) return "";
 
-        // Forzamos UTC sin doble conversión y truncamos a segundos
         var a = UtcIsoFormatString(NormalizeToUtcSecond(startedAt.Value));
         var b = UtcIsoFormatString(NormalizeToUtcSecond(endedAt.Value));
 
