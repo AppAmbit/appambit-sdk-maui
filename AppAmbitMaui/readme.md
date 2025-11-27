@@ -29,6 +29,7 @@ Lightweight SDK for analytics, events, logging, crashes, and offline support. Si
 ## Features
 
 * Session analytics
+* Ambit Trail records detailed navigation for debugging
 * Event tracking with rich properties
 * Error logging for quick diagnostics 
 * Crash capture with stack traces and threads
@@ -46,7 +47,8 @@ Lightweight SDK for analytics, events, logging, crashes, and offline support. Si
 
   * iOS
   * Android
-* **Coming soon:** macOS and Windows
+  * macOS
+  * Windows
 
 ---
 
@@ -59,7 +61,7 @@ Add the package to your MAUI project:
 ```bash
 dotnet add package com.AppAmbit.Sdk
 # or specify version
-dotnet add package com.AppAmbit.Sdk --version 1.0.3
+dotnet add package com.AppAmbit.Sdk --version 1.1.0
 ```
 
 Or, using Visual Studio:
@@ -95,6 +97,7 @@ public static class MauiProgram
 ## Usage
 
 * **Session activity** – automatically tracks user session starts, stops, and durations
+* **Ambit Trail** – records detailed navigation of user and system actions leading up to an issue for easier debugging
 * **Track events** – send structured events with custom properties
 
   ```csharp
@@ -114,7 +117,11 @@ public static class MauiProgram
 
 ## Release Distribution
 
-* Push the artifact to your AppAmbit dashboard for distribution via email and direct installation.
+Upload your APK, AAB, or IPA directly to your AppAmbit dashboard.
+Distribute release builds through:
+* Direct install links
+* Email distribution
+* Environment-specific channels
 
 ---
 
