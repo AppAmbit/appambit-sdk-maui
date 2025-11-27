@@ -19,7 +19,6 @@ namespace AppAmbit
         public static event Action<object> OnCrashException;
         private static IStorageService? _storageService;
         private static IAPIService? _apiService;
-        private static IAppInfoService? _appInfoService;
         private static string _deviceId = "";
         private static readonly SemaphoreSlim _ensureFileLocked = new SemaphoreSlim(1, 1);
         private static bool _crashScanDone;
@@ -183,7 +182,6 @@ namespace AppAmbit
 
             SaveCrashToFile(json);
             OnCrashException?.Invoke(ex);
-            await LogCrash(info);
         }
 
 #if MACCATALYST
@@ -321,11 +319,10 @@ namespace AppAmbit
             var file = exception?.CrashLogFile;
             var info = new Services.AppInfoService();
 
-
             return new LogEntity
             {
                 SessionId = exception?.SessionId,
-                AppVersion = $"{_appInfoService?.AppVersion} ({_appInfoService?.Build})",
+                AppVersion = $"{info?.AppVersion} ({info?.Build})",
                 ClassFQN = exception?.ClassFullName ?? AppConstants.UnknownClass,
                 FileName = exception?.FileNameFromStackTrace ?? AppConstants.UnknownFileName,
                 LineNumber = exception?.LineNumberFromStackTrace ?? 0,
