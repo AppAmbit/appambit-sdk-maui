@@ -5,7 +5,7 @@ using AppAmbit.Services;
 
 namespace AppAmbit;
 
-internal static partial class MauiNativePlatforms
+internal static partial class NativePlatforms
 {
     private static string? _appKey;
 

@@ -19,7 +19,7 @@ using NCapability = Android.Net.NetCapability;
 
 namespace AppAmbit;
 
-internal static partial class MauiNativePlatforms
+internal static partial class NativePlatforms
 {
     private static volatile bool _androidInitialized;
     private static int _startedActivities;

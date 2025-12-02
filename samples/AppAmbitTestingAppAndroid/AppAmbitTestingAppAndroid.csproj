@@ -10,6 +10,6 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AppAmbitMaui\AppAmbitMaui.csproj" />
+    <ProjectReference Include="..\..\src\AppAmbitMaui\AppAmbitMaui.csproj" />
   </ItemGroup>
 </Project>

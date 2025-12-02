@@ -207,7 +207,7 @@ public static class AppAmbitSdk
     {
         try
         {
-            MauiNativePlatforms.Register(appKey);
+            NativePlatforms.Register(appKey);
         }
         catch (Exception ex)
         {

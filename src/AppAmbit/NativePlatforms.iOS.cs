@@ -9,7 +9,7 @@ using UIKit;
 
 namespace AppAmbit;
 
-internal static partial class MauiNativePlatforms
+internal static partial class NativePlatforms
 {
     private static NSObject? _obsWillEnterForeground;
     private static NSObject? _obsDidEnterBackground;
