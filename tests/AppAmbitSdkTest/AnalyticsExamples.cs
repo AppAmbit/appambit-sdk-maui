@@ -34,6 +34,7 @@ public class AnalyticsExamples : IDisposable
         var (api, storage, appInfo) = BuildFakes(apiError: ApiErrorType.NetworkUnavailable);
         InitializeSdk(api, storage, appInfo);
 
+        await SessionManager.StartSession();
         await Analytics.TrackEvent("video_started", new Dictionary<string, string> { { "q", "hd" } });
 
         var evt = Assert.Single(storage.Events);
@@ -236,7 +237,14 @@ public class AnalyticsExamples : IDisposable
     private static void SetStaticField(Type t, string name, object? value)
     {
         var f = t.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
-        f?.SetValue(null, value);
+        if (f != null)
+        {
+            f.SetValue(null, value);
+            return;
+        }
+
+        var p = t.GetProperty(name, BindingFlags.NonPublic | BindingFlags.Static);
+        p?.SetValue(null, value);
     }
 
     private sealed class FakeApiService : IAPIService
