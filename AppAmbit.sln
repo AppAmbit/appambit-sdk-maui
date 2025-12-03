@@ -7,9 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbit", "src\AppAmbit\Ap
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitMaui", "src\AppAmbitMaui\AppAmbitMaui.csproj", "{D0B6F4C1-A98A-46BE-B567-077CEF5FDDB0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitSdkMaui", "src\AppAmbitSdkMaui\AppAmbitSdkMaui.csproj", "{D0B6F4C1-A98A-46BE-B567-077CEF5FDDB0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitAvalonia", "src\AppAmbitAvalonia\AppAmbitAvalonia.csproj", "{0A529EB1-7FDF-4E3E-8344-70CEA819FE98}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbitSdkAvalonia", "src\AppAmbitSdkAvalonia\AppAmbitSdkAvalonia.csproj", "{0A529EB1-7FDF-4E3E-8344-70CEA819FE98}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
 EndProject
