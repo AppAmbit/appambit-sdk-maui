@@ -1,6 +1,6 @@
 namespace AppAmbitSdkCore.Services.Interfaces;
 
-internal interface IAppInfoService
+public interface IAppInfoService
 {
     string? AppVersion { get; set; }
     

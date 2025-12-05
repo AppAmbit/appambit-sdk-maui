@@ -20,7 +20,7 @@ using Microsoft.Win32;
 
 namespace AppAmbitSdkCore.Services;
 
-internal class AppInfoService : IAppInfoService
+public class AppInfoService : IAppInfoService
 {
     public AppInfoService()
     {

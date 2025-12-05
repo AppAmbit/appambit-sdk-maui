@@ -13,7 +13,7 @@ using AppAmbitSdkCore.Services.Endpoints;
 
 namespace AppAmbitSdkCore.Services;
 
-internal class APIService : IAPIService
+public class APIService : IAPIService
 {
     private string? _token;
     private Task<ApiErrorType>? currentTokenRenewalTask;

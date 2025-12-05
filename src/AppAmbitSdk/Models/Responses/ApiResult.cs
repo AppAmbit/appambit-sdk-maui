@@ -1,7 +1,7 @@
 using AppAmbitSdkCore.Enums;
 namespace AppAmbitSdkCore.Models.Responses;
 
-internal class ApiResult<T>
+public class ApiResult<T>
 {
     public T? Data { get; }
     public ApiErrorType ErrorType { get; }

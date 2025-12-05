@@ -3,7 +3,7 @@ using AppAmbitSdkCore.Models.Responses;
 
 namespace AppAmbitSdkCore.Services.Interfaces;
 
-internal interface IAPIService
+public interface IAPIService
 {
     Task<ApiResult<T>?> ExecuteRequest<T>(IEndpoint endpoint) where T : notnull;
 

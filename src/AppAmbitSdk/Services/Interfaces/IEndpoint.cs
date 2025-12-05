@@ -1,6 +1,6 @@
 namespace AppAmbitSdkCore.Services.Interfaces;
 
-internal interface IEndpoint
+public interface IEndpoint
 {
     string Url { get; set; }
     
@@ -15,7 +15,7 @@ internal interface IEndpoint
     bool SkipAuthorization { get; set; }
 }
 
-internal enum HttpMethodEnum
+public enum HttpMethodEnum
 {
     Get, Post, Put, Delete, Patch
 }

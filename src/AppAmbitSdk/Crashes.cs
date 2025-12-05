@@ -76,7 +76,7 @@ namespace AppAmbitSdkCore
             throw new NullReferenceException();
         }
 
-        internal static async Task LoadCrashFileIfExists()
+        public static async Task LoadCrashFileIfExists()
         {
             await _ensureFileLocked.WaitAsync();
 

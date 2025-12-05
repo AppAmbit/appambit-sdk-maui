@@ -11,7 +11,7 @@ using Newtonsoft.Json.Converters;
 
 namespace AppAmbitSdkCore;
 
-internal class SessionManager
+public static class SessionManager
 {
     private static IAPIService? _apiService;
     private static IStorageService? _storageService;

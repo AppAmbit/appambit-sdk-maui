@@ -24,25 +24,25 @@ public static class AppAmbitMauiExtensions
 #if ANDROID
             events.AddAndroid(android =>
             {
-                android.OnCreate((activity, state) => { AppAmbitSdkCore.AppAmbitSdk.InternalStart(appKey); HookPageNavigation(); });
-                android.OnPause(activity => { AppAmbitSdkCore.AppAmbitSdk.InternalSleep(); });
-                android.OnResume(activity => { _ = AppAmbitSdkCore.AppAmbitSdk.InternalResume(); HookPageNavigation(); });
-                android.OnStop(activity => { AppAmbitSdkCore.AppAmbitSdk.InternalSleep(); });
-                android.OnRestart(activity => { _ = AppAmbitSdkCore.AppAmbitSdk.InternalResume(); HookPageNavigation(); });
-                android.OnDestroy(activity => { AppAmbitSdkCore.AppAmbitSdk.InternalEnd(); });
+                android.OnCreate((activity, state) => { AppAmbitSdkCore.AppAmbitSdk.StartFromHostLifecycle(appKey); HookPageNavigation(); });
+                android.OnPause(activity => { AppAmbitSdkCore.AppAmbitSdk.Sleep(); });
+                android.OnResume(activity => { _ = AppAmbitSdkCore.AppAmbitSdk.ResumeAsync(); HookPageNavigation(); });
+                android.OnStop(activity => { AppAmbitSdkCore.AppAmbitSdk.Sleep(); });
+                android.OnRestart(activity => { _ = AppAmbitSdkCore.AppAmbitSdk.ResumeAsync(); HookPageNavigation(); });
+                android.OnDestroy(activity => { AppAmbitSdkCore.AppAmbitSdk.End(); });
             });
 #elif IOS
             events.AddiOS(ios =>
             {
                 ios.FinishedLaunching((application, options) =>
                 {
-                    AppAmbitSdkCore.AppAmbitSdk.InternalStart(appKey);
+                    AppAmbitSdkCore.AppAmbitSdk.StartFromHostLifecycle(appKey);
                     HookPageNavigation();
                     return true;
                 });
-                ios.DidEnterBackground(application => { AppAmbitSdkCore.AppAmbitSdk.InternalSleep(); });
-                ios.WillEnterForeground(application => { _ = AppAmbitSdkCore.AppAmbitSdk.InternalResume(); HookPageNavigation(); });
-                ios.WillTerminate(application => { AppAmbitSdkCore.AppAmbitSdk.InternalEnd(); });
+                ios.DidEnterBackground(application => { AppAmbitSdkCore.AppAmbitSdk.Sleep(); });
+                ios.WillEnterForeground(application => { _ = AppAmbitSdkCore.AppAmbitSdk.ResumeAsync(); HookPageNavigation(); });
+                ios.WillTerminate(application => { AppAmbitSdkCore.AppAmbitSdk.End(); });
             });
 #endif
         });
@@ -66,15 +66,15 @@ public static class AppAmbitMauiExtensions
             return;
         }
 
-        if (!AppAmbitSdkCore.AppAmbitSdk.InternalTokenIsValid())
-            await AppAmbitSdkCore.AppAmbitSdk.InternalEnsureToken(null);
+        if (!AppAmbitSdkCore.AppAmbitSdk.IsTokenValid())
+            await AppAmbitSdkCore.AppAmbitSdk.EnsureTokenAsync(null);
 
         BreadcrumbManager.LoadBreadcrumbsFromFile();
         await SessionManager.SendEndSessionFromDatabase();
         await SessionManager.SendStartSessionIfExist();
         await AppAmbitSdkCore.Crashes.LoadCrashFileIfExists();        
         await BreadcrumbManager.AddAsync(BreadcrumbsConstants.online);
-        await AppAmbitSdkCore.AppAmbitSdk.InternalSendPending();
+        await AppAmbitSdkCore.AppAmbitSdk.SendPendingAsync();
     }
 
     private static void HookPageNavigation()

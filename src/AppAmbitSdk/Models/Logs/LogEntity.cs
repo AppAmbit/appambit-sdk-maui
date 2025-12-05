@@ -4,7 +4,7 @@ using SQLite;
 namespace AppAmbitSdkCore.Models.Logs;
 
 //This class is created for storing on the database and send it in the bulk upload
-internal class LogEntity : Log
+public class LogEntity : Log
 {
     [PrimaryKey]
     [JsonIgnore]

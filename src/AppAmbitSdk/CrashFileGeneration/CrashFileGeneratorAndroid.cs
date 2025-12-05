@@ -6,6 +6,7 @@ using Process = System.Diagnostics.Process;
 using StringBuilder = System.Text.StringBuilder;
 using Android.OS;
 using System.Runtime.InteropServices;
+using AppAmbitSdkCore.Services;
 
 namespace AppAmbitSdkCore;
 
@@ -13,7 +14,7 @@ internal static class CrashFileGeneratorAndroid
 {
     public static void AddHeader(StringBuilder log, string deviceId)
     {    
-        var info = new AppAmbit.Services.AppInfoService();
+        var info = new AppInfoService();
         var packageName = global::Android.App.Application.Context?.PackageName;
         log.AppendLine($"Package: {packageName}");
         log.AppendLine($"Version Code: {info.Build}");

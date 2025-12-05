@@ -1,5 +1,5 @@
 namespace AppAmbitSdkCore.Enums;
-internal enum ApiErrorType
+public enum ApiErrorType
 {
     None,
     Unauthorized,

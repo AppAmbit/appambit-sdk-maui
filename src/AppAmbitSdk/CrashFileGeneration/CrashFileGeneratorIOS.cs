@@ -1,8 +1,10 @@
 #if IOS
 using System.Runtime.InteropServices;
 using System.Text;
-using AppAmbitSdkCore;
+using AppAmbitSdkCore.Services;
 using UIKit;
+
+namespace AppAmbitSdkCore;
 
 internal partial class CrashFileGeneratorIOS
 {
@@ -26,7 +28,7 @@ internal partial class CrashFileGeneratorIOS
 
     public static void AddHeader(StringBuilder log, string deviceId)
     {
-        var info = new AppAmbit.Services.AppInfoService();
+        var info = new AppInfoService();
         var bundleId = Foundation.NSBundle.MainBundle?.BundleIdentifier;
         log.AppendLine($"Package: {bundleId}");
         log.AppendLine($"Version Code: {info.Build}");

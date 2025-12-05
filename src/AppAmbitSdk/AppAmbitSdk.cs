@@ -203,6 +203,24 @@ public static class AppAmbitSdk
 #endif
     }
 
+    /// <summary>
+    /// Starts the SDK when the host (e.g., MAUI/Avalonia) already handles lifecycle callbacks.
+    /// This avoids registering additional native lifecycle hooks.
+    /// </summary>
+    public static void StartFromHostLifecycle(string appKey) => OnStart(appKey);
+
+    public static Task ResumeAsync() => OnResume();
+
+    public static void Sleep() => OnSleep();
+
+    public static void End() => OnEnd();
+
+    public static Task EnsureTokenAsync(string? appKey = null) => GetNewToken(appKey);
+
+    public static Task SendPendingAsync() => SendDataPending();
+
+    public static bool IsTokenValid() => TokenIsValid();
+
     private static void HookPlatformLifecycle(string appKey)
     {
         try

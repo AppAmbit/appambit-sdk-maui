@@ -4,7 +4,7 @@ using AppAmbitSdkCore.Models.Logs;
 
 namespace AppAmbitSdkCore.Services.Interfaces;
 
-internal interface IStorageService
+public interface IStorageService
 {
     Task InitializeAsync();
 

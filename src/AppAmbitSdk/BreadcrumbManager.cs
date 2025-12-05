@@ -8,7 +8,7 @@ using static AppAmbitSdkCore.FileUtils;
 
 namespace AppAmbitSdkCore;
 
-internal static class BreadcrumbManager
+public static class BreadcrumbManager
 {
     private static IAPIService? _api;
     private static IStorageService? _storage;

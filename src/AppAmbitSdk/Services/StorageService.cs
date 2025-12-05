@@ -11,7 +11,7 @@ using SQLite;
 
 namespace AppAmbitSdkCore.Services;
 
-internal class StorageService : IStorageService
+public class StorageService : IStorageService
 {
     private SQLiteAsyncConnection _database;
 
