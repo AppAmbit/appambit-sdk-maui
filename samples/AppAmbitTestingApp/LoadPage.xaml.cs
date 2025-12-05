@@ -1,4 +1,4 @@
-using AppAmbit;
+using AppAmbitSdkMaui;
 using System.Diagnostics;
 
 namespace AppAmbitTestingApp;

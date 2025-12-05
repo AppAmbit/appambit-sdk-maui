@@ -1,5 +1,5 @@
 using Android.Content;
-using AppAmbit;
+using AppAmbitSdkMaui;
 using Android.Views;
 
 namespace AppAmbitTestingAppAndroid;

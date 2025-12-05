@@ -1,4 +1,4 @@
-using AppAmbit;
+using AppAmbitSdkMaui;
 namespace AppAmbitTestingiOS;
 
 

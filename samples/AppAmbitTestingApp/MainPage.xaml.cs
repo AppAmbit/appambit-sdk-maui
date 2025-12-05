@@ -1,11 +1,5 @@
-﻿using AppAmbit;
-using System.Diagnostics;
-using AppAmbit.Services;
-using Newtonsoft.Json;
-using static AppAmbitTestingApp.FormattedRequestSize;
+﻿using AppAmbitSdkMaui;
 using static System.Linq.Enumerable;
-
-using AppAmbitTestingApp.Models;
 
 namespace AppAmbitTestingApp;
 
@@ -68,8 +62,6 @@ public partial class MainPage : ContentPage
 
     private async void OnGenerateLogsForBatch(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
-
         await DisplayAlert("Info", "Turn off internet", "Ok");
         foreach (int index in Range(1, 220))
         {
@@ -77,10 +69,6 @@ public partial class MainPage : ContentPage
         }
         await DisplayAlert("Info", "Logs generated", "Ok");
         await DisplayAlert("Info", "Turn on internet to send the logs", "Ok");
-
-        ButtonBatchUpload.Padding = 10;
-        ButtonBatchUpload.FontSize = 12;
-        ButtonBatchUpload.Text = $"Generate Logs for Batch upload ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnHasCrashedTheLastSession(object? sender, EventArgs eventArgs)
@@ -109,12 +97,8 @@ public partial class MainPage : ContentPage
 
     private async void OnSendTestLog(object sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
         await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
         await DisplayAlert("Info", "LogError Sent", "Ok");
-        ButtonDefaultLogError.Padding = 10;
-        ButtonDefaultLogError.FontSize = 12;
-        ButtonDefaultLogError.Text = $"Send Default LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnSendTestException(object sender, EventArgs e)
@@ -125,23 +109,15 @@ public partial class MainPage : ContentPage
         }
         catch (Exception exception)
         {
-            LoggingHandler.ResetTotalSize();
             await Crashes.LogError(exception, new Dictionary<string, string>() { { "user_id", "1" } });
             await DisplayAlert("Info", "LogError Sent", "Ok");
-            ButtonSendTestException.Padding = 10;
-            ButtonSendTestException.FontSize = 12;
-            ButtonSendTestException.Text = $"Send Exception LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
         }
     }
 
     private async void OnSendTestLogWithClassFQN(object sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
         await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } }, this.GetType().FullName);
         await DisplayAlert("Info", "LogError Sent", "Ok");
-        ButtonTestLogWithClassFQN.Padding = 10;
-        ButtonTestLogWithClassFQN.FontSize = 12;
-        ButtonTestLogWithClassFQN.Text = $"Send ClassInfo LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnGenerate30daysTestErrors(object sender, EventArgs e)
@@ -162,12 +138,8 @@ public partial class MainPage : ContentPage
 
     private async void OnTestErrorLogClicked(object sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
         await Crashes.LogError(LogMessage);
         await DisplayAlert("Info", "LogError Sent", "Ok");
-        ButtonCustomLogError.Padding = 10;
-        ButtonCustomLogError.FontSize = 12;
-        ButtonCustomLogError.Text = $"Send Custom LogError ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void OnGenerateTestCrash(object sender, EventArgs e)

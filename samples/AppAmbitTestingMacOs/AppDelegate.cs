@@ -1,4 +1,4 @@
-using AppAmbit;
+using AppAmbitSdkMaui;
 namespace AppAmbitTestingMacOs;
 
 [Register("AppDelegate")]

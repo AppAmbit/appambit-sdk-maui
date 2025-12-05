@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Foundation;
 using UIKit;
-using AppAmbit;
+using AppAmbitSdkMaui;
 
 namespace AppAmbitTestingMacOs;
 
