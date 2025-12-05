@@ -11,7 +11,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseAppAmbit("e3057ace-cd42-4a0c-8ac8-fe3f6d58a2e6");
+            .UseAppAmbit("<YOUR-APPKEY>");
         
         return builder.Build();
     }
