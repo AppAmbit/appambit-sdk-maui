@@ -1,4 +1,6 @@
-namespace AppAmbitSdkMaui;
+using System;
+
+namespace AppAmbitSdkAvalonia;
 
 public static class Analytics
 {
