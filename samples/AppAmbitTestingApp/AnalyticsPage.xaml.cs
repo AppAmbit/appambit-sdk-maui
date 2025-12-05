@@ -1,6 +1,4 @@
-using AppAmbit;
-using AppAmbit.Services;
-using static AppAmbitTestingApp.FormattedRequestSize;
+using AppAmbitSdkMaui;
 using static System.Linq.Enumerable;
 
 
@@ -15,13 +13,7 @@ public partial class AnalyticsPage : ContentPage
 
     private async void Button_OnStartSession(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
-
         await Analytics.StartSession();
-
-        ButtonStartSession.Padding = 10;
-        ButtonStartSession.FontSize = 12;
-        ButtonStartSession.Text = $"Start Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private void OnTestToken(object? sender, EventArgs eventArgs)
@@ -31,7 +23,6 @@ public partial class AnalyticsPage : ContentPage
 
     private async void OnTokenRefreshTest(object? sender, EventArgs eventArgs)
     {
-        LoggingHandler.ResetTotalSize();
         Analytics.ClearToken();
         var logsTask = Range(0, 5).Select(
             _ => Task.Run(() =>
@@ -50,46 +41,25 @@ public partial class AnalyticsPage : ContentPage
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
         await DisplayAlert("Info", "5 events and errors sent", "Ok");
-        ButtonRefreshTest.Padding = 10;
-        ButtonRefreshTest.FontSize = 12;
-        ButtonRefreshTest.Text = $"Token refresh test ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnEndSession(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
-
         await Analytics.EndSession();
-
-        ButtonEndSession.Padding = 10;
-        ButtonEndSession.FontSize = 12;
-        ButtonEndSession.Text = $"End Session ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClicked(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
-
         await Analytics.TrackEvent("ButtonClicked", new Dictionary<string, string> { { "Count", "41" } });
-
-        ButtonClickedEventWProperty.Padding = 10;
-        ButtonClickedEventWProperty.FontSize = 12;
-        ButtonClickedEventWProperty.Text = $"Send 'Button Clicked' Event w/ property ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestEvent(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
         await Analytics.GenerateTestEvent();
-
-        ButtonDefaultClickedEventWProperty.Padding = 10;
-        ButtonDefaultClickedEventWProperty.FontSize = 12;
-        ButtonDefaultClickedEventWProperty.Text = $"Send Default Event w/ property ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestLimitsEvent(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
         //300 characters:
         var _300Characters = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
         var _300Characters2 = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678902";
@@ -99,15 +69,10 @@ public partial class AnalyticsPage : ContentPage
             { _300Characters2, _300Characters2 }
         };
         await Analytics.TrackEvent(_300Characters, properties);
-        ButtonMax300LengthEvent.Padding = 10;
-        ButtonMax300LengthEvent.FontSize = 12;
-        ButtonMax300LengthEvent.Text = $"Send Max-300-Length Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
     private async void Button_OnClickedTestMaxPropertiesEvent(object? sender, EventArgs e)
     {
-        LoggingHandler.ResetTotalSize();
-
         var properties = new Dictionary<string, string>
         {
             { "01", "01"},
@@ -137,12 +102,9 @@ public partial class AnalyticsPage : ContentPage
             { "25", "25"},//25
         };
         await Analytics.TrackEvent("TestMaxProperties", properties);
-        ButtonMax20PropertiesEvent.Padding = 10;
-        ButtonMax20PropertiesEvent.FontSize = 12;
-        ButtonMax20PropertiesEvent.Text = $"Send Max-20-Properties Event ({FormatSize(LoggingHandler.TotalRequestSize)})";
     }
 
-    private async void OnSend30DailyEvents(object? sender, EventArgs e)
+    private void OnSend30DailyEvents(object? sender, EventArgs e)
     {
     }
 
@@ -157,7 +119,7 @@ public partial class AnalyticsPage : ContentPage
         await DisplayAlert("Info", "Turn on internet to send the events", "Ok");
     }
 
-    private async void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
+    private void OnGenerate30DaysTestSessions(object? sender, EventArgs e)
     {
 
     }

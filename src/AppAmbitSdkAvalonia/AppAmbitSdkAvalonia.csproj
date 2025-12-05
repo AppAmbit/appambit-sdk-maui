@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AppAmbit\AppAmbit.csproj" />
+    <ProjectReference Include="..\AppAmbitSdk\AppAmbitSdk.csproj" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

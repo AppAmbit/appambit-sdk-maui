@@ -1,4 +1,4 @@
-﻿using AppAmbit;
+﻿using AppAmbitSdkMaui;
 using System.Configuration;
 using System.Data;
 using System.Windows;

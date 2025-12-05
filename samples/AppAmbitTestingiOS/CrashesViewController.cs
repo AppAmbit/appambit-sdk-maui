@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using AppAmbit;
+using AppAmbitSdkMaui;
 
 namespace AppAmbitTestingiOS;
 

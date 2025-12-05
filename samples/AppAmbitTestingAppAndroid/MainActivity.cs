@@ -1,5 +1,5 @@
 using Android.Content;
-using AppAmbit;
+using AppAmbitSdkMaui;
 using Android.Views;
 
 namespace AppAmbitTestingAppAndroid;
@@ -18,7 +18,7 @@ public class MainActivity : Activity
     {
         base.OnCreate(savedInstanceState);
 
-        AppAmbitSdk.Start("<YOUR-APPKEY>");
+        AppAmbitSdk.Start("e3057ace-cd42-4a0c-8ac8-fe3f6d58a2e6");
 
         SetContentView(L("activity_main"));
 
