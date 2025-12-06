@@ -19,7 +19,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        AppAmbitSdk.Start("115521de-1dd4-45a9-9f7e-938189383b99");
+        AppAmbitSdk.Start("<YOUR_APPKEY>");
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
