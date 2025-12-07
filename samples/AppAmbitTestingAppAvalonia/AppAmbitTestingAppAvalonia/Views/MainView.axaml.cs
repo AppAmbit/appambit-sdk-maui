@@ -13,6 +13,14 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+
+        try
+        {
+            txtChangeUserId.Text = System.Guid.NewGuid().ToString();
+            txtChangeUserEmail.Text = "test@gmail.com";
+            txtCustomLogError.Text = "Test Log Message";
+        }
+        catch { }
     }
 
     private void OnNavCrashesClicked(object? sender, RoutedEventArgs e)
@@ -27,52 +35,42 @@ public partial class MainView : UserControl
         AnalyticsPanel.IsVisible = true;
     }
 
-    private async System.Threading.Tasks.Task ShowMessageAsync(string message)
-    {
-        var wnd = this.VisualRoot as Window;
-        var dialog = new AlertWindow(message);
-        if (wnd != null)
-            await dialog.ShowDialog(wnd);
-        else
-            dialog.Show();
-    }
-
-
     private async void OnDidCrashClicked(object? sender, RoutedEventArgs e)
     {
-        Crashes.DidCrashInLastSession();
+        await Crashes.DidCrashInLastSession();
     }
 
     private async void OnChangeUserIdClicked(object? sender, RoutedEventArgs e)
     {
         var text = txtChangeUserId?.Text?.Trim();
-        if (text != null)
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            Analytics.SetUserId(txtChangeUserId.Text);
+            Analytics.SetUserId(text);
         }
     }
 
     private async void OnChangeUserEmailClicked(object? sender, RoutedEventArgs e)
     {
         var text = txtChangeUserEmail?.Text?.Trim();
-        if (text != null)
+        if (string.IsNullOrWhiteSpace(text))
         {
-            Analytics.SetUserEmail(txtChangeUserEmail.Text);
+            text = "test@gmail.com";
+            Analytics.SetUserEmail(text);
         }
     }
 
     private async void OnCustomLogErrorClicked(object? sender, RoutedEventArgs e)
     {
         var text = txtCustomLogError?.Text?.Trim();
-        if (text != null)
+        if (string.IsNullOrWhiteSpace(text))
         {
-            await Crashes.LogError(text);
+            Crashes.LogError(text);
         }
     }
 
     private async void OnDefaultLogErrorClicked(object? sender, RoutedEventArgs e)
     {
-        await Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
+        Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
     }
 
     private async void OnSendExceptionLogErrorClicked(object? sender, RoutedEventArgs e)
@@ -83,7 +81,7 @@ public partial class MainView : UserControl
         }
         catch (Exception ex)
         {
-            await Crashes.LogError(ex);
+            Crashes.LogError(ex);
         }
     }
 
@@ -99,12 +97,12 @@ public partial class MainView : UserControl
 
     private async void OnSessionStartClicked(object? sender, RoutedEventArgs e)
     {
-        Analytics.StartSession();
+        await Analytics.StartSession();
     }
 
     private async void OnSessionEndClicked(object? sender, RoutedEventArgs e)
     {
-        Analytics.EndSession();
+        await Analytics.EndSession();
     }
 
     private async void OnInvalidateTokenClicked(object? sender, RoutedEventArgs e)
@@ -115,19 +113,17 @@ public partial class MainView : UserControl
     private async void OnTokenRefreshTestClicked(object? sender, RoutedEventArgs e)
     {
         Analytics.ClearToken();
-        var logsTask = Enumerable.Range(0, 5).Select(
-            _ => Task.Run(() =>
-            {
-                Crashes.LogError("Sending 5 errors after an invalid token");
-            }));
+        var logsTask = Enumerable.Range(0, 5).Select(i => Task.Run(async () =>
+        {
+            await Crashes.LogError("Sending 5 errors after an invalid token");
+        }));
 
-        var eventsTask = Enumerable.Range(0, 5).Select(
-            _ => Task.Run(() =>
-            {
-                Analytics.TrackEvent("Sending 5 events after an invalid token",
+        var eventsTask = Enumerable.Range(0, 5).Select(i => Task.Run(async () =>
+        {
+            await Analytics.TrackEvent("Sending 5 events after an invalid token",
                 new Dictionary<string, string>
                 {{"Test Token", "5 events sent"}});
-            }));
+        }));
         await Task.WhenAll(logsTask);
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
