@@ -1,0 +1,18 @@
+using AppAmbit.Models.Analytics;
+using AppAmbit.Services.Endpoints.Base;
+using AppAmbit.Services.Interfaces;
+
+namespace AppAmbit.Services.Endpoints;
+
+internal class StartSessionEndpoint : BaseEndpoint
+{
+    public StartSessionEndpoint(DateTime utcNow)
+    {
+        Url = "/session/start";
+        Method = HttpMethodEnum.Post;
+        Payload = new SessionData
+        {
+            Timestamp = utcNow
+        };
+    }
+}
