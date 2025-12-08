@@ -9,6 +9,6 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AppAmbit.Maui\AppAmbit.Maui.csproj" />
+    <ProjectReference Include="..\..\sdk\AppAmbit\AppAmbit.csproj" />
   </ItemGroup>
 </Project>
