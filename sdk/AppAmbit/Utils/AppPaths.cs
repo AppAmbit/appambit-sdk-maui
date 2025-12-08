@@ -3,6 +3,9 @@ using System.IO;
 #if MACCATALYST || IOS
 using Foundation;
 #endif
+#if WINDOWS
+using System.Reflection;
+#endif
 
 namespace AppAmbit
 {
@@ -18,6 +21,13 @@ namespace AppAmbit
                 var dir = Path.Combine(baseDir, NSBundle.MainBundle.BundleIdentifier ?? "AppAmbit");
                 Directory.CreateDirectory(dir);
                 return dir;
+#elif WINDOWS
+                string appName = Assembly.GetEntryAssembly()?.GetName().Name ?? "AppAmbit";
+                var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var fullPath = Path.Combine(basePath, appName);
+                Directory.CreateDirectory(fullPath);
+
+                return fullPath;
 #else
                 var p = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
                 if (string.IsNullOrEmpty(p))
@@ -36,6 +46,13 @@ namespace AppAmbit
             );
             Directory.CreateDirectory(dir);
             return Path.Combine(dir, databaseFileName);
+#elif WINDOWS
+            string appName = Assembly.GetEntryAssembly()?.GetName().Name ?? "AppAmbit";
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var appDir = Path.Combine(basePath, appName);
+            Directory.CreateDirectory(appDir);
+
+            return Path.Combine(appDir, databaseFileName);
 #else
             var dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             if (string.IsNullOrEmpty(dir)) dir = AppContext.BaseDirectory;
