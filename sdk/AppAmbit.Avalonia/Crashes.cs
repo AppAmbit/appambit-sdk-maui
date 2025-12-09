@@ -1,18 +1,18 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace AppAmbitSdkAvalonia;
+namespace AppAmbitAvalonia;
 
 public static class Crashes
 {
     public static Task<bool> DidCrashInLastSession()
     {
-        return AppAmbitSdkCore.Crashes.DidCrashInLastSession();
+        return AppAmbit.Crashes.DidCrashInLastSession();
     }
 
     public static Task GenerateTestCrash()
     {
-        return AppAmbitSdkCore.Crashes.GenerateTestCrash();
+        return AppAmbit.Crashes.GenerateTestCrash();
     }
 
     public static async Task LogError(string message,
@@ -22,7 +22,7 @@ public static class Crashes
             [CallerFilePath] string? fileName = null,
             [CallerLineNumber] int? lineNumber = null)
     {
-        AppAmbitSdkCore.Crashes.LogError(message, properties, classFqn, exception, fileName, lineNumber);
+        AppAmbit.Crashes.LogError(message, properties, classFqn, exception, fileName, lineNumber);
     }
 
     public static async Task LogError(Exception exception,
@@ -31,6 +31,6 @@ public static class Crashes
             [CallerFilePath] string? fileName = null,
             [CallerLineNumber] int lineNumber = 0)
     {
-        AppAmbitSdkCore.Crashes.LogError(exception, properties, classFqn, fileName, lineNumber);
+        AppAmbit.Crashes.LogError(exception, properties, classFqn, fileName, lineNumber);
     }
 }

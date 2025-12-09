@@ -1,11 +1,10 @@
 using System;
-using AppAmbitSdkCore;
-namespace AppAmbitSdkAvalonia;
+namespace AppAmbitAvalonia;
 
 public class AppAmbitSdk
 {
     public static void Start(string appKey)
     {
-        AppAmbitSdkCore.AppAmbitSdk.Start(appKey);
+        AppAmbit.AppAmbitSdk.Start(appKey);
     }
 }

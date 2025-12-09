@@ -1,58 +1,58 @@
 using System;
 
-namespace AppAmbitSdkAvalonia;
+namespace AppAmbitAvalonia;
 
 public static class Analytics
 {
     public static void EnableManualSession()
     {
-        AppAmbitSdkCore.Analytics.EnableManualSession();
+        AppAmbit.Analytics.EnableManualSession();
     }
 
     public static async Task StartSession()
     {
-        await AppAmbitSdkCore.Analytics.StartSession();
+        await AppAmbit.Analytics.StartSession();
     }
 
     public static async Task EndSession()
     {
-        await AppAmbitSdkCore.Analytics.EndSession();
+        await AppAmbit.Analytics.EndSession();
     }
 
     public static async void SetUserId(string userId)
     {
-        AppAmbitSdkCore.Analytics.SetUserId(userId);
+        AppAmbit.Analytics.SetUserId(userId);
     }
 
     public static async Task<string?> GetUserId()
     {
-        return await AppAmbitSdkCore.Analytics.GetUserId();
+        return await AppAmbit.Analytics.GetUserId();
     }
 
     public static async void SetUserEmail(string userEmail)
     {
-        AppAmbitSdkCore.Analytics.SetUserEmail(userEmail);
+        AppAmbit.Analytics.SetUserEmail(userEmail);
     }
 
     public static async Task<string?> GetUserEmail()
     {
-        return await AppAmbitSdkCore.Analytics.GetUserEmail();
+        return await AppAmbit.Analytics.GetUserEmail();
     }
 
     public static async Task GenerateTestEvent()
     {
-        AppAmbitSdkCore.Analytics.GenerateTestEvent();
+        AppAmbit.Analytics.GenerateTestEvent();
     }
 
     public static async Task TrackEvent(string eventName, 
             Dictionary<string, string>? properties = null)
     {
-        await AppAmbitSdkCore.Analytics.TrackEvent(eventName, properties);
+        await AppAmbit.Analytics.TrackEvent(eventName, properties);
     }
 
     public static void ClearToken()
     {
-        AppAmbitSdkCore.Analytics.ClearToken();
+        AppAmbit.Analytics.ClearToken();
     }
 
 }
