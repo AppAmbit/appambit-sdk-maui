@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.iOS;
 using Avalonia.Media;
+using AppAmbit;
 
 namespace AppAmbitTestingAppAvalonia.iOS;
 
@@ -17,6 +18,7 @@ public partial class AppDelegate : AvaloniaAppDelegate<App>
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
+        AppAmbitSdk.Start("<YOUR-APPKEY>");
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();
     }

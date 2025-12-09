@@ -2,7 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using System.Collections.Generic;
-using AppAmbitSdkAvalonia;
+using AppAmbit;
 using System.Threading.Tasks;
 using System.Linq;
 

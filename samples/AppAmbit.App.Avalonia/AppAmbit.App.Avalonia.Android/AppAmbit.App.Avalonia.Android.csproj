@@ -23,6 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AppAmbitTestingAppAvalonia\AppAmbitTestingAppAvalonia.csproj" />
+    <ProjectReference Include="..\AppAmbit.App.Avalonia\AppAmbit.App.Avalonia.csproj" />
   </ItemGroup>
 </Project>

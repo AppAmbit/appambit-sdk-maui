@@ -2,7 +2,7 @@
 using Android.Content.PM;
 using Avalonia;
 using Avalonia.Android;
-using AppAmbitSdkAvalonia;
+using AppAmbit;
 
 namespace AppAmbitTestingAppAvalonia.Android;
 
@@ -16,7 +16,7 @@ public class MainActivity : AvaloniaMainActivity<App>
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        AppAmbitSdk.Start("115521de-1dd4-45a9-9f7e-938189383b99");
+        AppAmbitSdk.Start("<YOUR_APPKEY>");
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();
     }

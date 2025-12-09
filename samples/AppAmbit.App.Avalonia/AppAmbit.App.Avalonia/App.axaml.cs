@@ -6,7 +6,7 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using AppAmbitTestingAppAvalonia.ViewModels;
 using AppAmbitTestingAppAvalonia.Views;
-using AppAmbitSdkAvalonia;
+using AppAmbit;
 
 namespace AppAmbitTestingAppAvalonia;
 
@@ -19,7 +19,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        AppAmbitSdk.Start("<YOUR_APPKEY>");
+        AppAmbitSdk.Start("<YOUR-APPKEY>");
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
