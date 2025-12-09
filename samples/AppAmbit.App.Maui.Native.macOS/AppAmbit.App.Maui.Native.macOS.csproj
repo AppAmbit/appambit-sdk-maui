@@ -56,7 +56,7 @@
     <UseHardenedRuntime>true</UseHardenedRuntime>
   </PropertyGroup>-->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AppAmbit.Maui\AppAmbit.Maui.csproj" />
+    <ProjectReference Include="..\..\sdk\AppAmbit.Maui\AppAmbit.Maui.csproj" />
   </ItemGroup>  
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug' and '$(TargetFramework)'=='net9.0-maccatalyst'">

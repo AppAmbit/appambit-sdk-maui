@@ -2,7 +2,6 @@ using System.Globalization;
 using AppAmbit.Services.Interfaces;
 using System.Reflection;
 using System.Runtime.InteropServices;
-
 #if ANDROID
 using Android.App;
 using Android.Content.PM;
@@ -17,9 +16,7 @@ using UIKit;
 #elif WINDOWS
 using Microsoft.Win32;
 #endif
-
 namespace AppAmbit.Services;
-
 public class AppInfoService : IAppInfoService
 {
     public AppInfoService()
@@ -28,16 +25,13 @@ public class AppInfoService : IAppInfoService
         Platform = "Android";
         OS = AOSBuild.VERSION.Release ?? ((int)AOSBuild.VERSION.SdkInt).ToString();
         DeviceModel = AOSBuild.Model;
-
         var context = global::Android.App.Application.Context;
         var pm = context.PackageManager;
         var packageName = context.PackageName;
-
         PackageInfo? pInfo;
 #pragma warning disable 612, 618
         pInfo = pm?.GetPackageInfo(packageName!, 0);
 #pragma warning restore 612, 618
-
         AppVersion = pInfo?.VersionName;
         long code = 0;
         if (OperatingSystem.IsAndroidVersionAtLeast(28))
@@ -55,20 +49,16 @@ public class AppInfoService : IAppInfoService
         Platform = "iOS";
         OS = UIDevice.CurrentDevice.SystemVersion;
         DeviceModel = UIDevice.CurrentDevice.Model;
-
         var bundle = NSBundle.MainBundle;
         AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
         Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();
-
 #elif WINDOWS
         Platform = "Windows";
         OS = RuntimeInformation.OSDescription;
         DeviceModel = Environment.MachineName;
-
         var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
         AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
-
         Build = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 #elif MACCATALYST
         Platform = "macOS";
@@ -78,18 +68,28 @@ public class AppInfoService : IAppInfoService
         AppVersion = bundle.ObjectForInfoDictionary("CFBundleShortVersionString")?.ToString();
         Build = bundle.ObjectForInfoDictionary("CFBundleVersion")?.ToString();
 #else
-        Platform = RuntimeInformation.OSDescription;
-        OS = Environment.OSVersion.VersionString;
-        DeviceModel = Environment.MachineName;
-        AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
-        Build = Assembly.GetEntryAssembly()?.GetName()?.Version?.Build.ToString();
+        if (OperatingSystem.IsWindows())
+        {
+            Platform = "Windows";
+            OS = RuntimeInformation.OSDescription;
+            DeviceModel = Environment.MachineName;
+            var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+            AppVersion = assembly.GetName().Version?.ToString();
+            Build = assembly.GetName().Version?.ToString();
+        }
+        else
+        {
+            Platform = RuntimeInformation.OSDescription;
+            OS = Environment.OSVersion.VersionString;
+            DeviceModel = Environment.MachineName;
+            AppVersion = Assembly.GetEntryAssembly()?.GetName()?.Version?.ToString();
+            Build = Assembly.GetEntryAssembly()?.GetName()?.Version?.Build.ToString();
+        }
 #endif
-
         Country = RegionInfo.CurrentRegion?.Name;
         UtcOffset = TimeZoneInfo.Local.BaseUtcOffset.ToString();
         Language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     }
-
     public string? AppVersion { get; set; }
     public string? Build { get; set; }
     public string? Platform { get; set; }

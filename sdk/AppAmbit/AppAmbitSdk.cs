@@ -200,6 +200,15 @@ public static class AppAmbitSdk
             AppAmbitMacOs.Register(appKey);
 #elif WINDOWS
             AppAmbitWindows.Register(appKey);
+#else
+            if (OperatingSystem.IsWindows())
+            {
+                AppAmbitWindows.Register(appKey);
+            }
+            else
+            {
+                StartFromHostLifecycle(appKey);
+            }
 #endif
     }
 
