@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sdk", "sdk", "{FF13A09E-0E7
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbit", "sdk\AppAmbit\AppAmbit.csproj", "{4F3F153F-1A8D-4F83-A8C7-A503477A6B1E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbit.Avalonia", "sdk\AppAmbit.Avalonia\AppAmbit.Avalonia.csproj", "{FF3CB3FA-2F49-4187-8758-651EB57B3D52}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AppAmbit.Maui", "AppAmbit.Maui", "{6AFB34A9-6803-04B6-06DE-3DDF611F8D1B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppAmbit.App.Maui", "samples\AppAmbit.App.Maui\AppAmbit.App.Maui.csproj", "{B91D2201-510A-4DBC-87BA-810694E0C305}"
