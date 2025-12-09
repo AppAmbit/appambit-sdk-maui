@@ -1,13 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AppAmbitTestingAppAvalonia.Views.AlertWindow"
-        Width="360" Height="140" CanResize="False" WindowStartupLocation="CenterOwner">
-  <Border Padding="12">
-    <StackPanel Spacing="10">
-      <TextBlock Name="MessageText" TextWrapping="Wrap" />
-      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button Name="OkButton" Content="OK" Width="80" Click="OnOkClicked" />
-      </StackPanel>
+        Width="420" Height="160" WindowStartupLocation="CenterOwner" CanResize="False">
+  <StackPanel Margin="12" Spacing="10">
+    <TextBlock Name="txtMessage" TextWrapping="Wrap"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Name="btnOk" Width="80" Content="OK"/>
     </StackPanel>
-  </Border>
+  </StackPanel>
 </Window>

@@ -1,6 +1,10 @@
 using System;
 using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Controls.Primitives;
+using Avalonia.Media;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using System.Collections.Generic;
 using AppAmbit;
 using System.Threading.Tasks;
@@ -16,7 +20,7 @@ public partial class MainView : UserControl
 
         try
         {
-            txtChangeUserId.Text = System.Guid.NewGuid().ToString();
+            txtChangeUserId.Text = Guid.NewGuid().ToString();
             txtChangeUserEmail.Text = "test@gmail.com";
             txtCustomLogError.Text = "Test Log Message";
         }
@@ -37,7 +41,14 @@ public partial class MainView : UserControl
 
     private async void OnDidCrashClicked(object? sender, RoutedEventArgs e)
     {
-        await Crashes.DidCrashInLastSession();
+        try
+        {
+            var didCrash = await Crashes.DidCrashInLastSession();
+            var message = didCrash ? "Application did crash in the last session" : "Application did not crash in the last session.";
+
+            await AlertWindow.ShowAlert(message);
+        }
+        catch (Exception) {}
     }
 
     private async void OnChangeUserIdClicked(object? sender, RoutedEventArgs e)
@@ -47,42 +58,54 @@ public partial class MainView : UserControl
         {
             Analytics.SetUserId(text);
         }
+        await AlertWindow.ShowAlert("User ID changed");
     }
 
     private async void OnChangeUserEmailClicked(object? sender, RoutedEventArgs e)
     {
         var text = txtChangeUserEmail?.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(text))
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            text = "test@gmail.com";
             Analytics.SetUserEmail(text);
         }
+        else
+        {
+            Analytics.SetUserEmail("test@gmail.com");
+        }
+        await AlertWindow.ShowAlert("User email changed");
     }
 
     private async void OnCustomLogErrorClicked(object? sender, RoutedEventArgs e)
     {
         var text = txtCustomLogError?.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(text))
+        if (!string.IsNullOrWhiteSpace(text))
         {
             Crashes.LogError(text);
         }
+        else
+        {
+            Crashes.LogError("Test Log Message");
+        }
+        await AlertWindow.ShowAlert("LogError Custom sent");
     }
 
     private async void OnDefaultLogErrorClicked(object? sender, RoutedEventArgs e)
     {
         Crashes.LogError("Test Log Error", new Dictionary<string, string>() { { "user_id", "1" } });
+        await AlertWindow.ShowAlert("LogError Default sent");
     }
 
     private async void OnSendExceptionLogErrorClicked(object? sender, RoutedEventArgs e)
     {
         try
         {
-            throw new InvalidOperationException("This is a test exception for LogError.");
+            throw new InvalidOperationException();
         }
         catch (Exception ex)
         {
             Crashes.LogError(ex);
         }
+        await AlertWindow.ShowAlert("LogError Exception sent");
     }
 
     private async void OnThrowNewCrashClicked(object? sender, RoutedEventArgs e)
@@ -98,6 +121,7 @@ public partial class MainView : UserControl
     private async void OnSessionStartClicked(object? sender, RoutedEventArgs e)
     {
         await Analytics.StartSession();
+        await AlertWindow.ShowAlert("Session started");
     }
 
     private async void OnSessionEndClicked(object? sender, RoutedEventArgs e)
@@ -127,6 +151,7 @@ public partial class MainView : UserControl
         await Task.WhenAll(logsTask);
         Analytics.ClearToken();
         await Task.WhenAll(eventsTask);
+        await AlertWindow.ShowAlert("5 events and errors sent");
     }
 
     private async void OnSendButtonClickedClicked(object? sender, RoutedEventArgs e)
@@ -191,10 +216,29 @@ public partial class MainView : UserControl
         {
             await Analytics.TrackEvent("Test Batch TrackEvent", new Dictionary<string, string> { { "test1", "test1" } });
         }
+        await AlertWindow.ShowAlert("220 events sent");
     }
 
     private async void OnChangeSecondActivityClicked(object? sender, RoutedEventArgs e)
     {
-        
+        var root = this.GetVisualRoot();
+        object previousContent = this;
+        if (root is Window w)
+        {
+            previousContent = w.Content ?? this;
+            var second = new SecondView(previousContent);
+            w.Content = second;
+            return;
+        }
+        try
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime singleView)
+            {
+                var second = new SecondView(previousContent);
+                singleView.MainView = second;
+            }
+        }
+        catch {}
     }
+
 }
