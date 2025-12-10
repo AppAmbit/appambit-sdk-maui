@@ -5,3 +5,4 @@ bin/
 *.user
 launch.json
 Shared/
+**/.DS_Store
