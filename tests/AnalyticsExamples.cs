@@ -2,13 +2,13 @@ using System.Reflection;
 using AppAmbit;
 using AppAmbit.Enums;
 using AppAmbit.Models.Analytics;
-using AppAmbit.Models.Breadcrums;
+using AppAmbit.Models.Breadcrumbs;
 using AppAmbit.Models.Logs;
 using AppAmbit.Models.Responses;
 using AppAmbit.Services;
 using AppAmbit.Services.Interfaces;
 
-namespace AppAmbitSdkTest;
+namespace AppAmbitTest;
 
 public class AnalyticsExamples : IDisposable
 {
