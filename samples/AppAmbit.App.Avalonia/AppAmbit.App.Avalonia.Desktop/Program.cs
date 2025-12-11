@@ -1,6 +1,6 @@
 ﻿using System;
 using Avalonia;
-using AppAmbit;
+using AppAmbitAvalonia;
 
 namespace AppAmbitTestingAppAvalonia.Desktop;
 

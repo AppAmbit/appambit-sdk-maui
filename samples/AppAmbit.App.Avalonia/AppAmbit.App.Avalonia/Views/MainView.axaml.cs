@@ -6,7 +6,7 @@ using Avalonia.Media;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using System.Collections.Generic;
-using AppAmbit;
+using AppAmbitAvalonia;
 using System.Threading.Tasks;
 using System.Linq;
 

@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\sdk\AppAmbit\AppAmbit.csproj" />
+    <ProjectReference Include="..\..\..\sdk\AppAmbit.Avalonia\AppAmbit.Avalonia.csproj" />
   </ItemGroup>  
 
   <ItemGroup>

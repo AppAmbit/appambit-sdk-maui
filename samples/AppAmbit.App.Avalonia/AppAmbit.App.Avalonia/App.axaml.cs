@@ -6,7 +6,7 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using AppAmbitTestingAppAvalonia.ViewModels;
 using AppAmbitTestingAppAvalonia.Views;
-using AppAmbit;
+using AppAmbitAvalonia;
 
 namespace AppAmbitTestingAppAvalonia;
 

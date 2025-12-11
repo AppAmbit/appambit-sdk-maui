@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.iOS;
 using Avalonia.Media;
-using AppAmbit;
+using AppAmbitAvalonia;
 
 namespace AppAmbitTestingAppAvalonia.iOS;
 
