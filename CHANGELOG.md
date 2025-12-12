@@ -2,15 +2,15 @@
 
 ### AppAmbit
 
-* **[Refactor]** The MAUI SDK was refactored to be a DOTNET SDK targeting .NETStandard 2.0 and .NET 9.
-* **[Feature]** Added SDK for Avalonia and DOTNET
+* **[Refactor]** Added a shared .NET SDK (netstandard2.0 + .NET 9); MAUI SDK now extends this base.
+* **[Feature]** New Avalonia and .NET SDK support.
 
 ## Version 1.1.0
 
 ### AppAmbit
 
-* **[Feature]** Added AppAmbit Trail logs app and page lifecycle events
-* **[Feature]** SDK Updated to support Windows and MacCatalyst
+* **[Feature]** Add Ambit Trail for tracking detailed app and page lifecycle events.
+* **[Feature]** Added Windows and Mac Catalyst support.
 
 ## Version 1.0.3
 
