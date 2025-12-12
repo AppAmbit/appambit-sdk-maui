@@ -2,7 +2,7 @@
 
 ### AppAmbit
 
-* **[Feature]** Added SDK for Avalonia and MAUI
+* **[Feature]** Added SDK for Avalonia and DOTNET
 
 ## Version 1.1.0
 
