@@ -35,10 +35,15 @@ namespace AppAmbit
                 }
                 if (OperatingSystem.IsMacOS())
                 {
-                    var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    if (string.IsNullOrWhiteSpace(basePath))
-                        basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                    var dir = Path.Combine(basePath, "AppAmbit");
+                    var basePath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Library",
+                        "Application Support"
+                    );
+
+                    string appName = Assembly.GetEntryAssembly()?.GetName().Name ?? "AppAmbit";
+                    var dir = Path.Combine(basePath, appName);
+
                     Directory.CreateDirectory(dir);
                     return dir;
                 }
@@ -77,10 +82,15 @@ namespace AppAmbit
             }
             if (OperatingSystem.IsMacOS())
             {
-                var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                if (string.IsNullOrWhiteSpace(basePath))
-                    basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var dir = Path.Combine(basePath, "AppAmbit");
+                var basePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Library",
+                    "Application Support"
+                );
+
+                string appName = Assembly.GetEntryAssembly()?.GetName().Name ?? "AppAmbit";
+                var dir = Path.Combine(basePath, appName);
+
                 Directory.CreateDirectory(dir);
                 return Path.Combine(dir, databaseFileName);
             }

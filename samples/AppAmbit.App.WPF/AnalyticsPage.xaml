@@ -1,4 +1,4 @@
-﻿<Page x:Class="AppAmbitTestingAppWindows.AnalyticsPage"
+﻿<Page x:Class="AppAmbit.App.WPF.AnalyticsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="AnalyticsPage">
