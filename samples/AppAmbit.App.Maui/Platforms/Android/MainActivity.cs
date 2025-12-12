@@ -17,8 +17,5 @@ public class MainActivity : MauiAppCompatActivity
 
         // Start push and wire token updates to AppAmbit.
         PushNotifications.Start(ApplicationContext);
-
-        // Request POST_NOTIFICATIONS on Android 13+.
-        PushNotifications.RequestNotificationPermission((ActivityBase)this);
     }
 }

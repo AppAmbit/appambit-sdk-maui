@@ -29,14 +29,38 @@ internal static class PushNotificationsAndroid
 
         _ = Task.Run(() =>
         {
+            var needsPostStartSync = false;
+
             try
             {
-                PushKernel.Start(appContext);
                 PushKernel.SetNotificationsEnabled(appContext, enableNotifications);
             }
             catch (Java.Lang.IllegalStateException ex)
             {
+                needsPostStartSync = true;
+                Log.Warn(LogTag, $"Failed to apply notifications enabled={enableNotifications} before start: {ex}");
+            }
+
+            try
+            {
+                PushKernel.Start(appContext);
+            }
+            catch (Java.Lang.IllegalStateException ex)
+            {
                 Log.Error(LogTag, $"Failed to start push: {ex}");
+                return;
+            }
+
+            if (needsPostStartSync)
+            {
+                try
+                {
+                    PushKernel.SetNotificationsEnabled(appContext, enableNotifications);
+                }
+                catch (Java.Lang.IllegalStateException ex)
+                {
+                    Log.Error(LogTag, $"Failed to apply notifications enabled={enableNotifications} after start: {ex}");
+                }
             }
         });
     }
@@ -54,19 +78,31 @@ internal static class PushNotificationsAndroid
             Log.Error(LogTag, $"Failed to set notifications enabled={enabled}: {ex}");
         }
 
-        if (!enabled && !string.IsNullOrWhiteSpace(_lastPushToken))
+        var token = _lastPushToken;
+        if (!string.IsNullOrWhiteSpace(token))
         {
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await AppAmbitSdk.UpdateConsumerAsync(_lastPushToken, false);
+                    await AppAmbitSdk.UpdateConsumerAsync(token, enabled);
                 }
                 catch (System.Exception ex)
                 {
                     Log.Error(LogTag, $"Failed to sync consumer push state (enabled={enabled}): {ex}");
                 }
+                finally
+                {
+                    if (!enabled)
+                    {
+                        _lastPushToken = null;
+                    }
+                }
             });
+        }
+        else if (!enabled)
+        {
+            _lastPushToken = null;
         }
     }
 
@@ -116,7 +152,14 @@ internal static class PushNotificationsAndroid
 
         public void Customize(Context context, NotificationCompat.Builder builder, AppAmbitNotification notification)
         {
-            Managed.Customize(context, builder, notification);
+            var managedNotification = new AppAmbitNotification(
+                notification.Title,
+                notification.Body,
+                notification.Color,
+                notification.SmallIconName,
+                notification.Data);
+
+            Managed.Customize(context, builder, managedNotification);
         }
     }
 

@@ -1,10 +1,8 @@
 using System;
-#if ANDROID
 using Android.Content;
 using AndroidX.Core.App;
 using Com.Appambit.Sdk.Models;
 using ActivityBase = AndroidX.Activity.ComponentActivity;
-#endif
 
 namespace AppAmbit.PushNotifications;
 
@@ -20,47 +18,64 @@ public static class PushNotifications
         void OnPermissionResult(bool isGranted);
     }
 
-#if ANDROID
     public interface INotificationCustomizer
     {
         void Customize(Context context, NotificationCompat.Builder builder, AppAmbitNotification notification);
     }
 
-    public static void Start(Context context, bool enableNotifications = true) =>
+    public static void Start(Context context, bool enableNotifications = true)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
         PushNotificationsAndroid.Start(context, enableNotifications);
+    }
 
-    public static void SetNotificationsEnabled(Context context, bool enabled) =>
+    public static void SetNotificationsEnabled(Context context, bool enabled)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
         PushNotificationsAndroid.SetNotificationsEnabled(context, enabled);
+    }
 
-    public static bool IsNotificationsEnabled(Context context) =>
-        PushNotificationsAndroid.IsNotificationsEnabled(context);
+    public static bool IsNotificationsEnabled(Context context)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
 
-    public static void RequestNotificationPermission(ActivityBase activity) =>
+        return PushNotificationsAndroid.IsNotificationsEnabled(context);
+    }
+
+    public static void RequestNotificationPermission(ActivityBase activity)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
         PushNotificationsAndroid.RequestNotificationPermission(activity, null);
+    }
 
-    public static void RequestNotificationPermission(ActivityBase activity, IPermissionListener? listener) =>
+    public static void RequestNotificationPermission(ActivityBase activity, IPermissionListener? listener)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
         PushNotificationsAndroid.RequestNotificationPermission(activity, listener);
+    }
 
-    public static void SetNotificationCustomizer(INotificationCustomizer? customizer) =>
+    public static void SetNotificationCustomizer(INotificationCustomizer? customizer)
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
         PushNotificationsAndroid.SetNotificationCustomizer(customizer);
+    }
 
-    public static INotificationCustomizer? GetNotificationCustomizer() =>
-        PushNotificationsAndroid.GetNotificationCustomizer();
-#else
-    // Future platforms: provide implementations here. For now, throw to indicate unsupported.
-    public static void Start(object context, bool enableNotifications = true) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static void SetNotificationsEnabled(object context, bool enabled) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static bool IsNotificationsEnabled(object context) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static void RequestNotificationPermission(object activity) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static void RequestNotificationPermission(object activity, IPermissionListener? listener) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static void SetNotificationCustomizer(INotificationCustomizer? customizer) =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-    public static INotificationCustomizer? GetNotificationCustomizer() =>
-        throw new PlatformNotSupportedException("PushNotifications is not supported on this platform.");
-#endif
+    public static INotificationCustomizer? GetNotificationCustomizer()
+    {
+        if (!OperatingSystem.IsAndroid())
+            throw new PlatformNotSupportedException("AppAmbit push notifications are only supported on Android.");
+
+        return PushNotificationsAndroid.GetNotificationCustomizer();
+    }
 }

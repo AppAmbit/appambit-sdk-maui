@@ -1,7 +1,4 @@
 ﻿using AppAmbitMaui;
-using Microsoft.Maui;
-using Microsoft.Maui.Hosting;
-using Microsoft.Maui.Controls.Hosting;
 
 namespace AppAmbitTestingApp;
 
@@ -15,7 +12,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseAppAmbit("<YOUR-APPKEY>");
-        
+
         return builder.Build();
     }
 }
