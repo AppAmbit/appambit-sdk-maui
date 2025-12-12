@@ -1,0 +1,54 @@
+﻿<Page x:Class="AppAmbit.App.WPF.AnalyticsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="AnalyticsPage">
+
+    <Grid Background="#FFFFFF">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="40">
+                <TextBlock Text="Analytics"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="Black"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,30" />
+
+                <Button Content="Invalidate Token" Click="onInvalidateToken"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Token refresh test" Click="onTokenRefreshTest"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Start Session" Click="onStartSession"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="End Session" Click="onEndSession"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Send 'Button Clicked' Event w/ property" Click="onButtonClicked"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Send Default Event w/ property" Click="onDefaultEvent"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Send Max-300-Length Event" Click="onSendMax300Event"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Send Max-20-Properties Event" Click="onSendMax20PropertiesEvent"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+
+                <Button Content="Send Batch of 220 Events" Click="onGenerateBatchEvents"
+                        Height="55" FontSize="16" Margin="0,5"
+                        Background="Blue" Foreground="White" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -1,3 +1,9 @@
+## Version 1.1.1
+
+### AppAmbit
+
+* **[Feature]** Added SDK for Avalonia and MAUI
+
 ## Version 1.1.0
 
 ### AppAmbit
