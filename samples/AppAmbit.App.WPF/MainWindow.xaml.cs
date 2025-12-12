@@ -2,7 +2,7 @@
 using System.Text;
 using System.Windows;
 
-namespace AppAmbitTestingAppWindows;
+namespace AppAmbit.App.WPF;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
