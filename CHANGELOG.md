@@ -9,7 +9,7 @@
 
 ### AppAmbit
 
-* **[Feature]** Added Ambit Trail now records more detailed navigation information, making it easier to trace user flow within the app.
+* **[Feature]** Added AppAmbit Trail logs app and page lifecycle events
 * **[Feature]** SDK Updated to support Windows and MacCatalyst
 
 ## Version 1.0.3
