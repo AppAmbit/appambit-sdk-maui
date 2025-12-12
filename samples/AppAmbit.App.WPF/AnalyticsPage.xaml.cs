@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using AppAmbit;
 
-namespace AppAmbitTestingAppWindows
+namespace AppAmbit.App.WPF
 {
     public partial class AnalyticsPage : Page
     {
