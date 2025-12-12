@@ -1,38 +1,23 @@
 using Android.Content;
-using AndroidX.Activity;
-using AndroidX.Core.App;
 using Android.Util;
-using AppAmbit;
+using AndroidX.Core.App;
 using Com.Appambit.Sdk.Models;
 using Com.Appambit.Sdk;
+using AppAmbit;
+using System.Threading.Tasks;
+using ActivityBase = AndroidX.Activity.ComponentActivity;
 
 namespace AppAmbit.PushNotifications;
 
-/// <summary>
-/// Bridge to the AppAmbit Push Notifications AAR plus orchestration with the .NET core SDK.
-/// </summary>
-public static class PushNotifications
+internal static class PushNotificationsAndroid
 {
-    private const string LogTag = "AppAmbitPushSDK";
     private static bool _initialized;
     private static string? _lastPushToken;
+    private const string LogTag = PushNotifications.LogTag;
 
-    public interface IPermissionListener
+    public static void Start(Context context, bool enableNotifications)
     {
-        void OnPermissionResult(bool isGranted);
-    }
-
-    public interface INotificationCustomizer
-    {
-        void Customize(Context context, NotificationCompat.Builder builder, AppAmbitNotification notification);
-    }
-
-    /// <summary>
-    /// Starts the push kernel and wires it to the .NET core SDK to update the consumer.
-    /// </summary>
-    public static void Start(Context context, bool enableNotifications = true)
-    {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (context == null) throw new System.ArgumentNullException(nameof(context));
 
         var appContext = context.ApplicationContext;
 
@@ -58,7 +43,7 @@ public static class PushNotifications
 
     public static void SetNotificationsEnabled(Context context, bool enabled)
     {
-        if (context == null) throw new ArgumentNullException(nameof(context));
+        if (context == null) throw new System.ArgumentNullException(nameof(context));
 
         try
         {
@@ -77,7 +62,7 @@ public static class PushNotifications
                 {
                     await AppAmbitSdk.UpdateConsumerAsync(_lastPushToken, false);
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     Log.Error(LogTag, $"Failed to sync consumer push state (enabled={enabled}): {ex}");
                 }
@@ -86,22 +71,19 @@ public static class PushNotifications
     }
 
     public static bool IsNotificationsEnabled(Context context) =>
-        PushKernel.AreNotificationsEnabled(context.ApplicationContext);
+        PushKernel.IsNotificationsEnabled(context.ApplicationContext);
 
-    public static void RequestNotificationPermission(AndroidX.Activity.ComponentActivity activity) =>
-        PushKernel.RequestNotificationPermission(activity, null);
+    public static void RequestNotificationPermission(ActivityBase activity, PushNotifications.IPermissionListener? listener) =>
+        PushKernel.RequestNotificationPermission(activity, listener is null ? null : new PermissionListenerProxy(listener));
 
-    public static void RequestNotificationPermission(AndroidX.Activity.ComponentActivity activity, IPermissionListener listener) =>
-        PushKernel.RequestNotificationPermission(activity, new PermissionListenerProxy(listener));
-
-    public static void SetNotificationCustomizer(INotificationCustomizer? customizer)
+    public static void SetNotificationCustomizer(PushNotifications.INotificationCustomizer? customizer)
     {
         PushKernel.NotificationCustomizer = customizer is null
             ? null
             : new NotificationCustomizerProxy(customizer);
     }
 
-    public static INotificationCustomizer? GetNotificationCustomizer()
+    public static PushNotifications.INotificationCustomizer? GetNotificationCustomizer()
     {
         return PushKernel.NotificationCustomizer is NotificationCustomizerProxy proxy
             ? proxy.Managed
@@ -110,9 +92,9 @@ public static class PushNotifications
 
     private sealed class PermissionListenerProxy : Java.Lang.Object, Com.Appambit.Sdk.PushKernel.IPermissionListener
     {
-        private readonly IPermissionListener _managed;
+        private readonly PushNotifications.IPermissionListener _managed;
 
-        public PermissionListenerProxy(IPermissionListener managed)
+        public PermissionListenerProxy(PushNotifications.IPermissionListener managed)
         {
             _managed = managed;
         }
@@ -125,9 +107,9 @@ public static class PushNotifications
 
     private sealed class NotificationCustomizerProxy : Java.Lang.Object, Com.Appambit.Sdk.PushKernel.INotificationCustomizer
     {
-        public INotificationCustomizer Managed { get; }
+        public PushNotifications.INotificationCustomizer Managed { get; }
 
-        public NotificationCustomizerProxy(INotificationCustomizer managed)
+        public NotificationCustomizerProxy(PushNotifications.INotificationCustomizer managed)
         {
             Managed = managed;
         }
@@ -149,7 +131,7 @@ public static class PushNotifications
 
         public void OnNewToken(string token)
         {
-            if (!PushKernel.AreNotificationsEnabled(_context))
+            if (!PushKernel.IsNotificationsEnabled(_context))
                 return;
 
             Log.Debug(LogTag, $"FCM token received: {token}");
@@ -160,7 +142,7 @@ public static class PushNotifications
                 {
                     await AppAmbitSdk.UpdateConsumerAsync(token, true);
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     Log.Error(LogTag, $"Failed to update consumer with new FCM token: {ex}");
                 }

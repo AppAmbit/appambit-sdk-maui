@@ -2,6 +2,7 @@
 using Android.Content.PM;
 using Android.OS;
 using AppAmbit.PushNotifications;
+using ActivityBase = AndroidX.Activity.ComponentActivity;
 
 namespace AppAmbitTestingApp;
 
@@ -13,9 +14,11 @@ public class MainActivity : MauiAppCompatActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        // Start push bridge after MAUI/Core is initialized.
+
+        // Start push and wire token updates to AppAmbit.
         PushNotifications.Start(ApplicationContext);
-        // Request notification permission on Android 13+.
-        PushNotifications.RequestNotificationPermission(this);
+
+        // Request POST_NOTIFICATIONS on Android 13+.
+        PushNotifications.RequestNotificationPermission((ActivityBase)this);
     }
 }

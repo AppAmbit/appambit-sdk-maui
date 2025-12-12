@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "583937499860",
+    "project_id": "appambit-maui-native-android",
+    "storage_bucket": "appambit-maui-native-android.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:583937499860:android:56311ba684b32d35005141",
+        "android_client_info": {
+          "package_name": "com.companyname.AppAmbitTestingAppAndroid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBtMvwTwowwGWhhy4v_XE3Q1ONeCankOw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

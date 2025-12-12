@@ -155,14 +155,14 @@ internal class ConsumerService
             var normalizedToken = string.IsNullOrWhiteSpace(deviceToken) ? storedToken : deviceToken.Trim();
             var normalizedEnabled = pushEnabled ?? storedEnabled ?? true;
 
-            await _storageService.SetPushDeviceToken(normalizedToken);
-            await _storageService.SetPushEnabled(normalizedEnabled);
-
-            if (string.IsNullOrWhiteSpace(normalizedToken))
+            if (string.IsNullOrWhiteSpace(normalizedToken) && pushEnabled == null && storedEnabled == null)
             {
-                Debug.WriteLine("[ConsumerService] Push token is empty, backend update skipped.");
+                Debug.WriteLine("[ConsumerService] No push data to update (token and flag missing).");
                 return;
             }
+
+            await _storageService.SetPushDeviceToken(normalizedToken);
+            await _storageService.SetPushEnabled(normalizedEnabled);
 
             if (!await NetConnectivity.HasInternetAsync())
             {
@@ -177,7 +177,16 @@ internal class ConsumerService
                 return;
             }
 
-            var endpoint = new UpdateConsumerEndpoint(consumerId, new UpdateConsumer(normalizedToken, normalizedEnabled));
+            var payloadToken = string.IsNullOrWhiteSpace(normalizedToken) ? null : normalizedToken;
+            var payloadEnabled = pushEnabled ?? storedEnabled;
+
+            if (payloadToken == null && payloadEnabled == null)
+            {
+                Debug.WriteLine("[ConsumerService] Nothing to send to backend (token empty and enabled flag null).");
+                return;
+            }
+
+            var endpoint = new UpdateConsumerEndpoint(consumerId, new UpdateConsumer(payloadToken, payloadEnabled));
             var response = await _apiService.ExecuteRequest<object>(endpoint);
 
             if (response != null && response.ErrorType == ApiErrorType.None)

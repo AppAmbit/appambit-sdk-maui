@@ -1,12 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Android.App;
 using Android.Content;
-using AppAmbitMaui;
 using Android.Views;
 using Android.OS;
+using AndroidX.AppCompat.App;
+using Android.Widget;
+using AppAmbit.PushNotifications;
+using AppAmbitMaui;
+using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
 namespace AppAmbitTestingAppAndroid;
 
-[Activity(Label = "@string/app_name", MainLauncher = true)]
-public class MainActivity : Activity
+[Activity(Label = "@string/app_name", MainLauncher = true, Theme = "@style/Theme.AppCompat.Light.NoActionBar")]
+public class MainActivity : AppCompatActivity
 {
     FrameLayout? _container;
     View? _viewCrashes;
@@ -20,6 +29,8 @@ public class MainActivity : Activity
         base.OnCreate(savedInstanceState);
 
         AppAmbitSdk.Start("<YOUR-APPKEY>");
+        PushNotifications.Start(ApplicationContext);
+        PushNotifications.RequestNotificationPermission(this);
 
         SetContentView(L("activity_main"));
 
