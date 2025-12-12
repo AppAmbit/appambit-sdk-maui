@@ -28,6 +28,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Run unit tests
+        run: dotnet test ./tests/AppAmbitTest.csproj --configuration ${{ env.RELEASE_TYPE }}
+
       - name: Read version from csproj
         id: version
         shell: pwsh
