@@ -2,7 +2,7 @@
 
 ### AppAmbit
 
-* **[Refactor]** The MAUI SDK was refactored to be a DOTNET sdk targeting .NETStandard 2.0 and .NET 9.
+* **[Refactor]** The MAUI SDK was refactored to be a DOTNET SDK targeting .NETStandard 2.0 and .NET 9.
 * **[Feature]** Added SDK for Avalonia and DOTNET
 
 ## Version 1.1.0
