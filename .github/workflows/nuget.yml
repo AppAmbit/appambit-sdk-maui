@@ -81,10 +81,8 @@ jobs:
       - name: Create artifacts directory
         run: mkdir -p ${{ env.FOLDER_OUTPUT }}
 
-      - name: Restore solution
-        run: |
-          dotnet clean
-          dotnet restore
+      - name: Install .NET Workloads (Restore)
+        run: dotnet workload restore
 
       - name: Pack AppAmbit (base)
         if: steps.check_tag.outputs.skip_build != 'true'
