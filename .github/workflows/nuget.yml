@@ -2,11 +2,6 @@ name: Build and Publish NuGet Package
 
 on:
   workflow_dispatch:
-    inputs:
-      publish:
-        description: 'If true, will push packages to NuGet (manual). Default: false'
-        required: false
-        default: 'false'
 
 env:
   FOLDER_OUTPUT: artifacts
@@ -84,23 +79,19 @@ jobs:
       - name: Install .NET Workloads (Restore)
         run: dotnet workload restore
 
-      - name: Pack AppAmbit (base)
-        if: steps.check_tag.outputs.skip_build != 'true'
+      - name: Pack AppAmbit Dotnet
         run: |
           dotnet pack ${{ env.SDK_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Pack AppAmbit.Maui
-        if: steps.check_tag.outputs.skip_build != 'true'
         run: |
           dotnet pack ${{ env.SDK_MAUI_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Pack AppAmbit.Avalonia
-        if: steps.check_tag.outputs.skip_build != 'true'
         run: |
           dotnet pack ${{ env.SDK_AVALONIA_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
 
       - name: Upload artifacts
-        if: steps.check_tag.outputs.skip_build != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: AppAmbit-Packages-${{ steps.version.outputs.version_name }}
@@ -117,12 +108,12 @@ jobs:
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
       - name: Skip publishing prerelease versions to NuGet
-        if: ${{ github.event.inputs.publish == 'true' && steps.version.outputs.is_prerelease == 'true' }}
+        if: ${{ steps.version.outputs.is_prerelease == 'true' }}
         run: |
-          echo "Version ${{ steps.version.outputs.version_name }} is a prerelease; skipping publish to NuGet.org as requested."
+          echo "Version ${{ steps.version.outputs.version_name }} is a prerelease; skipping publish to NuGet.org."
 
       - name: Publish to NuGet (manual)
-        if: ${{ github.event.inputs.publish == 'true' && steps.version.outputs.is_prerelease == 'false' }}
+        if: ${{ steps.version.outputs.is_prerelease == 'false' }}
         shell: pwsh
         run: |
           Write-Host "Publishing all nupkgs in $env:FOLDER_OUTPUT to NuGet.org"
