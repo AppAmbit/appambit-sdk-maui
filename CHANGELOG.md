@@ -1,14 +1,16 @@
-## Version 1.1.1
+## Version 2.0.0
 
 ### AppAmbit
 
-* **[Feature]** Added SDK for Avalonia and MAUI
+* **[Refactor]** Added a shared .NET SDK (netstandard2.0 + .NET 9); MAUI SDK now extends this base.
+* **[Feature]** New Avalonia and .NET SDK support.
 
 ## Version 1.1.0
 
 ### AppAmbit
 
-* **[Feature]** SDK Updated to support Windows and MacCatalyst
+* **[Feature]** Add Ambit Trail for tracking detailed app and page lifecycle events.
+* **[Feature]** Added Windows and Mac Catalyst support.
 
 ## Version 1.0.3
 
