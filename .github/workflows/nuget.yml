@@ -33,7 +33,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Read version from Directory.Build.props
         id: version
@@ -81,23 +81,10 @@ jobs:
       - name: Create artifacts directory
         run: mkdir -p ${{ env.FOLDER_OUTPUT }}
 
-      - name: Restore & Build AppAmbit (base)
-        if: steps.check_tag.outputs.skip_build != 'true'
+      - name: Restore solution
         run: |
-          dotnet restore ${{ env.SDK_PATH }}
-          dotnet build ${{ env.SDK_PATH }} --configuration ${{ env.RELEASE_TYPE }}
-
-      - name: Restore & Build AppAmbit.Maui
-        if: steps.check_tag.outputs.skip_build != 'true'
-        run: |
-          dotnet restore ${{ env.SDK_MAUI_PATH }}
-          dotnet build ${{ env.SDK_MAUI_PATH }} --configuration ${{ env.RELEASE_TYPE }}
-
-      - name: Restore & Build AppAmbit.Avalonia
-        if: steps.check_tag.outputs.skip_build != 'true'
-        run: |
-          dotnet restore ${{ env.SDK_AVALONIA_PATH }}
-          dotnet build ${{ env.SDK_AVALONIA_PATH }} --configuration ${{ env.RELEASE_TYPE }}
+          dotnet clean
+          dotnet restore
 
       - name: Pack AppAmbit (base)
         if: steps.check_tag.outputs.skip_build != 'true'
