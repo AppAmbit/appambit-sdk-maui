@@ -10,6 +10,7 @@ env:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   build:
@@ -17,6 +18,38 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
+      - name: Ensure NET Unit Tests workflow succeeded
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = process.env.GITHUB_SHA;
+            if (!headSha) throw new Error("Missing GITHUB_SHA");
+
+            const workflows = await github.rest.actions.listRepoWorkflows({ owner, repo, per_page: 100 });
+            const wf = workflows.data.workflows.find(w => w.name === "NET Unit Tests");
+            if (!wf) throw new Error("Workflow 'NET Unit Tests' not found. Check the workflow name.");
+
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: wf.id,
+              per_page: 50
+            });
+
+            const sameSha = runs.data.workflow_runs.filter(r => r.head_sha === headSha && r.status === "completed");
+            if (sameSha.length === 0) {
+              throw new Error("No completed 'NET Unit Tests' run found for this commit. Run unit tests first.");
+            }
+
+            const ok = sameSha.find(r => r.conclusion === "success");
+            const finalRun = ok ?? sameSha[0];
+            if (!ok) throw new Error(`'NET Unit Tests' concluded with '${finalRun.conclusion}'.`);
+
+            console.log(`NET Unit Tests succeeded: ${finalRun.html_url}`);
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
