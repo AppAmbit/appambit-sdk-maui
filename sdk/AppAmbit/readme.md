@@ -1,4 +1,4 @@
-# AppAmbit .NET MAUI SDK
+# AppAmbit .NET SDK
 
 **Track. Debug. Distribute.**
 **AppAmbit: track, debug, and distribute your apps from one dashboard.**
@@ -35,20 +35,18 @@ Lightweight SDK for analytics, events, logging, crashes, and offline support. Si
 * Crash capture with stack traces and threads
 * Offline support with batching, retry, and queue
 * Create mutliple app profiles for staging and production
-* Lightweight, modern .NET MAUI API for iOS and Android
+* Lightweight, modern .NET API for iOS and Android
 
 ---
 
 ## Requirements
 
-* .NET 8.0 or newer with the .NET MAUI workload
-* Visual Studio 2022 (17.6 or newer) or VS Code with .NET MAUI extensions
+* .NET 9.0 or newer with the .NET workload
+* Visual Studio 2022 (17.6 or newer) or VS Code with .NET extensions
 * **Supported targets:**
 
-  * iOS
-  * Android
-  * macOS
-  * Windows
+  * WPF
+  * WinUI
 
 ---
 
@@ -56,12 +54,12 @@ Lightweight SDK for analytics, events, logging, crashes, and offline support. Si
 
 ### NuGet
 
-Add the package to your MAUI project:
+Add the package to your project:
 
 ```bash
-dotnet add package com.AppAmbit.Maui
+dotnet add package com.AppAmbit.Sdk
 # or specify version
-dotnet add package com.AppAmbit.Maui --version 2.0.0
+dotnet add package com.AppAmbit.Sdk --version 2.0.0
 ```
 
 Or, using Visual Studio:
@@ -73,21 +71,18 @@ Or, using Visual Studio:
 
 ## Quickstart
 
-Initialize AppAmbit early in your application lifecycle (e.g. in `MauiProgram.cs`.
+Initialize AppAmbit early in your application lifecycle (e.g. in `Program.cs`.
 
 ```csharp
 using AppAmbit;
 
-public static class MauiProgram
+public partial class App : Application
 {
-    public static MauiApp CreateMauiApp()
+    public override void OnFrameworkInitializationCompleted()
     {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .UseAppAmbit("YOUR-APPKEY");
-
-        return builder.Build();
+        AppAmbitSdk.Start("<YOUR-APPKEY>");
+        ...
+        base.OnFrameworkInitializationCompleted();
     }
 }
 ```
@@ -101,7 +96,7 @@ public static class MauiProgram
 * **Track events** – send structured events with custom properties
 
   ```csharp
-      Analytics.TrackEvent("Audio started", new Dictionary<string, string> {
+    Analytics.TrackEvent("Audio started", new Dictionary<string, string> {
         { "Category", "Music" },
         { "FileName", "favorite.mp3"}
     });
@@ -183,6 +178,6 @@ Open source under the terms described in the [LICENSE](./LICENSE) file.
 * **Docs**: [docs.appambit.com](https://docs.appambit.com)
 * **Dashboard**: [appambit.com](https://appambit.com)
 * **Discord**: [discord.gg](https://discord.gg/nJyetYue2s)
-* **Examples**: Sample .NET MAUI demo (iOS and Android) included in repo.
+* **Examples**: Sample .NET demo (iOS and Android) included in repo.
 
 ---

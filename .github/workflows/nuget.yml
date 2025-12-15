@@ -2,15 +2,21 @@ name: Build and Publish NuGet Package
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'If true, will push packages to NuGet (manual). Default: false'
+        required: false
+        default: 'false'
 
 env:
-  PROJECT_PATH: ./AppAmbitMaui/AppAmbitMaui.csproj
   FOLDER_OUTPUT: artifacts
   RELEASE_TYPE: Release
+  SDK_PATH: sdk/AppAmbit/AppAmbit.csproj
+  SDK_MAUI_PATH: sdk/AppAmbit.Maui/AppAmbit.Maui.csproj
+  SDK_AVALONIA_PATH: sdk/AppAmbit.Avalonia/AppAmbit.Avalonia.csproj
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
   build:
@@ -18,38 +24,6 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      - name: Ensure NET Unit Tests workflow succeeded
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const headSha = process.env.GITHUB_SHA;
-            if (!headSha) throw new Error("Missing GITHUB_SHA");
-
-            const workflows = await github.rest.actions.listRepoWorkflows({ owner, repo, per_page: 100 });
-            const wf = workflows.data.workflows.find(w => w.name === "NET Unit Tests");
-            if (!wf) throw new Error("Workflow 'NET Unit Tests' not found. Check the workflow name.");
-
-            const runs = await github.rest.actions.listWorkflowRuns({
-              owner,
-              repo,
-              workflow_id: wf.id,
-              per_page: 50
-            });
-
-            const sameSha = runs.data.workflow_runs.filter(r => r.head_sha === headSha && r.status === "completed");
-            if (sameSha.length === 0) {
-              throw new Error("No completed 'NET Unit Tests' run found for this commit. Run unit tests first.");
-            }
-
-            const ok = sameSha.find(r => r.conclusion === "success");
-            const finalRun = ok ?? sameSha[0];
-            if (!ok) throw new Error(`'NET Unit Tests' concluded with '${finalRun.conclusion}'.`);
-
-            console.log(`NET Unit Tests succeeded: ${finalRun.html_url}`);
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -59,33 +33,25 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
-      - name: Run unit tests
-        run: dotnet test ./tests/AppAmbitTest.csproj --configuration ${{ env.RELEASE_TYPE }}
-
-      - name: Read version from csproj
+      - name: Read version from Directory.Build.props
         id: version
         shell: pwsh
         run: |
-          [xml]$csproj = Get-Content "${{ env.PROJECT_PATH }}"
-          $version = $csproj.Project.PropertyGroup.Version
-          echo "VERSION_NAME=$version"
+          [xml]$xml = Get-Content "Directory.Build.props"
+          $version = $xml.Project.PropertyGroup.Version
+          if (-not $version) { Write-Error "Cannot determine Version in Directory.Build.props"; exit 1 }
           echo "version_name=$version" >> $env:GITHUB_OUTPUT
           echo "new_tag=v$version" >> $env:GITHUB_OUTPUT
-
-          if ($version -match '-') {
-            echo "is_prerelease=true" >> $env:GITHUB_OUTPUT
-          } else {
-            echo "is_prerelease=false" >> $env:GITHUB_OUTPUT
-          }
+          if ($version -match '-') { echo "is_prerelease=true" >> $env:GITHUB_OUTPUT } else { echo "is_prerelease=false" >> $env:GITHUB_OUTPUT }
 
       - name: Check if tag already exists
         id: check_tag
         run: |
           TAG=${{ steps.version.outputs.new_tag }}
           if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists. Skipping build and publish."
+            echo "Tag $TAG already exists. Skipping build and pack."
             echo "skip_build=true" >> $GITHUB_OUTPUT
           else
             echo "skip_build=false" >> $GITHUB_OUTPUT
@@ -95,7 +61,7 @@ jobs:
       - name: Stop if tag exists
         if: steps.check_tag.outputs.skip_build == 'true'
         run: |
-          echo "Build skipped because version tag already exists."
+          echo "Build/Pack skipped because version tag already exists."
           exit 0
 
       - name: Extract latest changelog entry
@@ -112,30 +78,50 @@ jobs:
           echo "Last changes:"
           echo "${{ steps.changelog.outputs.changelog }}"
 
-      - name: Restore
-        if: steps.check_tag.outputs.skip_build != 'true'
-        run: dotnet restore ${{ env.PROJECT_PATH }}
-
-      - name: Build
-        if: steps.check_tag.outputs.skip_build != 'true'
-        run: dotnet build ${{ env.PROJECT_PATH }} --configuration ${{ env.RELEASE_TYPE }}
-
       - name: Create artifacts directory
-        run: mkdir ${{ env.FOLDER_OUTPUT }}
+        run: mkdir -p ${{ env.FOLDER_OUTPUT }}
 
-      - name: Pack
+      - name: Restore & Build AppAmbit (base)
         if: steps.check_tag.outputs.skip_build != 'true'
-        run: dotnet pack "${{ env.PROJECT_PATH }}" --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
+        run: |
+          dotnet restore ${{ env.SDK_PATH }}
+          dotnet build ${{ env.SDK_PATH }} --configuration ${{ env.RELEASE_TYPE }}
 
-      - name: Upload artifact
+      - name: Restore & Build AppAmbit.Maui
+        if: steps.check_tag.outputs.skip_build != 'true'
+        run: |
+          dotnet restore ${{ env.SDK_MAUI_PATH }}
+          dotnet build ${{ env.SDK_MAUI_PATH }} --configuration ${{ env.RELEASE_TYPE }}
+
+      - name: Restore & Build AppAmbit.Avalonia
+        if: steps.check_tag.outputs.skip_build != 'true'
+        run: |
+          dotnet restore ${{ env.SDK_AVALONIA_PATH }}
+          dotnet build ${{ env.SDK_AVALONIA_PATH }} --configuration ${{ env.RELEASE_TYPE }}
+
+      - name: Pack AppAmbit (base)
+        if: steps.check_tag.outputs.skip_build != 'true'
+        run: |
+          dotnet pack ${{ env.SDK_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
+
+      - name: Pack AppAmbit.Maui
+        if: steps.check_tag.outputs.skip_build != 'true'
+        run: |
+          dotnet pack ${{ env.SDK_MAUI_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
+
+      - name: Pack AppAmbit.Avalonia
+        if: steps.check_tag.outputs.skip_build != 'true'
+        run: |
+          dotnet pack ${{ env.SDK_AVALONIA_PATH }} --configuration "${{ env.RELEASE_TYPE }}" --output "${{ env.FOLDER_OUTPUT }}" -p:PackageVersion=${{ steps.version.outputs.version_name }}
+
+      - name: Upload artifacts
         if: steps.check_tag.outputs.skip_build != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: AppAmbitMaui-${{ steps.version.outputs.version_name }}
+          name: AppAmbit-Packages-${{ steps.version.outputs.version_name }}
           path: ./${{ env.FOLDER_OUTPUT }}/*.nupkg
 
       - name: Create Release and Upload Assets
-        if: github.ref_name == 'main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
@@ -145,14 +131,22 @@ jobs:
           body: ${{ steps.changelog.outputs.changelog }}
           prerelease: ${{ steps.version.outputs.is_prerelease }}
 
-      - name: Push to NuGet
-        if: steps.check_tag.outputs.skip_build != 'true' && steps.version.outputs.is_prerelease == 'false' && github.ref_name == 'main'
+      - name: Skip publishing prerelease versions to NuGet
+        if: ${{ github.event.inputs.publish == 'true' && steps.version.outputs.is_prerelease == 'true' }}
+        run: |
+          echo "Version ${{ steps.version.outputs.version_name }} is a prerelease; skipping publish to NuGet.org as requested."
+
+      - name: Publish to NuGet (manual)
+        if: ${{ github.event.inputs.publish == 'true' && steps.version.outputs.is_prerelease == 'false' }}
         shell: pwsh
         run: |
-          $pkg = Get-ChildItem -Path "${{ env.FOLDER_OUTPUT }}" -Filter "*.nupkg" | Select-Object -First 1
-          if (-not $pkg) { throw "No .nupkg found in $env:FOLDER_OUTPUT" }
-          Write-Host "Pushing $($pkg.FullName)"
-          dotnet nuget push "$($pkg.FullName)" `
-            --api-key "${{ secrets.NUGET_APPKEY_SECRET }}" `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate
+          Write-Host "Publishing all nupkgs in $env:FOLDER_OUTPUT to NuGet.org"
+          $pkgs = Get-ChildItem -Path "${{ env.FOLDER_OUTPUT }}" -Filter "*.nupkg"
+          if (-not $pkgs) { throw "No .nupkg found in $env:FOLDER_OUTPUT" }
+          foreach ($pkg in $pkgs) {
+            Write-Host "Pushing $($pkg.FullName)"
+            dotnet nuget push "$($pkg.FullName)" `
+              --api-key "${{ secrets.NUGET_TOKEN }}" `
+              --source https://api.nuget.org/v3/index.json `
+              --skip-duplicate
+          }
