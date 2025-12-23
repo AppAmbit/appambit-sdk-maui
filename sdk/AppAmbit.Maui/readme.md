@@ -59,9 +59,9 @@ Lightweight SDK for analytics, events, logging, crashes, and offline support. Si
 Add the package to your MAUI project:
 
 ```bash
-dotnet add package com.AppAmbit.Sdk
+dotnet add package com.AppAmbit.Maui
 # or specify version
-dotnet add package com.AppAmbit.Sdk --version 1.1.0
+dotnet add package com.AppAmbit.Maui --version 2.0.0
 ```
 
 Or, using Visual Studio:

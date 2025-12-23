@@ -2,12 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <RootNamespace>AppAmbitAvalonia</RootNamespace>
+    <PackageId>com.AppAmbit.Avalonia</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AppAmbit\AppAmbit.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\AppAmbit\AppAmbit.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+  </ItemGroup>
 </Project>

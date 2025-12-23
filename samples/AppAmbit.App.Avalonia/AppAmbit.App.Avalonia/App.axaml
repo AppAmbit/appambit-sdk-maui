@@ -1,0 +1,45 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:AppAmbitTestingAppAvalonia"
+             x:Class="AppAmbitTestingAppAvalonia.App"
+             RequestedThemeVariant="Default">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <SolidColorBrush x:Key="NavBackgroundBrush" Color="#F6F7FA" />
+        <SolidColorBrush x:Key="NavItemForeground" Color="#1F2937" />
+        <SolidColorBrush x:Key="NavItemHover" Color="#E6EEFF" />
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Global Button style: larger and purple -->
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#6B21A8" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="Button.bottom-nav-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource NavItemForeground}" />
+        </Style>
+
+        <Style Selector="Button.bottom-nav-item:pointerover">
+            <Setter Property="Background" Value="{StaticResource NavItemHover}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+    </Application.Styles>
+</Application>
